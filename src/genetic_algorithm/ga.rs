@@ -25,6 +25,7 @@ impl GA {
 
     pub fn run(&self) {
         for (i, c) in self.population.iter().enumerate() {
+            c.makespan(&self.problem);
             println!("{}: {}", i, c);
         }
     }

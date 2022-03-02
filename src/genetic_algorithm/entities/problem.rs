@@ -1,9 +1,9 @@
 pub struct Problem {
     pub n_jobs: u32,
-    m_stages: u32,
-    machines: Vec<u32>,
-    processing_times: Vec<Vec<u32>>,
-    setup_times: Vec<Vec<u32>>,
+    pub m_stages: u32,
+    pub machines: Vec<u32>,
+    pub processing_times: Vec<Vec<u32>>,
+    pub setup_times: Vec<Vec<u32>>,
 }
 
 impl Problem {
