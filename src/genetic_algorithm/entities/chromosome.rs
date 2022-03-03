@@ -65,7 +65,7 @@ impl Chromosome {
 
                         // Add completion time to both machine and job completions vectors
                         machine_completions[stage][0].push((*job, processing_time));
-                        job_completions[stage][i] = processing_time;
+                        job_completions[stage][*job as usize] = processing_time;
                     } else {
                         let mut earliest_completion: (u32, u32) = (u32::MAX, 0);
                         for machine in 0..*m_machines {
@@ -96,6 +96,7 @@ impl Chromosome {
                 /*
                     Stage > 0: jobs are now processed in order of ascending ready times
                     For each job in sorted order, find its completion time for each machine in current stage
+                    If two jobs are ready at the same time, they should be processed in same order as of previous stage
 
                     ready times: [14, 8, 3, 19]
                     order: [3, 2, 1, 4]
@@ -110,10 +111,46 @@ impl Chromosome {
 
                 sorted.sort_by_key(|&(&val, _)| val);
 
+                // Indices of jobs in sorted order: [3, 2, 1, 4]
                 let ordered_jobs: Vec<usize> = sorted.iter().map(|&(_, idx)| idx).collect();
 
                 for (i, &job) in ordered_jobs.iter().enumerate() {
-                    // completion_time = max{machine ready time, job ready time} + setup time + processing time
+                    /*
+                        Here, earliest completion time is found from both job and machine ready times
+                        We find the maximum of the two above-mentioned, this is the earliest the job can start
+                        In addition, sequence dependent setup time is needed based on a machine's prvious job, if any
+                        Finally, the processing time must be accounted for
+                        completion_time = max{machine ready time, job ready time} + setup time + processing time
+                    */
+
+                    let mut earliest_completion: (u32, u32) = (u32::MAX, 0);
+
+                    for machine in 0..*m_machines {
+                        // Find current machine's previous run, if any, and extract job type and ready time
+                        let (prev_job, machine_ready_time) =
+                            match machine_completions[stage][machine as usize].iter().last() {
+                                Some((prev_job, ready_time)) => (*prev_job, *ready_time),
+                                None => (u32::MAX, 0),
+                            };
+
+                        // Find ready time for job as maximum of the job and current machine's ready time
+                        let ready_time =
+                            std::cmp::max(job_completions[stage - 1][job], machine_ready_time);
+
+                        let mut completion_time = ready_time + problem.processing_times[job][stage];
+
+                        if prev_job != u32::MAX {
+                            completion_time += problem.setup_times[stage][prev_job as usize];
+                        }
+
+                        if completion_time < earliest_completion.0 {
+                            earliest_completion = (completion_time, machine);
+                        }
+                    }
+                    // Add completion time to both machine and job completions vectors
+                    machine_completions[stage][earliest_completion.1 as usize]
+                        .push((job as u32, earliest_completion.0));
+                    job_completions[stage][job] = earliest_completion.0;
                 }
             }
         }
