@@ -23,10 +23,10 @@ impl GA {
         };
     }
 
-    pub fn run(&self) {
-        for (i, c) in self.population.iter().enumerate() {
+    pub fn run(&mut self) {
+        for (i, c) in self.population.iter_mut().enumerate() {
             c.makespan(&self.problem);
-            println!("{}: {}", i, c);
+            println!("{i} {c}");
         }
     }
 }
