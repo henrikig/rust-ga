@@ -8,14 +8,27 @@ pub struct GA {
 }
 
 impl GA {
-    pub fn new(problem: &str) -> GA {
-        let problem = Problem::init(problem);
+    pub fn new(problem_file: &str) -> GA {
+        let problem = Problem::init(problem_file);
 
         let mut population: Vec<Chromosome> = Vec::with_capacity(POPULATION_SIZE);
 
         for _ in 0..POPULATION_SIZE {
             population.push(Chromosome::new(&problem));
         }
+
+        return GA {
+            problem,
+            population,
+        };
+    }
+
+    pub fn new_test() -> GA {
+        let problem = Problem::toy_problem();
+
+        let mut population: Vec<Chromosome> = Vec::with_capacity(1);
+
+        population.push(Chromosome::toy_chromosome(&problem));
 
         return GA {
             problem,

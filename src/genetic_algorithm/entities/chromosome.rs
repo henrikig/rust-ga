@@ -36,17 +36,9 @@ impl Chromosome {
         - [14, 8, 3, 19]
         - job 1: 14, job 2: 8, job 3: 3, job 4: 19
 
-        2. for each machine, a vector with machine runs is needed, e.g.:
-        - m11: [(3, 3), (2, 8), (1, 14), (4, 19)]
+        2. for each machine in each stage, a vector with machine runs is needed, e.g.:
         - tuple: (job number, completion time)
-        */
-        let n = problem.n_jobs as usize;
-        let m = problem.m_stages as usize;
-
-        let mut job_completions = vec![vec![0; n]; m];
-        let mut machine_completions: Vec<Vec<Vec<(u32, u32)>>> = Vec::with_capacity(m);
-
-        /* [
+        - [
             [
                 [(3, 3), (1, 14)],
                 [(2, 8), (4, 19)]
@@ -54,7 +46,14 @@ impl Chromosome {
                 [(1, 2), (2, 8)],
                 [(3, 9), (4, 18)]
             ]
-        ] */
+        ]
+        */
+        let n = problem.n_jobs as usize;
+        let m = problem.m_stages as usize;
+
+        let mut job_completions = vec![vec![0; n]; m];
+        let mut machine_completions: Vec<Vec<Vec<(u32, u32)>>> = Vec::with_capacity(m);
+
         for stage in 0..m {
             machine_completions.push(Vec::new());
 
@@ -83,9 +82,13 @@ impl Chromosome {
                         // completion time is machine ready time + setup time + processing time
                         let completion_time =
                             match machine_completions[stage][machine as usize].iter().last() {
-                                // TODO: access setup times correctly
+                                // Setup times is defined as a 2D-vector with n * m entries
+                                // Setup time for job i preceeding job j is given as:
+                                // setup_times[stage * n_jobs + i][j]
                                 Some((prev_job, ready_time)) => {
-                                    problem.setup_times[stage][*prev_job as usize]
+                                    problem.setup_times
+                                        [stage * problem.n_jobs as usize + *job as usize]
+                                        [*prev_job as usize]
                                         + ready_time
                                         + problem.processing_times[*job as usize][stage]
                                 }
@@ -157,7 +160,9 @@ impl Chromosome {
 
                         // Add setup time if this is not the first machine run of current machine
                         if prev_job != u32::MAX {
-                            completion_time += problem.setup_times[stage][prev_job as usize];
+                            completion_time += problem.setup_times
+                                [stage * problem.n_jobs as usize + job]
+                                [prev_job as usize]
                         }
 
                         if completion_time < earliest_completion.0 {
