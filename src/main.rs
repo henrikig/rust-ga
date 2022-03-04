@@ -1,17 +1,41 @@
-extern crate serde;
-extern crate serde_json;
-use serde_json::Value as JsonValue;
-#[macro_use]
-extern crate serde_derive;
+mod genetic_algorithm;
 
-struct Instance {
-    products: u32
-    stages: u32
-    machines: Vec<u64>
-    production_times: Vec<Vec<u64>>
-    setup_times: Vec<Vec<u64>>
-}
+use genetic_algorithm::{ga::GA, params::PROBLEM_FILE};
+>>>>>>> fa147e4e742afb1ca76de3345152761a7628375e
 
 fn main() {
-    println!("Hello, world!");
+    let mut ga = GA::new(PROBLEM_FILE);
+    ga.run();
+}
+
+#[cfg(test)]
+mod tests {
+
+    use crate::genetic_algorithm::{
+        entities::{chromosome::Chromosome, problem::Problem},
+        ga::GA,
+    };
+
+    #[test]
+    fn makespan_calculation_toy_problem() {
+        let mut ga = GA::new_test();
+        ga.population[0].makespan(&ga.problem);
+
+        assert_eq!(Some(338), ga.population[0].makespan);
+    }
+
+    #[test]
+    fn chromosome_ordering() {
+        let problem = Problem::toy_problem();
+
+        let mut c1 = Chromosome::from(vec![0, 1, 2, 3, 4]);
+        let mut c2 = Chromosome::from(vec![4, 3, 2, 1, 0]);
+
+        c1.makespan(&problem);
+        c2.makespan(&problem);
+
+        assert!(c1 > c2);
+        assert!(c1 >= c2);
+        assert!(c1 != c2);
+    }
 }
