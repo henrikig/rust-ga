@@ -2,9 +2,12 @@
 Converter to make excel file to json to be used in Rust.
 """
 
+from pydoc import importfile
 import pandas as pd
 import numpy as np
 import json
+
+SAVE_PATH = "json\\"
 
 
 # Splits the dataframe into many and returns the list of all dataframes with last element as remainder
@@ -43,16 +46,19 @@ def to_json(df: pd.DataFrame, save_as: str) -> dict:
             product.append(int(df.iloc[3+index, index2]))
         dic["production_times"].append(product)
     dic["setup_times"] = []
-    for index in range(dic["products"]*dic["stages"]):
-        setup = []
-        for index2 in range(dic["products"]):
-            setup.append(int(df.iloc[3+dic["products"]+index, index2]))
-        dic["setup_times"].append(setup)
-    with open(f"json\{save_as}.json", "w", encoding="utf-8") as f:
+    for stage in range(dic["stages"]):
+        stage_setup = []
+        for index in range(dic["products"]*stage, dic["products"]*stage+dic["products"]):
+            setup = []
+            for index2 in range(dic["products"]):
+                setup.append(int(df.iloc[3+dic["products"]+index, index2]))
+            stage_setup.append(setup)
+    dic["setup_times"].append(stage_setup)
+    with open(f"{SAVE_PATH}{save_as}.json", "w", encoding="utf-8") as f:
         json.dump(dic, f, ensure_ascii=False)
     return dic
 
-
+# Extraction of dataframes from excel files
 width = 20
 
 df = pd.read_excel(io="n=20\m=2,4\\n=20, m=2,4.xls", header=None)
@@ -61,8 +67,6 @@ n20m2 = split_dataframe(df=df, height=height, width=width, n=80)
 df = n20m2.pop()
 height = 103
 n20m4 = split_dataframe(df=df, height=height, width=width, n=80)
-
-to_json(df=n20m2[0], save_as="n20m2-1")
 
 df = pd.read_excel(io="n=20\m=8\\n=20, m=8.xls", header=None)
 height = 183
@@ -95,3 +99,8 @@ n80m4_constant = split_dataframe(df=df, height=height, width=width, n=40)
 df = pd.read_excel(io="n=80\\n=80,m=4\\Variable\\n=80, m=4, Var.xls", header=None)
 n80m4_variable = split_dataframe(df=df, height=height, width=width, n=40)
 
+
+# Conversion of dataframes to .json
+
+for index in range(80):
+    to_json(df=n20m2[index], save_as=f"n20m2-{index+1}")
