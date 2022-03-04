@@ -1,5 +1,7 @@
 use super::entities::chromosome::Chromosome;
 use super::entities::problem::Problem;
+use super::operators::crossover;
+use super::operators::crossover::Crossover;
 use super::params;
 
 use rand::prelude::ThreadRng;
@@ -84,11 +86,12 @@ impl GA {
                 self.mating_pool.push(winner_clone);
             }
 
-            /* // Perform crossover
+            // Perform crossover
             for parents in self.mating_pool.chunks(2) {
                 let p1 = &parents[0];
                 let p2 = &parents[1];
-            } */
+                let children = crossover::SJOX::apply(p1, p2, None);
+            }
 
             // Perform mutation
 
