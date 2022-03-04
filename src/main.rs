@@ -1,3 +1,8 @@
+fn main() {
+    println!("yes!")
+}
+
+/*
 mod genetic_algorithm;
 
 use genetic_algorithm::{ga::GA, params::PROBLEM_FILE};
@@ -39,3 +44,4 @@ mod tests {
         assert!(c1 != c2);
     }
 }
+*/
