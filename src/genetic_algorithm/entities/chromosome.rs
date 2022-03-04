@@ -193,7 +193,6 @@ impl Ord for Chromosome {
 
 impl PartialOrd for Chromosome {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        // Some(self.makespan.unwrap().cmp(&other.makespan.unwrap()))
         Some(self.cmp(other))
     }
 }
