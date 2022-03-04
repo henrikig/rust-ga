@@ -1,10 +1,13 @@
 use rand::seq::SliceRandom;
 use rand::thread_rng;
-use std::fmt::{Display, Error, Formatter};
+use std::{
+    cmp::Ordering,
+    fmt::{Display, Error, Formatter},
+};
 
 use super::problem::Problem;
 
-#[derive(Debug)]
+#[derive(Debug, Eq)]
 pub struct Chromosome {
     pub jobs: Vec<u32>,
     pub makespan: Option<u32>,
@@ -179,6 +182,34 @@ impl Chromosome {
 
         // Find and return makespan as maximum of all completion times
         self.makespan = Some(*job_completions.iter().flatten().max().unwrap());
+    }
+}
+
+impl Ord for Chromosome {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.makespan.unwrap().cmp(&other.makespan.unwrap())
+    }
+}
+
+impl PartialOrd for Chromosome {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        // Some(self.makespan.unwrap().cmp(&other.makespan.unwrap()))
+        Some(self.cmp(other))
+    }
+}
+
+impl PartialEq for Chromosome {
+    fn eq(&self, other: &Self) -> bool {
+        self.makespan == other.makespan
+    }
+}
+
+impl From<Vec<u32>> for Chromosome {
+    fn from(jobs: Vec<u32>) -> Self {
+        Chromosome {
+            jobs: jobs.to_vec(),
+            makespan: None,
+        }
     }
 }
 
