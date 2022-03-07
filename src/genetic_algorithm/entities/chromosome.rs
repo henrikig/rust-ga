@@ -24,15 +24,6 @@ impl Chromosome {
         }
     }
 
-    pub fn toy_chromosome(problem: &Problem) -> Chromosome {
-        let jobs: Vec<u32> = (0..problem.n_jobs).collect();
-
-        Chromosome {
-            jobs,
-            makespan: None,
-        }
-    }
-
     pub fn makespan(&mut self, problem: &Problem) {
         /*
         1. for each stage, a vector with completion times is needed, e.g.:

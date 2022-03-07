@@ -3,7 +3,7 @@ use crate::genetic_algorithm::entities::chromosome::Chromosome;
 use rand::Rng;
 
 pub trait Crossover {
-    fn apply(c1: &Chromosome, c2: &Chromosome, k: Option<usize>) -> (Chromosome, Chromosome);
+    fn apply(p1: &Chromosome, p2: &Chromosome, k: Option<usize>) -> (Chromosome, Chromosome);
 }
 
 pub struct SJOX;
@@ -33,15 +33,19 @@ impl Crossover for SJOX {
         p1.jobs
             .iter()
             .zip(p2.jobs.iter())
-            .skip(k - 1)
             .enumerate()
             .for_each(|(i, (j1, j2))| {
                 if j1 == j2 {
                     c1[i] = *j1;
                     c2[i] = *j1;
                 } else {
-                    p1_order.push(*j1);
-                    p2_order.push(*j2);
+                    // TODO: do this in another way for performance boost
+                    if !c2.contains(j1) {
+                        p1_order.push(*j1);
+                    }
+                    if !c1.contains(j2) {
+                        p2_order.push(*j2);
+                    }
                 }
             });
 

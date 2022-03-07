@@ -39,32 +39,4 @@ impl Problem {
             setup_times: vec![vec![1; 20]; 40],
         }
     }
-
-    pub fn toy_problem() -> Problem {
-        // Small toy problem for validation
-        Problem {
-            n_jobs: 5,
-            m_stages: 2,
-            machines: vec![2, 1],
-            processing_times: vec![
-                vec![71, 98],
-                vec![51, 54],
-                vec![0, 49],
-                vec![94, 28],
-                vec![29, 90],
-            ],
-            setup_times: vec![
-                vec![1, 2, 3, 4, 5],
-                vec![1, 2, 3, 4, 5],
-                vec![1, 2, 3, 4, 5],
-                vec![1, 2, 3, 4, 5],
-                vec![5, 2, 3, 4, 5],
-                vec![1, 2, 3, 4, 5],
-                vec![1, 2, 7, 4, 5],
-                vec![1, 2, 3, 4, 5],
-                vec![1, 2, 3, 4, 5],
-                vec![3, 2, 3, 4, 5],
-            ],
-        }
-    }
 }
