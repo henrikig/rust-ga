@@ -53,7 +53,7 @@ def to_json(df: pd.DataFrame, save_as: str) -> dict:
             for index2 in range(dic["products"]):
                 setup.append(int(df.iloc[3+dic["products"]+index, index2]))
             stage_setup.append(setup)
-    dic["setup_times"].append(stage_setup)
+        dic["setup_times"].append(stage_setup)
     with open(f"{SAVE_PATH}{save_as}.json", "w", encoding="utf-8") as f:
         json.dump(dic, f, ensure_ascii=False)
     return dic
