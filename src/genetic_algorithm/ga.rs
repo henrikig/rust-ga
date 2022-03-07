@@ -2,6 +2,8 @@ use super::entities::chromosome::Chromosome;
 use super::entities::problem::Problem;
 use super::operators::crossover;
 use super::operators::crossover::Crossover;
+use super::operators::mutation;
+use super::operators::mutation::Mutation;
 use super::params;
 
 use rand::prelude::ThreadRng;
@@ -20,14 +22,14 @@ impl GA {
     pub fn new(problem_file: &str) -> GA {
         let problem = Problem::init(problem_file);
 
-        let mut population: Vec<Chromosome> = Vec::with_capacity(params::POPULATION_SIZE);
-        let mut mating_pool = Vec::with_capacity(problem.n_jobs as usize);
+        let mut population = Vec::with_capacity(params::POPULATION_SIZE);
+        let mating_pool = Vec::with_capacity(params::POPULATION_SIZE);
 
         for _ in 0..params::POPULATION_SIZE {
             population.push(Chromosome::new(&problem));
         }
 
-        let mut rng = thread_rng();
+        let rng = thread_rng();
 
         return GA {
             problem,
@@ -37,34 +39,14 @@ impl GA {
         };
     }
 
-    pub fn new_test() -> GA {
-        let problem = Problem::toy_problem();
-
-        let mut population: Vec<Chromosome> = Vec::with_capacity(1);
-        let mut mating_pool: Vec<Chromosome> = Vec::with_capacity(1);
-
-        population.push(Chromosome::toy_chromosome(&problem));
-
-        return GA {
-            problem,
-            population,
-            mating_pool,
-            rng: thread_rng(),
-        };
-    }
-
     pub fn run(&mut self) {
         // Initialisation - done in GA::new()
 
-        for _ in 0..params::ITERATIONS {
+        for iteration in 0..params::ITERATIONS {
             // calculate makespan
             self.population
                 .iter_mut()
                 .for_each(|c| c.makespan(&self.problem));
-
-            for (i, c) in self.population.iter().enumerate() {
-                println!("{i} {c}");
-            }
 
             // Selection - fill up mating pool to be used for next generation
             self.mating_pool.clear();
@@ -74,7 +56,7 @@ impl GA {
                 let p1 = self.population.choose(&mut self.rng).unwrap();
                 let p2 = self.population.choose(&mut self.rng).unwrap();
 
-                // Chose best in params::KEEP_BEST % of the time, random otherwise
+                // Choose best in params::KEEP_BEST % of the time, random otherwise
                 let winner = if self.rng.gen::<f32>() < params::KEEP_BEST {
                     std::cmp::min(p1, p2)
                 } else {
@@ -86,16 +68,43 @@ impl GA {
                 self.mating_pool.push(winner_clone);
             }
 
-            // Perform crossover
-            for parents in self.mating_pool.chunks(2) {
-                let p1 = &parents[0];
-                let p2 = &parents[1];
-                let children = crossover::SJOX::apply(p1, p2, None);
+            for parents in self.mating_pool.chunks_exact_mut(2) {
+                if self.rng.gen::<f32>() < params::XOVER_PROB {
+                    let (c1, c2) = crossover::SJOX::apply(&parents[0], &parents[1], None);
+
+                    for (i, parent) in parents.iter_mut().enumerate() {
+                        if i == 0 {
+                            *parent = Chromosome::from(c1.jobs.to_vec());
+                        } else {
+                            *parent = Chromosome::from(c2.jobs.to_vec());
+                        }
+                    }
+                }
             }
 
             // Perform mutation
+            self.mating_pool.iter_mut().for_each(|c| {
+                if self.rng.gen::<f32>() < params::MUTATION_PROB {
+                    mutation::SHIFT::apply(c);
+                }
+            });
 
             // Elitism
+            // TODO: omit sorting, find best chromosomes in another way
+            self.population.sort();
+            for c in self.population.iter().take(params::ELITISM) {
+                self.mating_pool.push(Chromosome::from(c.jobs.to_vec()));
+            }
+
+            println!("{}: {}", iteration, self.population[0].makespan.unwrap());
+
+            self.population.clear();
+
+            self.mating_pool
+                .iter()
+                .for_each(|c| self.population.push(Chromosome::from(c.jobs.to_vec())));
+
+            assert_eq!(self.mating_pool.len(), params::POPULATION_SIZE);
 
             // Check termination criteria, and potentially proceed to next generation
         }
