@@ -3,16 +3,6 @@
 version = 3
 
 [[package]]
-name = "tio4905"
-version = "0.1.0"
-dependencies = [
- "rand",
- "serde",
- "serde_derive",
- "serde_json",
-]
-
-[[package]]
 name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -138,6 +128,16 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-xid",
+]
+
+[[package]]
+name = "tio4905"
+version = "0.1.0"
+dependencies = [
+ "rand",
+ "serde",
+ "serde_derive",
+ "serde_json",
 ]
 
 [[package]]
