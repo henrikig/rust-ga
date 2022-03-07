@@ -3,36 +3,39 @@ mod tests {
 
     use rand::thread_rng;
 
-    use crate::genetic_algorithm::{
-        entities::{chromosome::Chromosome, problem::Problem},
-        ga::GA,
-        operators::crossover::{self, Crossover},
+    use crate::{
+        common::{instance::Instance, parser::parse},
+        genetic_algorithm::{
+            entities::chromosome::Chromosome,
+            ga::GA,
+            operators::crossover::{self, Crossover},
+        },
     };
 
     #[test]
     fn makespan_calculation_toy_problem() {
-        let problem = test_problem();
+        let instance = test_instance();
 
         let mut population: Vec<Chromosome> = Vec::with_capacity(1);
         let mating_pool: Vec<Chromosome> = Vec::with_capacity(1);
 
-        population.push(test_chromosome(&problem));
+        population.push(test_chromosome(&instance));
 
         let mut ga = GA {
-            problem,
+            instance,
             population,
             mating_pool,
             rng: thread_rng(),
         };
 
-        ga.population[0].makespan(&ga.problem);
+        ga.population[0].makespan(&ga.instance);
 
         assert_eq!(Some(338), ga.population[0].makespan);
     }
 
     #[test]
     fn chromosome_ordering() {
-        let problem = test_problem();
+        let problem = test_instance();
 
         let mut c1 = Chromosome::from(vec![0, 1, 2, 3, 4]);
         let mut c2 = Chromosome::from(vec![4, 3, 2, 1, 0]);
@@ -70,20 +73,16 @@ mod tests {
     }
 
     #[test]
-    fn vec_enumerate() {
-        let v1 = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-
-        for (u, j) in v1.chunks(2).enumerate() {
-            println!("{}: {}-{}", u, j[0], j[1]);
-        }
+    fn parse_problem() {
+        let _instance = parse("./instances/ruiz/json/n20m2-1.json").unwrap();
     }
 
-    fn test_problem() -> Problem {
-        Problem {
-            n_jobs: 5,
-            m_stages: 2,
+    fn test_instance() -> Instance {
+        Instance {
+            products: 5,
+            stages: 2,
             machines: vec![2, 1],
-            processing_times: vec![
+            production_times: vec![
                 vec![71, 98],
                 vec![51, 54],
                 vec![0, 49],
@@ -91,22 +90,26 @@ mod tests {
                 vec![29, 90],
             ],
             setup_times: vec![
-                vec![1, 2, 3, 4, 5],
-                vec![1, 2, 3, 4, 5],
-                vec![1, 2, 3, 4, 5],
-                vec![1, 2, 3, 4, 5],
-                vec![5, 2, 3, 4, 5],
-                vec![1, 2, 3, 4, 5],
-                vec![1, 2, 7, 4, 5],
-                vec![1, 2, 3, 4, 5],
-                vec![1, 2, 3, 4, 5],
-                vec![3, 2, 3, 4, 5],
+                vec![
+                    vec![1, 2, 3, 4, 5],
+                    vec![1, 2, 3, 4, 5],
+                    vec![1, 2, 3, 4, 5],
+                    vec![1, 2, 3, 4, 5],
+                    vec![5, 2, 3, 4, 5],
+                ],
+                vec![
+                    vec![1, 2, 3, 4, 5],
+                    vec![1, 2, 7, 4, 5],
+                    vec![1, 2, 3, 4, 5],
+                    vec![1, 2, 3, 4, 5],
+                    vec![3, 2, 3, 4, 5],
+                ],
             ],
         }
     }
 
-    pub fn test_chromosome(problem: &Problem) -> Chromosome {
-        let jobs: Vec<u32> = (0..problem.n_jobs).collect();
+    pub fn test_chromosome(instance: &Instance) -> Chromosome {
+        let jobs: Vec<u32> = (0..instance.products).collect();
 
         Chromosome {
             jobs,

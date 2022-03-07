@@ -1,5 +1,9 @@
+mod common;
+mod genetic_algorithm;
+use genetic_algorithm::{ga::GA, params::PROBLEM_FILE};
 fn main() {
-    println!("yes!")
+    let mut ga = GA::new(PROBLEM_FILE);
+    ga.run()
 }
 
 /*

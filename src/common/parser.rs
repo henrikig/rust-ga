@@ -2,21 +2,12 @@
 https://docs.serde.rs/serde_json/de/fn.from_reader.html
 */
 
-use serde_derive::Deserialize;
-
 use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
-#[derive(Deserialize, Debug)]
-pub struct Instance {
-    pub products: u64,
-    pub stages: u64,
-    pub machines: Vec<u64>,
-    pub production_times: Vec<Vec<u64>>,
-    pub setup_times: Vec<Vec<Vec<u64>>>,
-}
+use super::instance::Instance;
 
 /* Example of use:
 let instance = parser::parse("n20m2-1.json").unwrap();

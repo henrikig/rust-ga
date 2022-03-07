@@ -5,7 +5,7 @@ use std::{
     fmt::{Display, Error, Formatter},
 };
 
-use super::problem::Problem;
+use crate::common::instance::Instance;
 
 #[derive(Debug, Eq)]
 pub struct Chromosome {
@@ -14,8 +14,8 @@ pub struct Chromosome {
 }
 
 impl Chromosome {
-    pub fn new(problem: &Problem) -> Chromosome {
-        let mut jobs: Vec<u32> = (0..problem.n_jobs).collect();
+    pub fn new(instance: &Instance) -> Chromosome {
+        let mut jobs: Vec<u32> = (0..instance.products).collect();
         jobs.shuffle(&mut thread_rng());
 
         Chromosome {
@@ -24,7 +24,7 @@ impl Chromosome {
         }
     }
 
-    pub fn makespan(&mut self, problem: &Problem) {
+    pub fn makespan(&mut self, instance: &Instance) {
         /*
         1. for each stage, a vector with completion times is needed, e.g.:
         - [14, 8, 3, 19]
@@ -42,8 +42,8 @@ impl Chromosome {
             ]
         ]
         */
-        let n = problem.n_jobs as usize;
-        let m = problem.m_stages as usize;
+        let n = instance.products as usize;
+        let m = instance.stages as usize;
 
         let mut job_completions = vec![vec![0; n]; m];
         let mut machine_completions: Vec<Vec<Vec<(u32, u32)>>> = Vec::with_capacity(m);
@@ -51,12 +51,12 @@ impl Chromosome {
         for stage in 0..m {
             machine_completions.push(Vec::new());
 
-            for _ in 0..problem.machines[stage] {
+            for _ in 0..instance.machines[stage] {
                 machine_completions[stage].push(Vec::with_capacity(n));
             }
         }
 
-        for (stage, m_machines) in problem.machines.iter().enumerate() {
+        for (stage, m_machines) in instance.machines.iter().enumerate() {
             if stage == 0 {
                 /*
                     In first stage, jobs are assigned according to job permutation
@@ -65,7 +65,7 @@ impl Chromosome {
                 */
                 for job in self.jobs.iter() {
                     // If job has no processing time in this stage, skip directly to next stage
-                    if problem.processing_times[*job as usize][stage] == 0 {
+                    if instance.production_times[*job as usize][stage] == 0 {
                         job_completions[stage][*job as usize] = 0;
                         continue;
                     }
@@ -80,13 +80,11 @@ impl Chromosome {
                                 // Setup time for job i preceeding job j is given as:
                                 // setup_times[stage * n_jobs + i][j]
                                 Some((prev_job, ready_time)) => {
-                                    problem.setup_times
-                                        [stage * problem.n_jobs as usize + *job as usize]
-                                        [*prev_job as usize]
+                                    instance.setup_times[stage][*prev_job as usize][*job as usize]
                                         + ready_time
-                                        + problem.processing_times[*job as usize][stage]
+                                        + instance.production_times[*job as usize][stage]
                                 }
-                                None => problem.processing_times[*job as usize][stage],
+                                None => instance.production_times[*job as usize][stage],
                             };
                         // Compare with currently best completion time, and update if better
                         if completion_time < earliest_completion.0 {
@@ -131,7 +129,7 @@ impl Chromosome {
 
                     // If job has no processing time in this stage, skip directly to next stage
                     // Completion time becomes completion time of previous stage
-                    if problem.processing_times[job][stage] == 0 {
+                    if instance.production_times[job][stage] == 0 {
                         job_completions[stage][job] = job_completions[stage - 1][job];
                         continue;
                     }
@@ -150,13 +148,12 @@ impl Chromosome {
                         let ready_time =
                             std::cmp::max(job_completions[stage - 1][job], machine_ready_time);
 
-                        let mut completion_time = ready_time + problem.processing_times[job][stage];
+                        let mut completion_time =
+                            ready_time + instance.production_times[job][stage];
 
                         // Add setup time if this is not the first machine run of current machine
                         if prev_job != u32::MAX {
-                            completion_time += problem.setup_times
-                                [stage * problem.n_jobs as usize + job]
-                                [prev_job as usize]
+                            completion_time += instance.setup_times[stage][prev_job as usize][job]
                         }
 
                         if completion_time < earliest_completion.0 {

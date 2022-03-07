@@ -1,5 +1,7 @@
+use crate::common::instance::Instance;
+use crate::common::parser::parse;
+
 use super::entities::chromosome::Chromosome;
-use super::entities::problem::Problem;
 use super::operators::crossover;
 use super::operators::crossover::Crossover;
 use super::operators::mutation;
@@ -12,7 +14,7 @@ use rand::thread_rng;
 use rand::Rng;
 
 pub struct GA {
-    pub problem: Problem,
+    pub instance: Instance,
     pub population: Vec<Chromosome>,
     pub mating_pool: Vec<Chromosome>,
     pub rng: ThreadRng,
@@ -20,19 +22,19 @@ pub struct GA {
 
 impl GA {
     pub fn new(problem_file: &str) -> GA {
-        let problem = Problem::init(problem_file);
+        let instance = parse(problem_file).unwrap();
 
         let mut population = Vec::with_capacity(params::POPULATION_SIZE);
         let mating_pool = Vec::with_capacity(params::POPULATION_SIZE);
 
         for _ in 0..params::POPULATION_SIZE {
-            population.push(Chromosome::new(&problem));
+            population.push(Chromosome::new(&instance));
         }
 
         let rng = thread_rng();
 
         return GA {
-            problem,
+            instance,
             population,
             mating_pool,
             rng,
@@ -46,7 +48,7 @@ impl GA {
             // calculate makespan
             self.population
                 .iter_mut()
-                .for_each(|c| c.makespan(&self.problem));
+                .for_each(|c| c.makespan(&self.instance));
 
             // Selection - fill up mating pool to be used for next generation
             self.mating_pool.clear();
@@ -96,7 +98,12 @@ impl GA {
                 self.mating_pool.push(Chromosome::from(c.jobs.to_vec()));
             }
 
-            println!("{}: {}", iteration, self.population[0].makespan.unwrap());
+            println!(
+                "{}: {}-{}",
+                iteration,
+                self.population[0].makespan.unwrap(),
+                self.population.iter().last().unwrap().makespan.unwrap()
+            );
 
             self.population.clear();
 
