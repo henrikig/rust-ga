@@ -21,8 +21,8 @@ pub struct GA {
 }
 
 impl GA {
-    pub fn new(problem_file: &str) -> GA {
-        let instance = parse(problem_file).unwrap();
+    pub fn new() -> GA {
+        let instance = parse(params::PROBLEM_FILE).unwrap();
 
         let mut population = Vec::with_capacity(params::POPULATION_SIZE);
         let mating_pool = Vec::with_capacity(params::POPULATION_SIZE);
@@ -42,8 +42,6 @@ impl GA {
     }
 
     pub fn run(&mut self) {
-        // Initialisation - done in GA::new()
-
         for iteration in 0..params::ITERATIONS {
             // calculate makespan
             self.population
@@ -110,10 +108,11 @@ impl GA {
             self.mating_pool
                 .iter()
                 .for_each(|c| self.population.push(Chromosome::from(c.jobs.to_vec())));
-
-            assert_eq!(self.mating_pool.len(), params::POPULATION_SIZE);
-
-            // Check termination criteria, and potentially proceed to next generation
         }
     }
+}
+
+pub fn run() {
+    let mut ga = GA::new();
+    ga.run();
 }

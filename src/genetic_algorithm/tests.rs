@@ -19,6 +19,7 @@ mod tests {
         let mut population: Vec<Chromosome> = Vec::with_capacity(1);
         let mating_pool: Vec<Chromosome> = Vec::with_capacity(1);
 
+        // [0, 1, 2, 3, 4]
         population.push(test_chromosome(&instance));
 
         let mut ga = GA {
@@ -30,7 +31,7 @@ mod tests {
 
         ga.population[0].makespan(&ga.instance);
 
-        assert_eq!(Some(338), ga.population[0].makespan);
+        assert_eq!(Some(333), ga.population[0].makespan);
     }
 
     #[test]
