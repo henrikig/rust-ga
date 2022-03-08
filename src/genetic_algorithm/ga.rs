@@ -44,28 +44,14 @@ impl GA {
     pub fn run(&mut self) {
         for iteration in 0..params::ITERATIONS {
             // calculate makespan
-            self.population
-                .iter_mut()
-                .for_each(|c| c.makespan(&self.instance));
+            self.makespan();
 
             // Selection - fill up mating pool to be used for next generation
             self.mating_pool.clear();
 
             for _ in 0..(params::POPULATION_SIZE - params::ELITISM) {
-                // Select both possible parants
-                let p1 = self.population.choose(&mut self.rng).unwrap();
-                let p2 = self.population.choose(&mut self.rng).unwrap();
-
-                // Choose best in params::KEEP_BEST % of the time, random otherwise
-                let winner = if self.rng.gen::<f32>() < params::KEEP_BEST {
-                    std::cmp::min(p1, p2)
-                } else {
-                    vec![p1, p2].choose(&mut self.rng).unwrap()
-                };
-                // Create a new chromosome from the tournament winner
-                let mut winner_clone = Chromosome::from(winner.jobs.to_vec());
-                winner_clone.makespan = winner.makespan;
-                self.mating_pool.push(winner_clone);
+                let winner = self.tournament();
+                self.mating_pool.push(winner);
             }
 
             for parents in self.mating_pool.chunks_exact_mut(2) {
@@ -96,12 +82,9 @@ impl GA {
                 self.mating_pool.push(Chromosome::from(c.jobs.to_vec()));
             }
 
-            println!(
-                "{}: {}-{}",
-                iteration,
-                self.population[0].makespan.unwrap(),
-                self.population.iter().last().unwrap().makespan.unwrap()
-            );
+            if iteration % 1000 == 0 {
+                self.generation_status(iteration);
+            }
 
             self.population.clear();
 
@@ -109,6 +92,82 @@ impl GA {
                 .iter()
                 .for_each(|c| self.population.push(Chromosome::from(c.jobs.to_vec())));
         }
+    }
+
+    pub fn run_steady_state(&mut self) {
+        // Calculate makespan for all individuals in population
+        self.makespan();
+        self.population.sort();
+
+        // Go through generations
+        for iteration in 0..params::ITERATIONS {
+            // Select two individuals from tournament selection
+            let p1 = self.tournament();
+            let p2 = self.tournament();
+
+            // Crossover
+            let (mut c1, mut c2) = crossover::SJOX::apply(&p1, &p2, None);
+
+            // Mutate
+            let mut mutate = |c| {
+                if self.rng.gen::<f32>() < params::MUTATION_PROB {
+                    mutation::SHIFT::apply(c)
+                }
+            };
+            mutate(&mut c1);
+            mutate(&mut c2);
+
+            let makespan = |c: &mut Chromosome| c.makespan(&self.instance);
+            makespan(&mut c1);
+            makespan(&mut c2);
+
+            // Check if individuals are better than current worst & not already in population
+            let mut replace = |c: Chromosome| {
+                if &c < self.population.iter().last().unwrap() && !self.population.contains(&c) {
+                    // Replace if so (inserting into correct position)
+                    self.population.remove(self.population.len() - 1);
+                    let idx = self.population.binary_search(&c).unwrap_or_else(|x| x);
+                    self.population.insert(idx, c);
+                }
+            };
+            replace(c1);
+            replace(c2);
+
+            if iteration % 1000 == 0 {
+                self.generation_status(iteration);
+            }
+        }
+    }
+
+    pub fn makespan(&mut self) {
+        self.population
+            .iter_mut()
+            .for_each(|c| c.makespan(&self.instance));
+    }
+
+    fn tournament(&mut self) -> Chromosome {
+        // Select both possible parants
+        let p1 = self.population.choose(&mut self.rng).unwrap();
+        let p2 = self.population.choose(&mut self.rng).unwrap();
+        // Choose best in params::KEEP_BEST % of the time, random otherwise
+        let winner = if self.rng.gen::<f32>() < params::KEEP_BEST {
+            std::cmp::min(p1, p2)
+        } else {
+            vec![p1, p2].choose(&mut self.rng).unwrap()
+        };
+        // Create a new chromosome from the tournament winner
+        let mut winner_clone = Chromosome::from(winner.jobs.to_vec());
+        winner_clone.makespan = winner.makespan;
+        winner_clone
+    }
+
+    fn generation_status(&self, iteration: usize) {
+        println!(
+            "{}: {}-{}",
+            iteration,
+            self.population[0].makespan.unwrap(),
+            self.population.iter().last().unwrap().makespan.unwrap()
+        );
     }
 }
 
