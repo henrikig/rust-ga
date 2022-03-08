@@ -1,9 +1,12 @@
+use std::env;
+
 use crate::common::instance::Instance;
 use crate::common::parser::parse;
 
 use super::entities::chromosome::Chromosome;
 use super::operators::crossover;
 use super::operators::crossover::Crossover;
+use super::operators::crossover::XTYPE;
 use super::operators::mutation;
 use super::operators::mutation::Mutation;
 use super::params;
@@ -56,7 +59,15 @@ impl GA {
 
             for parents in self.mating_pool.chunks_exact_mut(2) {
                 if self.rng.gen::<f32>() < params::XOVER_PROB {
-                    let (c1, c2) = crossover::SJOX::apply(&parents[0], &parents[1], None);
+                    // Crossover
+                    let (c1, c2) = match params::XOVER {
+                        XTYPE::SJOX => {
+                            crossover::SJOX::apply(&parents[0], &parents[1], None, &self.instance)
+                        }
+                        XTYPE::BCBC => {
+                            crossover::BCBC::apply(&parents[0], &parents[1], None, &self.instance)
+                        }
+                    };
 
                     for (i, parent) in parents.iter_mut().enumerate() {
                         if i == 0 {
@@ -106,7 +117,10 @@ impl GA {
             let p2 = self.tournament();
 
             // Crossover
-            let (mut c1, mut c2) = crossover::SJOX::apply(&p1, &p2, None);
+            let (mut c1, mut c2) = match params::XOVER {
+                XTYPE::SJOX => crossover::SJOX::apply(&p1, &p2, None, &self.instance),
+                XTYPE::BCBC => crossover::BCBC::apply(&p1, &p2, None, &self.instance),
+            };
 
             // Mutate
             let mut mutate = |c| {
@@ -172,6 +186,12 @@ impl GA {
 }
 
 pub fn run() {
+    let args: Vec<String> = env::args().collect();
     let mut ga = GA::new();
-    ga.run();
+
+    if args.len() > 1 && args[1] == String::from("--steady") {
+        ga.run_steady_state()
+    } else {
+        ga.run()
+    }
 }

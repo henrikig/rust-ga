@@ -61,7 +61,7 @@ mod tests {
             3, 17, 9, 15, 14, 11, 13, 16, 6, 18, 5, 19, 7, 8, 4, 2, 1, 10, 20, 12,
         ]);
 
-        let (c1, c2) = crossover::SJOX::apply(&p1, &p2, Some(8));
+        let (c1, c2) = crossover::SJOX::apply(&p1, &p2, Some(8), &test_instance());
 
         assert_eq!(
             c2.jobs,
