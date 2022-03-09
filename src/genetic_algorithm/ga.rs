@@ -64,6 +64,9 @@ impl GA {
                         XTYPE::SJOX => {
                             crossover::SJOX::apply(&parents[0], &parents[1], None, &self.instance)
                         }
+                        XTYPE::SB2OX => {
+                            crossover::SB2OX::apply(&parents[0], &parents[1], None, &self.instance)
+                        }
                         XTYPE::BCBC => {
                             crossover::BCBC::apply(&parents[0], &parents[1], None, &self.instance)
                         }
@@ -119,6 +122,7 @@ impl GA {
             // Crossover
             let (mut c1, mut c2) = match params::XOVER {
                 XTYPE::SJOX => crossover::SJOX::apply(&p1, &p2, None, &self.instance),
+                XTYPE::SB2OX => crossover::SB2OX::apply(&p1, &p2, None, &self.instance),
                 XTYPE::BCBC => crossover::BCBC::apply(&p1, &p2, None, &self.instance),
             };
 

@@ -18,7 +18,7 @@ pub fn makespan(jobs: &[u32], instance: &Instance) -> u32 {
         ]
     ]
     */
-    let n = instance.products as usize;
+    let n = instance.jobs as usize;
     let m = instance.stages as usize;
 
     let mut job_completions = vec![vec![0; n]; m];
@@ -41,7 +41,7 @@ pub fn makespan(jobs: &[u32], instance: &Instance) -> u32 {
             */
             for job in jobs.iter() {
                 // If job has no processing time in this stage, skip directly to next stage
-                if instance.production_times[*job as usize][stage] == 0 {
+                if instance.processing_times[*job as usize][stage] == 0 {
                     job_completions[stage][*job as usize] = 0;
                     continue;
                 }
@@ -58,9 +58,9 @@ pub fn makespan(jobs: &[u32], instance: &Instance) -> u32 {
                             Some((prev_job, ready_time)) => {
                                 instance.setup_times[stage][*prev_job as usize][*job as usize]
                                     + ready_time
-                                    + instance.production_times[*job as usize][stage]
+                                    + instance.processing_times[*job as usize][stage]
                             }
-                            None => instance.production_times[*job as usize][stage],
+                            None => instance.processing_times[*job as usize][stage],
                         };
                     // Compare with currently best completion time, and update if better
                     if completion_time < earliest_completion.0 {
@@ -105,7 +105,7 @@ pub fn makespan(jobs: &[u32], instance: &Instance) -> u32 {
 
                 // If job has no processing time in this stage, skip directly to next stage
                 // Completion time becomes completion time of previous stage
-                if instance.production_times[job][stage] == 0 {
+                if instance.processing_times[job][stage] == 0 {
                     job_completions[stage][job] = job_completions[stage - 1][job];
                     continue;
                 }
@@ -124,7 +124,7 @@ pub fn makespan(jobs: &[u32], instance: &Instance) -> u32 {
                     let ready_time =
                         std::cmp::max(job_completions[stage - 1][job], machine_ready_time);
 
-                    let mut completion_time = ready_time + instance.production_times[job][stage];
+                    let mut completion_time = ready_time + instance.processing_times[job][stage];
 
                     // Add setup time if this is not the first machine run of current machine
                     if prev_job != u32::MAX {
