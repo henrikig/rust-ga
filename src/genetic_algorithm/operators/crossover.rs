@@ -1,9 +1,9 @@
 use crate::{
     common::{instance::Instance, makespan},
-    genetic_algorithm::entities::chromosome::Chromosome,
+    genetic_algorithm::{entities::chromosome::Chromosome, params},
 };
 
-use rand::{prelude::SliceRandom, thread_rng, Rng};
+use rand::{prelude::SliceRandom, Rng};
 
 pub enum XTYPE {
     _SJOX,
@@ -70,6 +70,7 @@ impl Crossover for SJOX {
                 }
             });
 
+        // Insert the jobs that are yet not allocated in order of opposite parent
         for i in k..c1.len() {
             if c1[i] == u32::MAX {
                 c1[i] = p2_order.remove(0);
@@ -163,7 +164,6 @@ impl Crossover for BCBC {
         let filter = |jobs: Vec<u32>, block: &[u32]| -> Vec<u32> {
             jobs.into_iter().filter(|&j| !block.contains(&j)).collect()
         };
-
         let c1 = filter(p1.jobs.to_vec(), block2);
         let c2 = filter(p2.jobs.to_vec(), block1);
 
@@ -185,21 +185,39 @@ pub fn find_best_insertion(jobs: Vec<u32>, block: &[u32], instance: &Instance) -
     let mut makespan = makespan::makespan(&jobs, instance);
     let k = block.len();
 
+    // Store one random solution which may be returned
+    let random_idx: usize = rand::thread_rng().gen_range(0..n_jobs);
+    let mut random_jobs: Vec<u32> = jobs.iter().cloned().collect();
+
+    // Initialise best jobs
     let mut best_jobs: Vec<Vec<u32>> = vec![jobs.iter().cloned().collect()];
 
     for i in 0..n_jobs {
+        // Shift block one step to the right
         jobs[i..i + k + 1].rotate_right(1);
         let new_makespan = makespan::makespan(&jobs, instance);
 
+        // Update random solution if we are at the random index
+        if i == random_idx {
+            random_jobs = jobs.iter().cloned().collect()
+        }
+
+        // Update best jobs if the current has a lower makespan
         if new_makespan < makespan {
             makespan = new_makespan;
             best_jobs = vec![jobs.iter().cloned().collect()];
+        // Add current to best jobs if makespan is equal to best jobs
         } else if new_makespan == makespan {
             best_jobs.push(jobs.iter().cloned().collect());
         }
     }
 
-    return best_jobs.choose(&mut rand::thread_rng()).unwrap().to_vec();
+    // Return either one of the best solutions, or the chosen random solution
+    if rand::thread_rng().gen::<f32>() < params::KEEP_BEST {
+        best_jobs.choose(&mut rand::thread_rng()).unwrap().to_vec()
+    } else {
+        random_jobs
+    }
 }
 
 #[cfg(test)]

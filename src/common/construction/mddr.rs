@@ -63,9 +63,7 @@ impl Iterator for MDDR<'_> {
 mod test {
     use crate::{
         common::parser::parse,
-        genetic_algorithm::{
-            entities::chromosome::Chromosome, params, tests::tests::test_instance,
-        },
+        genetic_algorithm::{entities::chromosome::Chromosome, params},
     };
 
     use super::MDDR;
