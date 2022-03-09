@@ -15,7 +15,7 @@ pub struct Chromosome {
 
 impl Chromosome {
     pub fn new(instance: &Instance) -> Chromosome {
-        let mut jobs: Vec<u32> = (0..instance.products).collect();
+        let mut jobs: Vec<u32> = (0..instance.jobs).collect();
         jobs.shuffle(&mut thread_rng());
 
         Chromosome {
