@@ -1,5 +1,5 @@
 #[cfg(test)]
-mod tests {
+pub mod tests {
 
     use rand::thread_rng;
 
@@ -50,7 +50,7 @@ mod tests {
         let _instance = parse("./instances/ruiz/json/n20m2-1.json").unwrap();
     }
 
-    fn test_instance() -> Instance {
+    pub fn test_instance() -> Instance {
         Instance {
             jobs: 5,
             stages: 2,

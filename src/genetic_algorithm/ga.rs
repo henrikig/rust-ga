@@ -1,14 +1,12 @@
 use std::env;
 
+use crate::common::construction::{mddr::MDDR, Construction};
 use crate::common::instance::Instance;
 use crate::common::parser::parse;
 
 use super::entities::chromosome::Chromosome;
-use super::operators::crossover;
-use super::operators::crossover::Crossover;
-use super::operators::crossover::XTYPE;
-use super::operators::mutation;
-use super::operators::mutation::Mutation;
+use super::operators::crossover::{Crossover, BCBC, SB2OX, SJOX, XTYPE};
+use super::operators::mutation::{self, Mutation};
 use super::params;
 
 use rand::prelude::ThreadRng;
@@ -30,7 +28,22 @@ impl GA {
         let mut population = Vec::with_capacity(params::POPULATION_SIZE);
         let mating_pool = Vec::with_capacity(params::POPULATION_SIZE);
 
-        for _ in 0..params::POPULATION_SIZE {
+        // Add number of chromosomes from MDDR constructor as specified
+        match params::CONSTRUCTION {
+            Construction::MDDR(num) => {
+                let mut constructed: Vec<Chromosome> = MDDR {
+                    instance: &instance,
+                }
+                .take(num)
+                .collect();
+
+                population.append(&mut constructed);
+            }
+            _ => (),
+        }
+
+        // Remaining chromosomes are added randomly
+        while population.len() < params::POPULATION_SIZE {
             population.push(Chromosome::new(&instance));
         }
 
@@ -57,22 +70,16 @@ impl GA {
                 self.mating_pool.push(winner);
             }
 
-            for parents in self.mating_pool.chunks_exact_mut(2) {
+            for p in self.mating_pool.chunks_exact_mut(2) {
                 if self.rng.gen::<f32>() < params::XOVER_PROB {
                     // Crossover
                     let (c1, c2) = match params::XOVER {
-                        XTYPE::SJOX => {
-                            crossover::SJOX::apply(&parents[0], &parents[1], None, &self.instance)
-                        }
-                        XTYPE::SB2OX => {
-                            crossover::SB2OX::apply(&parents[0], &parents[1], None, &self.instance)
-                        }
-                        XTYPE::BCBC => {
-                            crossover::BCBC::apply(&parents[0], &parents[1], None, &self.instance)
-                        }
+                        XTYPE::_SJOX => SJOX::apply(&p[0], &p[1], None, &self.instance),
+                        XTYPE::_SB2OX => SB2OX::apply(&p[0], &p[1], None, &self.instance),
+                        XTYPE::_BCBC => BCBC::apply(&p[0], &p[1], None, &self.instance),
                     };
 
-                    for (i, parent) in parents.iter_mut().enumerate() {
+                    for (i, parent) in p.iter_mut().enumerate() {
                         if i == 0 {
                             *parent = Chromosome::from(c1.jobs.to_vec());
                         } else {
@@ -121,9 +128,9 @@ impl GA {
 
             // Crossover
             let (mut c1, mut c2) = match params::XOVER {
-                XTYPE::SJOX => crossover::SJOX::apply(&p1, &p2, None, &self.instance),
-                XTYPE::SB2OX => crossover::SB2OX::apply(&p1, &p2, None, &self.instance),
-                XTYPE::BCBC => crossover::BCBC::apply(&p1, &p2, None, &self.instance),
+                XTYPE::_SJOX => SJOX::apply(&p1, &p2, None, &self.instance),
+                XTYPE::_SB2OX => SB2OX::apply(&p1, &p2, None, &self.instance),
+                XTYPE::_BCBC => BCBC::apply(&p1, &p2, None, &self.instance),
             };
 
             // Mutate

@@ -3,12 +3,12 @@ use crate::{
     genetic_algorithm::entities::chromosome::Chromosome,
 };
 
-use rand::Rng;
+use rand::{prelude::SliceRandom, thread_rng, Rng};
 
 pub enum XTYPE {
-    SJOX,
-    SB2OX,
-    BCBC,
+    _SJOX,
+    _SB2OX,
+    _BCBC,
 }
 
 pub trait Crossover {
@@ -184,7 +184,8 @@ pub fn find_best_insertion(jobs: Vec<u32>, block: &[u32], instance: &Instance) -
     let mut jobs: Vec<u32> = block.iter().cloned().chain(jobs.iter().cloned()).collect();
     let mut makespan = makespan::makespan(&jobs, instance);
     let k = block.len();
-    let mut best_jobs: Vec<u32> = jobs.iter().cloned().collect();
+
+    let mut best_jobs: Vec<Vec<u32>> = vec![jobs.iter().cloned().collect()];
 
     for i in 0..n_jobs {
         jobs[i..i + k + 1].rotate_right(1);
@@ -192,10 +193,13 @@ pub fn find_best_insertion(jobs: Vec<u32>, block: &[u32], instance: &Instance) -
 
         if new_makespan < makespan {
             makespan = new_makespan;
-            best_jobs = jobs.iter().cloned().collect();
+            best_jobs = vec![jobs.iter().cloned().collect()];
+        } else if new_makespan == makespan {
+            best_jobs.push(jobs.iter().cloned().collect());
         }
     }
-    best_jobs
+
+    return best_jobs.choose(&mut rand::thread_rng()).unwrap().to_vec();
 }
 
 #[cfg(test)]
