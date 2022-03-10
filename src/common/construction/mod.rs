@@ -4,7 +4,7 @@ pub mod mddr;
 
 pub enum Construction {
     _Random,
-    MDDR(usize),
+    _MDDR(usize),
 }
 
 pub trait Constructor {

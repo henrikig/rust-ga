@@ -25,7 +25,8 @@ impl Chromosome {
     }
 
     pub fn makespan(&mut self, instance: &Instance) {
-        self.makespan = Some(makespan::makespan(&self.jobs, instance));
+        let (m, _) = makespan::makespan(&self.jobs, instance);
+        self.makespan = Some(m);
     }
 }
 

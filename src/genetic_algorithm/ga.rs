@@ -2,7 +2,9 @@ use std::env;
 
 use crate::common::construction::{mddr::MDDR, Construction};
 use crate::common::instance::Instance;
+use crate::common::makespan;
 use crate::common::parser::parse;
+use crate::common::solution::Solution;
 
 use super::entities::chromosome::Chromosome;
 use super::operators::crossover::{Crossover, BCBC, SB2OX, SJOX, XTYPE};
@@ -30,7 +32,7 @@ impl GA {
 
         // Add number of chromosomes from MDDR constructor as specified
         match params::CONSTRUCTION {
-            Construction::MDDR(num) => {
+            Construction::_MDDR(num) => {
                 let mut constructed: Vec<Chromosome> = MDDR {
                     instance: &instance,
                 }
@@ -200,9 +202,20 @@ pub fn run() {
     let args: Vec<String> = env::args().collect();
     let mut ga = GA::new();
 
-    if args.len() > 1 && args[1] == String::from("--steady") {
-        ga.run_steady_state()
+    // Flag `-s` indicates a steady state generational scheme
+    if args.len() > 1 && args[1] == String::from("-s") {
+        ga.run_steady_state();
     } else {
-        ga.run()
+        ga.run();
     }
+
+    // Find the best solution and write it to file
+    let winner = ga.population.into_iter().min().unwrap();
+    let (m, machine_completions) = makespan::makespan(&winner.jobs, &ga.instance);
+
+    let solution: Solution = Solution::new(machine_completions, m, &ga.instance);
+
+    let problem = params::PROBLEM_FILE.split("/").last().unwrap();
+    let path = String::from("solutions/ga/") + problem;
+    solution.write(path);
 }

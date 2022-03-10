@@ -1,6 +1,6 @@
 use super::instance::Instance;
 
-pub fn makespan(jobs: &[u32], instance: &Instance) -> u32 {
+pub fn makespan(jobs: &[u32], instance: &Instance) -> (u32, Vec<Vec<Vec<(u32, u32)>>>) {
     /*
     1. for each stage, a vector with completion times is needed, e.g.:
     - [14, 8, 3, 19]
@@ -142,7 +142,9 @@ pub fn makespan(jobs: &[u32], instance: &Instance) -> u32 {
             }
         }
     }
-
     // Find and return makespan as maximum of all completion times
-    *job_completions.iter().flatten().max().unwrap()
+    (
+        *job_completions.iter().flatten().max().unwrap(),
+        machine_completions,
+    )
 }

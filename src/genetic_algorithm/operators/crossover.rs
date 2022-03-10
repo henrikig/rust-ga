@@ -182,7 +182,7 @@ impl Crossover for BCBC {
 pub fn find_best_insertion(jobs: Vec<u32>, block: &[u32], instance: &Instance) -> Vec<u32> {
     let n_jobs = jobs.len();
     let mut jobs: Vec<u32> = block.iter().cloned().chain(jobs.iter().cloned()).collect();
-    let mut makespan = makespan::makespan(&jobs, instance);
+    let (mut makespan, _) = makespan::makespan(&jobs, instance);
     let k = block.len();
 
     // Store one random solution which may be returned
@@ -195,7 +195,7 @@ pub fn find_best_insertion(jobs: Vec<u32>, block: &[u32], instance: &Instance) -
     for i in 0..n_jobs {
         // Shift block one step to the right
         jobs[i..i + k + 1].rotate_right(1);
-        let new_makespan = makespan::makespan(&jobs, instance);
+        let (new_makespan, _) = makespan::makespan(&jobs, instance);
 
         // Update random solution if we are at the random index
         if i == random_idx {
@@ -251,7 +251,8 @@ mod xover_test {
         // [0, 1, 4, 2, 3]
 
         assert_eq!(jobs, &[0, 1, 2, 3, 4]);
-        assert_eq!(makespan::makespan(&jobs, &instance), 333);
+        let (m, _) = makespan::makespan(&jobs, &instance);
+        assert_eq!(m, 333);
     }
 
     #[test]
@@ -276,63 +277,6 @@ mod xover_test {
             c1.jobs,
             vec![3, 15, 17, 8, 14, 11, 13, 16, 9, 6, 18, 5, 19, 7, 4, 2, 1, 10, 20, 12]
         );
-    }
-
-    #[test]
-    fn crossover_sb2ox() {
-        let p1 = Chromosome::from(vec![
-            3, 15, 17, 8, 14, 11, 13, 16, 19, 6, 1, 9, 18, 5, 4, 2, 10, 7, 20, 12,
-        ]);
-        let p2 = Chromosome::from(vec![
-            3, 17, 9, 15, 14, 11, 13, 16, 6, 18, 5, 19, 7, 8, 4, 2, 1, 10, 20, 12,
-        ]);
-
-        let mut c1: Vec<u32> = vec![u32::MAX; p1.jobs.len()];
-        let mut c2: Vec<u32> = vec![u32::MAX; p2.jobs.len()];
-
-        let start = 7;
-        let stop = 11;
-
-        // Copy elements between cut points from p1, p2 directly to respective children c1, c2
-        c1[start..stop].copy_from_slice(&p1.jobs[start..stop]);
-        c2[start..stop].copy_from_slice(&p2.jobs[start..stop]);
-
-        // Store non-similar jobs in correct order
-        let mut p1_order: Vec<u32> = Vec::new();
-        let mut p2_order: Vec<u32> = Vec::new();
-
-        // Fill in all building blocks of size > 1 - sequences where both parents have the same
-        // jobs in same positions
-        for (i, (j1, j2)) in p1.jobs.iter().zip(p2.jobs.iter()).enumerate() {
-            if (j1 == j2)
-                && ((i != 0 && p1.jobs[i - 1] == p2.jobs[i - 1])
-                    || (i != c1.len() - 1 && p1.jobs[i + 1] == p2.jobs[i + 1]))
-            {
-                c1[i] = *j1;
-                c2[i] = *j2;
-            } else {
-                // TODO: do this in another way for performance boost
-                if !c2.contains(j1) {
-                    p1_order.push(*j1);
-                }
-                if !c1.contains(j2) {
-                    p2_order.push(*j2);
-                }
-            }
-        }
-
-        for i in 0..c1.len() {
-            if c1[i] == u32::MAX {
-                c1[i] = p2_order.remove(0);
-                c2[i] = p1_order.remove(0);
-            }
-        }
-
-        println!("{:?}", c1);
-        println!("{:?}", c2);
-
-        println!("{:?}", p1_order);
-        println!("{:?}", p2_order);
     }
 
     fn test_instance() -> Instance {
