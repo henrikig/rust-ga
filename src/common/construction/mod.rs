@@ -9,5 +9,5 @@ pub enum Construction {
 }
 
 pub trait Constructor {
-    fn create(&self) -> Chromosome;
+    fn create(&mut self) -> Chromosome;
 }
