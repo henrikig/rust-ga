@@ -34,24 +34,24 @@ def well_behaved(df: pd.DataFrame, width: int) -> bool:
 # Interperets dataframe and makes json file.
 def to_json(df: pd.DataFrame, save_as: str) -> dict:
     dic = {}
-    dic["products"] = int(df.iloc[0,0])
+    dic["jobs"] = int(df.iloc[0,0])
     dic["stages"] = int(df.iloc[1,0])
     dic["machines"] = []
     for index in range(dic["stages"]):
         dic["machines"].append(int(df.iloc[2,index]))
-    dic["production_times"] = []
-    for index in range(dic["products"]):
+    dic["processing_times"] = []
+    for index in range(dic["jobs"]):
         product = []
         for index2 in range(dic["stages"]):
             product.append(int(df.iloc[3+index, index2]))
-        dic["production_times"].append(product)
+        dic["processing_times"].append(product)
     dic["setup_times"] = []
     for stage in range(dic["stages"]):
         stage_setup = []
-        for index in range(dic["products"]*stage, dic["products"]*stage+dic["products"]):
+        for index in range(dic["jobs"]*stage, dic["jobs"]*stage+dic["jobs"]):
             setup = []
-            for index2 in range(dic["products"]):
-                setup.append(int(df.iloc[3+dic["products"]+index, index2]))
+            for index2 in range(dic["jobs"]):
+                setup.append(int(df.iloc[3+dic["jobs"]+index, index2]))
             stage_setup.append(setup)
         dic["setup_times"].append(stage_setup)
     with open(f"{SAVE_PATH}{save_as}.json", "w", encoding="utf-8") as f:
