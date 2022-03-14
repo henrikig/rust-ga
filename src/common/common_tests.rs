@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod common_tests {
 
-    use crate::common::makespan_v2::Makespan;
+    use crate::common::makespan::Makespan;
     use crate::common::parser::parse;
 
     #[test]
@@ -14,7 +14,7 @@ mod common_tests {
         let inital_order: Vec<u32> = vec![
             0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
         ];
-        let makespan_test = makespan.makespan(&inital_order);
+        let (makespan_test, _) = makespan.makespan(&inital_order);
         println!(
             "Makespan of test: {}, and makespan was run {} times.",
             makespan_test, makespan.count

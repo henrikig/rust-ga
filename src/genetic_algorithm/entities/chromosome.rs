@@ -5,7 +5,7 @@ use std::{
     fmt::{Display, Error, Formatter},
 };
 
-use crate::common::{instance::Instance, makespan};
+use crate::common::{instance::Instance, makespan::Makespan};
 
 #[derive(Debug, Eq)]
 pub struct Chromosome {
@@ -24,8 +24,8 @@ impl Chromosome {
         }
     }
 
-    pub fn makespan(&mut self, instance: &Instance) {
-        let (m, _) = makespan::makespan(&self.jobs, instance);
+    pub fn makespan(&mut self, mks: &mut Makespan) {
+        let (m, _) = mks.makespan(&self.jobs);
         self.makespan = Some(m);
     }
 }

@@ -7,7 +7,7 @@ setup_times:[machine][previous_job][current_job]
 Note: When previous job and current is the same, it is the inital setup time
 */
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Instance {
     pub jobs: u32,
     pub stages: u32,

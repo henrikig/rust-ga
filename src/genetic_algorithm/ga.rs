@@ -2,7 +2,7 @@ use std::env;
 
 use crate::common::construction::{mddr::MDDR, Construction};
 use crate::common::instance::Instance;
-use crate::common::makespan;
+use crate::common::makespan::Makespan;
 use crate::common::parser::parse;
 use crate::common::solution::Solution;
 
@@ -20,12 +20,14 @@ pub struct GA {
     pub instance: Instance,
     pub population: Vec<Chromosome>,
     pub mating_pool: Vec<Chromosome>,
+    pub makespan: Makespan,
     pub rng: ThreadRng,
 }
 
 impl GA {
     pub fn new() -> GA {
         let instance = parse(params::PROBLEM_FILE).unwrap();
+        let mut makespan = Makespan::new(&instance);
 
         let mut population = Vec::with_capacity(params::POPULATION_SIZE);
         let mating_pool = Vec::with_capacity(params::POPULATION_SIZE);
@@ -34,7 +36,7 @@ impl GA {
         match params::CONSTRUCTION {
             Construction::_MDDR(num) => {
                 let mut constructed: Vec<Chromosome> = MDDR {
-                    instance: &instance,
+                    makespan: &mut makespan,
                 }
                 .take(num)
                 .collect();
@@ -49,12 +51,15 @@ impl GA {
             population.push(Chromosome::new(&instance));
         }
 
+        let makespan = Makespan::new(&instance);
+
         let rng = thread_rng();
 
         return GA {
             instance,
             population,
             mating_pool,
+            makespan,
             rng,
         };
     }
@@ -76,9 +81,9 @@ impl GA {
                 if self.rng.gen::<f32>() < params::XOVER_PROB {
                     // Crossover
                     let (c1, c2) = match params::XOVER {
-                        XTYPE::_SJOX => SJOX::apply(&p[0], &p[1], None, &self.instance),
-                        XTYPE::_SB2OX => SB2OX::apply(&p[0], &p[1], None, &self.instance),
-                        XTYPE::_BCBC => BCBC::apply(&p[0], &p[1], None, &self.instance),
+                        XTYPE::_SJOX => SJOX::apply(&p[0], &p[1], None, &mut self.makespan),
+                        XTYPE::_SB2OX => SB2OX::apply(&p[0], &p[1], None, &mut self.makespan),
+                        XTYPE::_BCBC => BCBC::apply(&p[0], &p[1], None, &mut self.makespan),
                     };
 
                     for (i, parent) in p.iter_mut().enumerate() {
@@ -130,9 +135,9 @@ impl GA {
 
             // Crossover
             let (mut c1, mut c2) = match params::XOVER {
-                XTYPE::_SJOX => SJOX::apply(&p1, &p2, None, &self.instance),
-                XTYPE::_SB2OX => SB2OX::apply(&p1, &p2, None, &self.instance),
-                XTYPE::_BCBC => BCBC::apply(&p1, &p2, None, &self.instance),
+                XTYPE::_SJOX => SJOX::apply(&p1, &p2, None, &mut self.makespan),
+                XTYPE::_SB2OX => SB2OX::apply(&p1, &p2, None, &mut self.makespan),
+                XTYPE::_BCBC => BCBC::apply(&p1, &p2, None, &mut self.makespan),
             };
 
             // Mutate
@@ -144,7 +149,7 @@ impl GA {
             mutate(&mut c1);
             mutate(&mut c2);
 
-            let makespan = |c: &mut Chromosome| c.makespan(&self.instance);
+            let mut makespan = |c: &mut Chromosome| c.makespan(&mut self.makespan);
             makespan(&mut c1);
             makespan(&mut c2);
 
@@ -169,7 +174,7 @@ impl GA {
     pub fn makespan(&mut self) {
         self.population
             .iter_mut()
-            .for_each(|c| c.makespan(&self.instance));
+            .for_each(|c| c.makespan(&mut self.makespan));
     }
 
     fn tournament(&mut self) -> Chromosome {
@@ -211,7 +216,9 @@ pub fn run() {
 
     // Find the best solution and write it to file
     let winner = ga.population.into_iter().min().unwrap();
-    let (m, machine_completions) = makespan::makespan(&winner.jobs, &ga.instance);
+    let (m, machine_completions) = ga.makespan.makespan(&winner.jobs);
+
+    println!("Makespan count: {}", ga.makespan.count);
 
     let solution: Solution = Solution::new(machine_completions, m, &ga.instance);
 

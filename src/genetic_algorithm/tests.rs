@@ -1,34 +1,10 @@
 #[cfg(test)]
 pub mod tests {
 
-    use rand::thread_rng;
-
     use crate::{
-        common::{instance::Instance, parser::parse},
-        genetic_algorithm::{entities::chromosome::Chromosome, ga::GA},
+        common::{instance::Instance, makespan::Makespan, parser::parse},
+        genetic_algorithm::entities::chromosome::Chromosome,
     };
-
-    #[test]
-    fn makespan_calculation_toy_problem() {
-        let instance = test_instance();
-
-        let mut population: Vec<Chromosome> = Vec::with_capacity(1);
-        let mating_pool: Vec<Chromosome> = Vec::with_capacity(1);
-
-        // [0, 1, 2, 3, 4]
-        population.push(test_chromosome(&instance));
-
-        let mut ga = GA {
-            instance,
-            population,
-            mating_pool,
-            rng: thread_rng(),
-        };
-
-        ga.population[0].makespan(&ga.instance);
-
-        assert_eq!(Some(333), ga.population[0].makespan);
-    }
 
     #[test]
     fn chromosome_ordering() {
@@ -37,8 +13,13 @@ pub mod tests {
         let mut c1 = Chromosome::from(vec![0, 1, 2, 3, 4]);
         let mut c2 = Chromosome::from(vec![4, 3, 2, 1, 0]);
 
-        c1.makespan(&problem);
-        c2.makespan(&problem);
+        let mut makespan = Makespan {
+            count: 0,
+            instance: problem.clone(),
+        };
+
+        c1.makespan(&mut makespan);
+        c2.makespan(&mut makespan);
 
         assert!(c1 > c2);
         assert!(c1 >= c2);
@@ -78,15 +59,6 @@ pub mod tests {
                     vec![3, 2, 3, 4, 5],
                 ],
             ],
-        }
-    }
-
-    pub fn test_chromosome(instance: &Instance) -> Chromosome {
-        let jobs: Vec<u32> = (0..instance.jobs).collect();
-
-        Chromosome {
-            jobs,
-            makespan: None,
         }
     }
 }

@@ -1,5 +1,5 @@
 use crate::{
-    common::{instance::Instance, makespan},
+    common::makespan::Makespan,
     genetic_algorithm::{entities::chromosome::Chromosome, params},
 };
 
@@ -16,7 +16,7 @@ pub trait Crossover {
         p1: &Chromosome,
         p2: &Chromosome,
         k: Option<usize>,
-        instance: &Instance,
+        makespan: &mut Makespan,
     ) -> (Chromosome, Chromosome);
 }
 
@@ -29,7 +29,7 @@ impl Crossover for SJOX {
         p1: &Chromosome,
         p2: &Chromosome,
         k: Option<usize>,
-        _instance: &Instance,
+        _makespan: &mut Makespan,
     ) -> (Chromosome, Chromosome) {
         // Generate new permutations based on parents
         let mut c1: Vec<u32> = vec![u32::MAX; p1.jobs.len()];
@@ -87,7 +87,7 @@ impl Crossover for SB2OX {
         p1: &Chromosome,
         p2: &Chromosome,
         _k: Option<usize>,
-        _instance: &Instance,
+        _makespan: &mut Makespan,
     ) -> (Chromosome, Chromosome) {
         // Generate new permutations based on parents
         let mut c1: Vec<u32> = vec![u32::MAX; p1.jobs.len()];
@@ -143,7 +143,7 @@ impl Crossover for BCBC {
         p1: &Chromosome,
         p2: &Chromosome,
         k: Option<usize>,
-        instance: &Instance,
+        makespan: &mut Makespan,
     ) -> (Chromosome, Chromosome) {
         // Set number of jobs to extract
         let n_jobs = p1.jobs.len();
@@ -168,8 +168,8 @@ impl Crossover for BCBC {
         let c2 = filter(p2.jobs.to_vec(), block1);
 
         // Test each possible insertion, record best index
-        let c1 = find_best_insertion(c1, block2, instance);
-        let c2 = find_best_insertion(c2, block1, instance);
+        let c1 = find_best_insertion(c1, block2, makespan);
+        let c2 = find_best_insertion(c2, block1, makespan);
 
         // TODO:
         // With probability x%, insert block into best position, otherwise random position
@@ -179,10 +179,10 @@ impl Crossover for BCBC {
     }
 }
 
-pub fn find_best_insertion(jobs: Vec<u32>, block: &[u32], instance: &Instance) -> Vec<u32> {
+pub fn find_best_insertion(jobs: Vec<u32>, block: &[u32], makespan: &mut Makespan) -> Vec<u32> {
     let n_jobs = jobs.len();
     let mut jobs: Vec<u32> = block.iter().cloned().chain(jobs.iter().cloned()).collect();
-    let (mut makespan, _) = makespan::makespan(&jobs, instance);
+    let (mut best_makespan, _) = makespan.makespan(&jobs);
     let k = block.len();
 
     // Store one random solution which may be returned
@@ -195,7 +195,7 @@ pub fn find_best_insertion(jobs: Vec<u32>, block: &[u32], instance: &Instance) -
     for i in 0..n_jobs {
         // Shift block one step to the right
         jobs[i..i + k + 1].rotate_right(1);
-        let (new_makespan, _) = makespan::makespan(&jobs, instance);
+        let (new_makespan, _) = makespan.makespan(&jobs);
 
         // Update random solution if we are at the random index
         if i == random_idx {
@@ -203,11 +203,11 @@ pub fn find_best_insertion(jobs: Vec<u32>, block: &[u32], instance: &Instance) -
         }
 
         // Update best jobs if the current has a lower makespan
-        if new_makespan < makespan {
-            makespan = new_makespan;
+        if new_makespan < best_makespan {
+            best_makespan = new_makespan;
             best_jobs = vec![jobs.iter().cloned().collect()];
         // Add current to best jobs if makespan is equal to best jobs
-        } else if new_makespan == makespan {
+        } else if new_makespan == best_makespan {
             best_jobs.push(jobs.iter().cloned().collect());
         }
     }
@@ -223,7 +223,7 @@ pub fn find_best_insertion(jobs: Vec<u32>, block: &[u32], instance: &Instance) -
 #[cfg(test)]
 mod xover_test {
     use crate::common::instance::Instance;
-    use crate::common::makespan;
+    use crate::common::makespan::Makespan;
     use crate::genetic_algorithm::operators::crossover::{self, Chromosome, Crossover};
 
     use super::find_best_insertion;
@@ -233,6 +233,7 @@ mod xover_test {
         // jobs, block, instance
 
         let instance = test_instance();
+        let mut makespan = Makespan::new(&instance);
         let jobs = test_chromosome(&instance);
         let block = &[2, 3];
 
@@ -242,7 +243,7 @@ mod xover_test {
         };
 
         let jobs = filter(jobs.jobs.to_vec(), block);
-        let jobs = find_best_insertion(jobs, block, &instance);
+        let jobs = find_best_insertion(jobs, block, &mut makespan);
 
         // Possible permutations
         // [2, 3, 0, 1, 4]
@@ -250,9 +251,7 @@ mod xover_test {
         // [0, 1, 2, 3, 4]
         // [0, 1, 4, 2, 3]
 
-        assert_eq!(jobs, &[0, 1, 2, 3, 4]);
-        let (m, _) = makespan::makespan(&jobs, &instance);
-        assert_eq!(m, 333);
+        assert_eq!(jobs, &[2, 3, 0, 1, 4]);
     }
 
     #[test]
@@ -267,7 +266,8 @@ mod xover_test {
             3, 17, 9, 15, 14, 11, 13, 16, 6, 18, 5, 19, 7, 8, 4, 2, 1, 10, 20, 12,
         ]);
 
-        let (c1, c2) = crossover::SJOX::apply(&p1, &p2, Some(8), &test_instance());
+        let (c1, c2) =
+            crossover::SJOX::apply(&p1, &p2, Some(8), &mut Makespan::new(&test_instance()));
 
         assert_eq!(
             c2.jobs,
