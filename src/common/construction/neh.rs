@@ -1,4 +1,4 @@
-use crate::common::{instance::Instance, makespan_v2::Makespan};
+use crate::common::{instance::Instance, makespan::Makespan};
 
 // Implements the NEH construction heuristic by an instance of makespan
 pub fn neh(makespan: &mut Makespan) -> Vec<u32> {
@@ -40,7 +40,7 @@ fn insert_job(makespan: &mut Makespan, schedule: &Vec<u32>, next_job: u32) -> Ve
         let mut test_schedule: Vec<u32> = schedule.clone();
         test_schedule.insert(index, next_job);
         // Find the makespan of the test schedule
-        let time = makespan.makespan(&test_schedule);
+        let (time, _) = makespan.makespan(&test_schedule);
         // If the test schedule has a makespan lower than the current best, update the time and set the new schedule as the current best
         if min_time.0 > time {
             min_time = (time, test_schedule);
@@ -52,7 +52,7 @@ fn insert_job(makespan: &mut Makespan, schedule: &Vec<u32>, next_job: u32) -> Ve
 
 #[cfg(test)]
 mod test {
-    use crate::common::{instance::Instance, makespan_old, makespan_v2::Makespan, parser::parse};
+    use crate::common::{instance::Instance, makespan::Makespan, makespan_old, parser::parse};
 
     use super::{insert_job, neh, sort_jobs};
 
@@ -87,7 +87,7 @@ mod test {
             instance: i,
         };
         let schedule = neh(&mut m);
-        let make = m.makespan(&schedule);
+        let (make, _) = m.makespan(&schedule);
         println!("Schedule: {:?}", schedule);
         println!("Makespan NEH: {}", make);
     }
