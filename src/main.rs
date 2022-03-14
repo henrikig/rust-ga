@@ -1,9 +1,8 @@
 mod common;
-mod genetic_algorithm;
-use genetic_algorithm::{ga::GA, params::PROBLEM_FILE};
+
+use crate::common::common_tests;
 fn main() {
-    let mut ga = GA::new(PROBLEM_FILE);
-    ga.run()
+    println!("Hello!");
 }
 
 /*
