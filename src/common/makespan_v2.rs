@@ -31,7 +31,7 @@ makespan(initial_job_order, instance) -> makespan
 impl Makespan {
     pub fn makespan(&mut self, initial_job_order: &Vec<u32>) -> u32 {
         let instance: &Instance = &mut self.instance;
-        let n_jobs: usize = instance.jobs as usize;
+        let n_jobs: usize = initial_job_order.len();
         let n_stages: usize = instance.stages as usize;
 
         // job_completions[stage][job](job_number, completion_time)

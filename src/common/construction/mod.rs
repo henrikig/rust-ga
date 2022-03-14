@@ -1,6 +1,7 @@
 use crate::genetic_algorithm::entities::chromosome::Chromosome;
 
 pub mod mddr;
+pub mod neh;
 
 pub enum Construction {
     _Random,
