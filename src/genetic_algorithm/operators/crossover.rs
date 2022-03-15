@@ -6,7 +6,7 @@ use crate::{
 use rand::{prelude::SliceRandom, Rng};
 
 pub enum XTYPE {
-    _SJOX,
+    _SJ2OX,
     _SB2OX,
     _BCBX,
 }
@@ -20,11 +20,11 @@ pub trait Crossover {
     ) -> (Chromosome, Chromosome);
 }
 
-pub struct SJOX;
+pub struct SJ2OX;
 pub struct SB2OX;
-pub struct BCBC;
+pub struct BCBX;
 
-impl Crossover for SJOX {
+impl Crossover for SJ2OX {
     fn apply(
         p1: &Chromosome,
         p2: &Chromosome,
@@ -49,26 +49,8 @@ impl Crossover for SJOX {
         let mut p1_order: Vec<u32> = Vec::new();
         let mut p2_order: Vec<u32> = Vec::new();
 
-        // Fill in all building blocks - sequences where both parents have the same
-        // jobs in same positions in range [k, n_jobs]
-        p1.jobs
-            .iter()
-            .zip(p2.jobs.iter())
-            .enumerate()
-            .for_each(|(i, (j1, j2))| {
-                if j1 == j2 {
-                    c1[i] = *j1;
-                    c2[i] = *j1;
-                } else {
-                    // TODO: do this in another way for performance boost
-                    if !c2.contains(j1) {
-                        p1_order.push(*j1);
-                    }
-                    if !c1.contains(j2) {
-                        p2_order.push(*j2);
-                    }
-                }
-            });
+        // Copy over blocks of size > 1 from parents to children
+        match_blocks(p1, p2, &mut c1, &mut c2, &mut p1_order, &mut p2_order);
 
         // Insert the jobs that are yet not allocated in order of opposite parent
         for i in k..c1.len() {
@@ -107,25 +89,8 @@ impl Crossover for SB2OX {
         let mut p1_order: Vec<u32> = Vec::new();
         let mut p2_order: Vec<u32> = Vec::new();
 
-        // Fill in all building blocks of size > 1 - sequences where both parents have the same
-        // jobs in same positions
-        for (i, (j1, j2)) in p1.jobs.iter().zip(p2.jobs.iter()).enumerate() {
-            if (j1 == j2)
-                && ((i != 0 && p1.jobs[i - 1] == p2.jobs[i - 1])
-                    || (i != c1.len() - 1 && p1.jobs[i + 1] == p2.jobs[i + 1]))
-            {
-                c1[i] = *j1;
-                c2[i] = *j2;
-            } else {
-                // TODO: do this in another way for performance boost
-                if !c2.contains(j1) {
-                    p1_order.push(*j1);
-                }
-                if !c1.contains(j2) {
-                    p2_order.push(*j2);
-                }
-            }
-        }
+        // Copy over blocks of size > 1 from parents to children
+        match_blocks(p1, p2, &mut c1, &mut c2, &mut p1_order, &mut p2_order);
 
         for i in 0..c1.len() {
             if c1[i] == u32::MAX {
@@ -138,7 +103,7 @@ impl Crossover for SB2OX {
     }
 }
 
-impl Crossover for BCBC {
+impl Crossover for BCBX {
     fn apply(
         p1: &Chromosome,
         p2: &Chromosome,
@@ -176,6 +141,35 @@ impl Crossover for BCBC {
 
         // Return new chromosomes
         (Chromosome::from(c1), Chromosome::from(c2))
+    }
+}
+
+fn match_blocks(
+    p1: &Chromosome,
+    p2: &Chromosome,
+    c1: &mut Vec<u32>,
+    c2: &mut Vec<u32>,
+    p1_order: &mut Vec<u32>,
+    p2_order: &mut Vec<u32>,
+) {
+    // Fill in all building blocks of size > 1 - sequences where both parents have the same
+    // jobs in same positions
+    for (i, (j1, j2)) in p1.jobs.iter().zip(p2.jobs.iter()).enumerate() {
+        if (j1 == j2)
+            && ((i != 0 && p1.jobs[i - 1] == p2.jobs[i - 1])
+                || (i != c1.len() - 1 && p1.jobs[i + 1] == p2.jobs[i + 1]))
+        {
+            c1[i] = *j1;
+            c2[i] = *j2;
+        } else {
+            // TODO: do this in another way for performance boost
+            if !c2.contains(j1) {
+                p1_order.push(*j1);
+            }
+            if !c1.contains(j2) {
+                p2_order.push(*j2);
+            }
+        }
     }
 }
 
@@ -267,7 +261,7 @@ mod xover_test {
         ]);
 
         let (c1, c2) =
-            crossover::SJOX::apply(&p1, &p2, Some(8), &mut Makespan::new(&test_instance()));
+            crossover::SJ2OX::apply(&p1, &p2, Some(8), &mut Makespan::new(&test_instance()));
 
         assert_eq!(
             c2.jobs,

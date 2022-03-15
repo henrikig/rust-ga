@@ -8,6 +8,6 @@ pub const ITERATIONS: usize = 20000;
 pub const ELITISM: usize = 2;
 pub const KEEP_BEST: f32 = 0.8;
 pub const XOVER_PROB: f32 = 0.5;
-pub const XOVER: XTYPE = XTYPE::_BCBX;
+pub const XOVER: XTYPE = XTYPE::_SJ2OX;
 pub const MUTATION_PROB: f32 = 0.05;
 pub const CONSTRUCTION: Construction = Construction::_MDDR(20);

@@ -7,7 +7,7 @@ use crate::common::parser::parse;
 use crate::common::solution::Solution;
 
 use super::entities::chromosome::Chromosome;
-use super::operators::crossover::{Crossover, BCBC, SB2OX, SJOX, XTYPE};
+use super::operators::crossover::{Crossover, BCBX, SB2OX, SJ2OX, XTYPE};
 use super::operators::mutation::{self, Mutation};
 use super::params;
 
@@ -81,9 +81,9 @@ impl GA {
                 if self.rng.gen::<f32>() < params::XOVER_PROB {
                     // Crossover
                     let (c1, c2) = match params::XOVER {
-                        XTYPE::_SJOX => SJOX::apply(&p[0], &p[1], None, &mut self.makespan),
+                        XTYPE::_SJ2OX => SJ2OX::apply(&p[0], &p[1], None, &mut self.makespan),
                         XTYPE::_SB2OX => SB2OX::apply(&p[0], &p[1], None, &mut self.makespan),
-                        XTYPE::_BCBX => BCBC::apply(&p[0], &p[1], None, &mut self.makespan),
+                        XTYPE::_BCBX => BCBX::apply(&p[0], &p[1], None, &mut self.makespan),
                     };
 
                     for (i, parent) in p.iter_mut().enumerate() {
@@ -135,9 +135,9 @@ impl GA {
 
             // Crossover
             let (mut c1, mut c2) = match params::XOVER {
-                XTYPE::_SJOX => SJOX::apply(&p1, &p2, None, &mut self.makespan),
+                XTYPE::_SJ2OX => SJ2OX::apply(&p1, &p2, None, &mut self.makespan),
                 XTYPE::_SB2OX => SB2OX::apply(&p1, &p2, None, &mut self.makespan),
-                XTYPE::_BCBX => BCBC::apply(&p1, &p2, None, &mut self.makespan),
+                XTYPE::_BCBX => BCBX::apply(&p1, &p2, None, &mut self.makespan),
             };
 
             // Mutate
