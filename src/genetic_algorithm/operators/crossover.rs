@@ -32,8 +32,7 @@ impl Crossover for SJ2OX {
         _makespan: &mut Makespan,
     ) -> (Chromosome, Chromosome) {
         // Generate new permutations based on parents
-        let mut c1: Vec<u32> = vec![u32::MAX; p1.jobs.len()];
-        let mut c2: Vec<u32> = vec![u32::MAX; p2.jobs.len()];
+        let (mut c1, mut c2) = generate_children(p1, p2);
 
         // Draw a cut point, k, from range [0, n_jobs)
         let k = match k {
@@ -53,12 +52,7 @@ impl Crossover for SJ2OX {
         match_blocks(p1, p2, &mut c1, &mut c2, &mut p1_order, &mut p2_order);
 
         // Insert the jobs that are yet not allocated in order of opposite parent
-        for i in k..c1.len() {
-            if c1[i] == u32::MAX {
-                c1[i] = p2_order.remove(0);
-                c2[i] = p1_order.remove(0);
-            }
-        }
+        insert_remaining(k, &mut c1, p2_order, &mut c2, p1_order);
 
         return (Chromosome::from(c1), Chromosome::from(c2));
     }
@@ -72,15 +66,13 @@ impl Crossover for SB2OX {
         _makespan: &mut Makespan,
     ) -> (Chromosome, Chromosome) {
         // Generate new permutations based on parents
-        let mut c1: Vec<u32> = vec![u32::MAX; p1.jobs.len()];
-        let mut c2: Vec<u32> = vec![u32::MAX; p2.jobs.len()];
+        let (mut c1, mut c2) = generate_children(p1, p2);
 
         // Draw two different cut points, k1, k2
         let k1 = rand::thread_rng().gen_range(0..p1.jobs.len());
         let k2 = rand::thread_rng().gen_range(0..p1.jobs.len());
         let start = std::cmp::min(k1, k2);
         let stop = std::cmp::max(k1, k2);
-
         // Copy elements between cut points from p1, p2 directly to respective children c1, c2
         c1[start..stop].copy_from_slice(&p1.jobs[start..stop]);
         c2[start..stop].copy_from_slice(&p2.jobs[start..stop]);
@@ -92,12 +84,8 @@ impl Crossover for SB2OX {
         // Copy over blocks of size > 1 from parents to children
         match_blocks(p1, p2, &mut c1, &mut c2, &mut p1_order, &mut p2_order);
 
-        for i in 0..c1.len() {
-            if c1[i] == u32::MAX {
-                c1[i] = p2_order.remove(0);
-                c2[i] = p1_order.remove(0);
-            }
-        }
+        // Insert the jobs that are yet not allocated in order of opposite parent
+        insert_remaining(0, &mut c1, p2_order, &mut c2, p1_order);
 
         return (Chromosome::from(c1), Chromosome::from(c2));
     }
@@ -136,12 +124,15 @@ impl Crossover for BCBX {
         let c1 = find_best_insertion(c1, block2, makespan);
         let c2 = find_best_insertion(c2, block1, makespan);
 
-        // TODO:
-        // With probability x%, insert block into best position, otherwise random position
-
         // Return new chromosomes
         (Chromosome::from(c1), Chromosome::from(c2))
     }
+}
+
+fn generate_children(p1: &Chromosome, p2: &Chromosome) -> (Vec<u32>, Vec<u32>) {
+    let c1: Vec<u32> = vec![u32::MAX; p1.jobs.len()];
+    let c2: Vec<u32> = vec![u32::MAX; p2.jobs.len()];
+    (c1, c2)
 }
 
 fn match_blocks(
@@ -169,6 +160,21 @@ fn match_blocks(
             if !c1.contains(j2) {
                 p2_order.push(*j2);
             }
+        }
+    }
+}
+
+fn insert_remaining(
+    k: usize,
+    c1: &mut Vec<u32>,
+    mut p2_order: Vec<u32>,
+    c2: &mut Vec<u32>,
+    mut p1_order: Vec<u32>,
+) {
+    for i in k..c1.len() {
+        if c1[i] == u32::MAX {
+            c1[i] = p2_order.remove(0);
+            c2[i] = p1_order.remove(0);
         }
     }
 }
