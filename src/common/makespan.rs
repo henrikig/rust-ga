@@ -2,8 +2,8 @@ use core::cmp::max;
 
 use super::instance::Instance;
 
-const PROCESS_FIFO: bool = false;
-const PROCESS_FIRSTCOMPLETE: bool = true;
+const PROCESS_FIFO: bool = true;
+const PROCESS_FIRSTCOMPLETE: bool = false;
 
 pub struct Makespan {
     pub count: u32,
@@ -63,6 +63,11 @@ impl Makespan {
 
         for stage in 0..instance.stages {
             if PROCESS_FIFO || stage == 0 {
+                // If FIFO and not in stage 0, we need to sort prev_stage_completions according to ready times of each job
+                if stage != 0 {
+                    prev_stage_completions.sort_by_key(|&(_, time)| time);
+                }
+
                 for (job, prev_stage_completion_time) in prev_stage_completions.iter() {
                     Self::fifo(
                         &job,
@@ -105,17 +110,29 @@ impl Makespan {
         machine_completions: &mut Vec<Vec<Vec<(u32, u32)>>>,
         instance: &Instance,
     ) {
-        // Find the machine that can finish the job the quickest
-        let (time, machine) = Self::choose_machine_for_job(
-            &job,
-            &stage,
-            &prev_stage_completion_time,
-            &machine_completions,
-            &instance,
-        );
+        let time;
+        let machine;
+        if instance.processing_times[*job as usize][*stage as usize] != 0 {
+            // Find the machine that can finish the job the quickest
+            (time, machine) = Self::choose_machine_for_job(
+                &job,
+                &stage,
+                &prev_stage_completion_time,
+                &machine_completions,
+                &instance,
+            );
+        } else {
+            (_, time) = *job_completions[*stage as usize]
+                .iter()
+                .last()
+                .unwrap_or(&(0u32, *prev_stage_completion_time));
+            machine = u32::MAX;
+        }
         // Update datastructures to keep track of production schedule
         job_completions[*stage as usize].push((*job, time));
-        machine_completions[*stage as usize][machine as usize].push((*job, time));
+        if machine != u32::MAX {
+            machine_completions[*stage as usize][machine as usize].push((*job, time));
+        }
     }
 
     // Function for choosing the machine in a given stage that completes the job the quickest
@@ -139,7 +156,7 @@ impl Makespan {
                 };
             // Compute the completion time
             let completion_time = max(machine_ready_time, *prev_stage_completion_time)
-                + instance.setup_times[machine][prev_job as usize][*job as usize]
+                + instance.setup_times[*stage as usize][prev_job as usize][*job as usize]
                 + instance.processing_times[*job as usize][*stage as usize];
             // If the time of completion is less than the current best found, update the machine to use and the completion time
             if time_machine.0 > completion_time {
@@ -195,5 +212,36 @@ impl Makespan {
             }
         }
         return time_job_machine_start;
+    }
+}
+
+#[cfg(test)]
+mod makespan_tests {
+    use crate::genetic_algorithm::tests::tests::test_instance;
+
+    use super::Makespan;
+
+    #[test]
+    fn makespan_calculation() {
+        let instance = test_instance();
+        let mut makespan = Makespan::new(&instance);
+
+        let jobs1 = vec![0, 1, 2, 3, 4];
+        let jobs2 = vec![1, 2, 3, 4, 0];
+        let jobs3 = vec![2, 3, 4, 0, 1];
+        let jobs4 = vec![3, 4, 0, 1, 2];
+        let jobs5 = vec![4, 0, 1, 2, 3];
+
+        let (m, _) = makespan.makespan(&jobs1);
+        dbg!(m);
+        assert_eq!(m, 391);
+        let (m, _) = makespan.makespan(&jobs2);
+        dbg!(m);
+        let (m, _) = makespan.makespan(&jobs3);
+        dbg!(m);
+        let (m, _) = makespan.makespan(&jobs4);
+        dbg!(m);
+        let (m, _) = makespan.makespan(&jobs5);
+        dbg!(m);
     }
 }

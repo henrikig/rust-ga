@@ -45,7 +45,7 @@ pub mod tests {
             ],
             setup_times: vec![
                 vec![
-                    vec![1, 2, 3, 4, 5],
+                    vec![4, 2, 3, 4, 5],
                     vec![1, 2, 3, 4, 5],
                     vec![1, 2, 3, 4, 5],
                     vec![1, 2, 3, 4, 5],

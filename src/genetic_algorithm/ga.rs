@@ -83,7 +83,7 @@ impl GA {
                     let (c1, c2) = match params::XOVER {
                         XTYPE::_SJOX => SJOX::apply(&p[0], &p[1], None, &mut self.makespan),
                         XTYPE::_SB2OX => SB2OX::apply(&p[0], &p[1], None, &mut self.makespan),
-                        XTYPE::_BCBC => BCBC::apply(&p[0], &p[1], None, &mut self.makespan),
+                        XTYPE::_BCBX => BCBC::apply(&p[0], &p[1], None, &mut self.makespan),
                     };
 
                     for (i, parent) in p.iter_mut().enumerate() {
@@ -137,7 +137,7 @@ impl GA {
             let (mut c1, mut c2) = match params::XOVER {
                 XTYPE::_SJOX => SJOX::apply(&p1, &p2, None, &mut self.makespan),
                 XTYPE::_SB2OX => SB2OX::apply(&p1, &p2, None, &mut self.makespan),
-                XTYPE::_BCBC => BCBC::apply(&p1, &p2, None, &mut self.makespan),
+                XTYPE::_BCBX => BCBC::apply(&p1, &p2, None, &mut self.makespan),
             };
 
             // Mutate

@@ -8,7 +8,7 @@ use rand::{prelude::SliceRandom, Rng};
 pub enum XTYPE {
     _SJOX,
     _SB2OX,
-    _BCBC,
+    _BCBX,
 }
 
 pub trait Crossover {
