@@ -2,7 +2,10 @@
 pub mod tests {
 
     use crate::{
-        common::{instance::Instance, makespan::Makespan, parser::parse},
+        common::{
+            instance::{parse, Instance},
+            makespan::Makespan,
+        },
         genetic_algorithm::entities::chromosome::Chromosome,
     };
 

@@ -1,10 +1,8 @@
 use std::env;
 
 use crate::common::construction::{mddr::MDDR, Construction};
-use crate::common::instance::Instance;
+use crate::common::instance::{parse, Instance, Solution};
 use crate::common::makespan::Makespan;
-use crate::common::parser::parse;
-use crate::common::solution::Solution;
 
 use super::entities::chromosome::Chromosome;
 use super::operators::crossover::{Crossover, BCBX, SB2OX, SJ2OX, XTYPE};
@@ -99,7 +97,7 @@ impl GA {
             // Perform mutation
             self.mating_pool.iter_mut().for_each(|c| {
                 if self.rng.gen::<f32>() < params::MUTATION_PROB {
-                    mutation::SHIFT::apply(c);
+                    mutation::SHIFT::apply(c, &mut self.makespan);
                 }
             });
 
@@ -143,7 +141,14 @@ impl GA {
             // Mutate
             let mut mutate = |c| {
                 if self.rng.gen::<f32>() < params::MUTATION_PROB {
-                    mutation::SHIFT::apply(c)
+                    match params::MTYPE {
+                        mutation::MTYPE::_Shift => mutation::SHIFT::apply(c, &mut self.makespan),
+                        mutation::MTYPE::_Reverse => {
+                            mutation::Reverse::apply(c, &mut self.makespan)
+                        }
+                        mutation::MTYPE::_Swap => mutation::Swap::apply(c, &mut self.makespan),
+                        mutation::MTYPE::_Greedy => mutation::Greedy::apply(c, &mut self.makespan),
+                    }
                 }
             };
             mutate(&mut c1);

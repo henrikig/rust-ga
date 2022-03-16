@@ -52,7 +52,7 @@ fn insert_job(makespan: &mut Makespan, schedule: &Vec<u32>, next_job: u32) -> Ve
 
 #[cfg(test)]
 mod test {
-    use crate::common::{instance::Instance, makespan::Makespan, makespan_old, parser::parse};
+    use crate::common::{instance::parse, instance::Instance, makespan::Makespan};
 
     use super::{insert_job, neh, sort_jobs};
 
@@ -123,18 +123,5 @@ mod test {
         let schedule = neh(&mut m);
         let (make, _) = m.makespan(&schedule);
         make
-    }
-
-    #[test]
-    fn neh_test_2() {
-        let i: Instance = parse("instances\\ruiz\\json\\n20m2-1.json").unwrap();
-        let mut m: Makespan = Makespan {
-            count: 1,
-            instance: i,
-        };
-        let schedule = neh(&mut m);
-        let make = makespan_old::makespan(&schedule, &m.instance);
-        println!("Schedule: {:?}", schedule);
-        println!("Makespan NEH: {}", make.0);
     }
 }

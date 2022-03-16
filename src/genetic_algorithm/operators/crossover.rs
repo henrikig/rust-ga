@@ -1,9 +1,8 @@
-use crate::{
-    common::makespan::Makespan,
-    genetic_algorithm::{entities::chromosome::Chromosome, params},
-};
+use crate::{common::makespan::Makespan, genetic_algorithm::entities::chromosome::Chromosome};
 
-use rand::{prelude::SliceRandom, Rng};
+use crate::common::best_insertion::find_best_insertion;
+
+use rand::Rng;
 
 pub enum XTYPE {
     _SJ2OX,
@@ -121,8 +120,8 @@ impl Crossover for BCBX {
         let c2 = filter(p2.jobs.to_vec(), block1);
 
         // Test each possible insertion, record best index
-        let c1 = find_best_insertion(c1, block2, makespan);
-        let c2 = find_best_insertion(c2, block1, makespan);
+        let c1 = find_best_insertion(c1, block2, makespan, true);
+        let c2 = find_best_insertion(c2, block1, makespan, true);
 
         // Return new chromosomes
         (Chromosome::from(c1), Chromosome::from(c2))
@@ -179,54 +178,12 @@ fn insert_remaining(
     }
 }
 
-pub fn find_best_insertion(jobs: Vec<u32>, block: &[u32], makespan: &mut Makespan) -> Vec<u32> {
-    let n_jobs = jobs.len();
-    let mut jobs: Vec<u32> = block.iter().cloned().chain(jobs.iter().cloned()).collect();
-    let (mut best_makespan, _) = makespan.makespan(&jobs);
-    let k = block.len();
-
-    // Store one random solution which may be returned
-    let random_idx: usize = rand::thread_rng().gen_range(0..n_jobs);
-    let mut random_jobs: Vec<u32> = jobs.iter().cloned().collect();
-
-    // Initialise best jobs
-    let mut best_jobs: Vec<Vec<u32>> = vec![jobs.iter().cloned().collect()];
-
-    for i in 0..n_jobs {
-        // Shift block one step to the right
-        jobs[i..i + k + 1].rotate_right(1);
-        let (new_makespan, _) = makespan.makespan(&jobs);
-
-        // Update random solution if we are at the random index
-        if i == random_idx {
-            random_jobs = jobs.iter().cloned().collect()
-        }
-
-        // Update best jobs if the current has a lower makespan
-        if new_makespan < best_makespan {
-            best_makespan = new_makespan;
-            best_jobs = vec![jobs.iter().cloned().collect()];
-        // Add current to best jobs if makespan is equal to best jobs
-        } else if new_makespan == best_makespan {
-            best_jobs.push(jobs.iter().cloned().collect());
-        }
-    }
-
-    // Return either one of the best solutions, or the chosen random solution
-    if rand::thread_rng().gen::<f32>() < params::KEEP_BEST {
-        best_jobs.choose(&mut rand::thread_rng()).unwrap().to_vec()
-    } else {
-        random_jobs
-    }
-}
-
 #[cfg(test)]
 mod xover_test {
+    use crate::common::best_insertion::find_best_insertion;
     use crate::common::instance::Instance;
     use crate::common::makespan::Makespan;
     use crate::genetic_algorithm::operators::crossover::{self, Chromosome, Crossover};
-
-    use super::find_best_insertion;
 
     #[test]
     fn test_block_insertion() {
@@ -243,7 +200,7 @@ mod xover_test {
         };
 
         let jobs = filter(jobs.jobs.to_vec(), block);
-        let jobs = find_best_insertion(jobs, block, &mut makespan);
+        let jobs = find_best_insertion(jobs, block, &mut makespan, true);
 
         // Possible permutations
         // [2, 3, 0, 1, 4]

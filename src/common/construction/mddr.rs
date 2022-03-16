@@ -61,7 +61,7 @@ impl Iterator for MDDR<'_> {
 #[cfg(test)]
 mod test {
     use crate::{
-        common::{makespan::Makespan, parser::parse},
+        common::{instance::parse, makespan::Makespan},
         genetic_algorithm::{entities::chromosome::Chromosome, params},
     };
 
