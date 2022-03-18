@@ -5,6 +5,7 @@ use crate::{
 
 use rand::Rng;
 
+#[derive(Clone)]
 pub enum MTYPE {
     _Shift,
     _Reverse,

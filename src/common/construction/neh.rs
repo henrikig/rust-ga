@@ -53,12 +53,18 @@ fn insert_job(makespan: &mut Makespan, schedule: &Vec<u32>, next_job: u32) -> Ve
 #[cfg(test)]
 mod test {
     use crate::common::{instance::parse, instance::Instance, makespan::Makespan};
+    use std::env;
 
     use super::{insert_job, neh, sort_jobs};
 
     #[test]
     fn sort_jobs_test() {
-        let i: Instance = parse("instances\\ruiz\\json\\n20m2-1.json").unwrap();
+        let path = match env::consts::OS {
+            "windows" => "instances\\ruiz\\json\\n20m2-1.json",
+            "macos" => "./instances/ruiz/json/n20m2-1.json",
+            _ => "./instances/ruiz/json/n20m2-1.json",
+        };
+        let i: Instance = parse(path).unwrap();
         let m: Makespan = Makespan {
             count: 1,
             instance: i,
@@ -69,7 +75,12 @@ mod test {
 
     #[test]
     fn insert_job_test() {
-        let i: Instance = parse("instances\\ruiz\\json\\n20m2-1.json").unwrap();
+        let path = match env::consts::OS {
+            "windows" => "instances\\ruiz\\json\\n20m2-1.json",
+            "macos" => "./instances/ruiz/json/n20m2-1.json",
+            _ => "./instances/ruiz/json/n20m2-1.json",
+        };
+        let i: Instance = parse(path).unwrap();
         let mut m: Makespan = Makespan {
             count: 1,
             instance: i,

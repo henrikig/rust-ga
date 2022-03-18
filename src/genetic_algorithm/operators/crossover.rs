@@ -4,6 +4,7 @@ use crate::common::best_insertion::find_best_insertion;
 
 use rand::Rng;
 
+#[derive(Clone)]
 pub enum XTYPE {
     _SJ2OX,
     _SB2OX,
