@@ -3,7 +3,7 @@ use serde_derive::Deserialize;
 /*
 machines[stage]
 processing_times[job][stage]
-setup_times:[machine][previous_job][current_job]
+setup_times:[stage][previous_job][current_job]
 Note: When previous job and current is the same, it is the inital setup time
 */
 
