@@ -1,89 +1,56 @@
-use std::env;
-
-use crate::common::construction::{mddr::MDDR, Construction};
-use crate::common::instance::Instance;
+use crate::common::instance::{Instance, Solution};
 use crate::common::makespan::Makespan;
-use crate::common::parser::parse;
-use crate::common::solution::Solution;
+use crate::genetic_algorithm::entities::options::Args;
 
 use super::entities::chromosome::Chromosome;
-use super::operators::crossover::{Crossover, BCBC, SB2OX, SJOX, XTYPE};
-use super::operators::mutation::{self, Mutation};
+use super::entities::options::Options;
+use super::operators::crossover::{Crossover, BCBX, SB2OX, SJ2OX, XTYPE};
+use super::operators::mutation::{self, Greedy, Mutation, Reverse, Swap, MTYPE, SHIFT};
 use super::params;
 
+use clap::StructOpt;
 use rand::prelude::ThreadRng;
 use rand::seq::SliceRandom;
-use rand::thread_rng;
 use rand::Rng;
+use std::borrow::Cow;
+use std::{fs, path::PathBuf};
 
 pub struct GA {
     pub instance: Instance,
     pub population: Vec<Chromosome>,
     pub mating_pool: Vec<Chromosome>,
     pub makespan: Makespan,
+    pub options: Options,
     pub rng: ThreadRng,
 }
 
-impl GA {
-    pub fn new() -> GA {
-        let instance = parse(params::PROBLEM_FILE).unwrap();
-        let mut makespan = Makespan::new(&instance);
-
-        let mut population = Vec::with_capacity(params::POPULATION_SIZE);
-        let mating_pool = Vec::with_capacity(params::POPULATION_SIZE);
-
-        // Add number of chromosomes from MDDR constructor as specified
-        match params::CONSTRUCTION {
-            Construction::_MDDR(num) => {
-                let mut constructed: Vec<Chromosome> = MDDR {
-                    makespan: &mut makespan,
-                }
-                .take(num)
-                .collect();
-
-                population.append(&mut constructed);
-            }
-            _ => (),
-        }
-
-        // Remaining chromosomes are added randomly
-        while population.len() < params::POPULATION_SIZE {
-            population.push(Chromosome::new(&instance));
-        }
-
-        let makespan = Makespan::new(&instance);
-
-        let rng = thread_rng();
-
-        return GA {
-            instance,
-            population,
-            mating_pool,
-            makespan,
-            rng,
-        };
+impl Default for GA {
+    fn default() -> Self {
+        Options::default().build()
     }
+}
 
+impl GA {
     pub fn run(&mut self) {
-        for iteration in 0..params::ITERATIONS {
+        for iteration in 0..self.options.iterations {
             // calculate makespan
             self.makespan();
 
             // Selection - fill up mating pool to be used for next generation
             self.mating_pool.clear();
 
-            for _ in 0..(params::POPULATION_SIZE - params::ELITISM) {
+            for _ in 0..(self.options.pop_size - self.options.elitism) {
                 let winner = self.tournament();
                 self.mating_pool.push(winner);
             }
 
             for p in self.mating_pool.chunks_exact_mut(2) {
-                if self.rng.gen::<f32>() < params::XOVER_PROB {
+                if self.rng.gen::<f32>() < self.options.xover_prob {
                     // Crossover
-                    let (c1, c2) = match params::XOVER {
-                        XTYPE::_SJOX => SJOX::apply(&p[0], &p[1], None, &mut self.makespan),
+                    let (c1, c2) = match self.options.xover_type {
+                        XTYPE::_SJ2OX => SJ2OX::apply(&p[0], &p[1], None, &mut self.makespan),
                         XTYPE::_SB2OX => SB2OX::apply(&p[0], &p[1], None, &mut self.makespan),
-                        XTYPE::_BCBC => BCBC::apply(&p[0], &p[1], None, &mut self.makespan),
+                        XTYPE::_BCBX => BCBX::apply(&p[0], &p[1], None, &mut self.makespan),
                     };
 
                     for (i, parent) in p.iter_mut().enumerate() {
@@ -98,15 +65,19 @@ impl GA {
 
             // Perform mutation
             self.mating_pool.iter_mut().for_each(|c| {
-                if self.rng.gen::<f32>() < params::MUTATION_PROB {
-                    mutation::SHIFT::apply(c);
+                if self.rng.gen::<f32>() < self.options.mutation_prob {
+                    match self.options.mutation_type {
+                        MTYPE::_Shift => SHIFT::apply(c, &mut self.makespan),
+                        MTYPE::_Reverse => Reverse::apply(c, &mut self.makespan),
+                        MTYPE::_Swap => Swap::apply(c, &mut self.makespan),
+                        MTYPE::_Greedy => Greedy::apply(c, &mut self.makespan),
+                    }
                 }
             });
 
             // Elitism
-            // TODO: omit sorting, find best chromosomes in another way
             self.population.sort();
-            for c in self.population.iter().take(params::ELITISM) {
+            for c in self.population.iter().take(self.options.elitism) {
                 self.mating_pool.push(Chromosome::from(c.jobs.to_vec()));
             }
 
@@ -128,22 +99,29 @@ impl GA {
         self.population.sort();
 
         // Go through generations
-        for iteration in 0..params::ITERATIONS {
+        for iteration in 0..self.options.iterations {
             // Select two individuals from tournament selection
             let p1 = self.tournament();
             let p2 = self.tournament();
 
             // Crossover
-            let (mut c1, mut c2) = match params::XOVER {
-                XTYPE::_SJOX => SJOX::apply(&p1, &p2, None, &mut self.makespan),
+            let (mut c1, mut c2) = match self.options.xover_type {
+                XTYPE::_SJ2OX => SJ2OX::apply(&p1, &p2, None, &mut self.makespan),
                 XTYPE::_SB2OX => SB2OX::apply(&p1, &p2, None, &mut self.makespan),
-                XTYPE::_BCBC => BCBC::apply(&p1, &p2, None, &mut self.makespan),
+                XTYPE::_BCBX => BCBX::apply(&p1, &p2, None, &mut self.makespan),
             };
 
             // Mutate
             let mut mutate = |c| {
-                if self.rng.gen::<f32>() < params::MUTATION_PROB {
-                    mutation::SHIFT::apply(c)
+                if self.rng.gen::<f32>() < self.options.mutation_prob {
+                    match self.options.mutation_type {
+                        mutation::MTYPE::_Shift => mutation::SHIFT::apply(c, &mut self.makespan),
+                        mutation::MTYPE::_Reverse => {
+                            mutation::Reverse::apply(c, &mut self.makespan)
+                        }
+                        mutation::MTYPE::_Swap => mutation::Swap::apply(c, &mut self.makespan),
+                        mutation::MTYPE::_Greedy => mutation::Greedy::apply(c, &mut self.makespan),
+                    }
                 }
             };
             mutate(&mut c1);
@@ -181,8 +159,8 @@ impl GA {
         // Select both possible parants
         let p1 = self.population.choose(&mut self.rng).unwrap();
         let p2 = self.population.choose(&mut self.rng).unwrap();
-        // Choose best in params::KEEP_BEST % of the time, random otherwise
-        let winner = if self.rng.gen::<f32>() < params::KEEP_BEST {
+        // Choose best in 'keep_best' % of the time, random otherwise
+        let winner = if self.rng.gen::<f32>() < self.options.keep_best {
             std::cmp::min(p1, p2)
         } else {
             vec![p1, p2].choose(&mut self.rng).unwrap()
@@ -203,12 +181,28 @@ impl GA {
     }
 }
 
-pub fn run() {
-    let args: Vec<String> = env::args().collect();
-    let mut ga = GA::new();
+pub fn main() {
+    let args = Args::parse();
 
-    // Flag `-s` indicates a steady state generational scheme
-    if args.len() > 1 && args[1] == String::from("-s") {
+    let problem_files = get_problem_files(args.run_all);
+
+    for problem_file in problem_files {
+        let options = Options {
+            problem_file: Cow::Owned(problem_file),
+            run_all: args.run_all,
+            steady_state: args.steady_state,
+            all_params: args.all_params,
+            ..Options::default()
+        };
+
+        run(options);
+    }
+}
+
+pub fn run(options: Options) {
+    let mut ga = options.build();
+
+    if ga.options.steady_state {
         ga.run_steady_state();
     } else {
         ga.run();
@@ -222,7 +216,27 @@ pub fn run() {
 
     let solution: Solution = Solution::new(machine_completions, m, &ga.instance);
 
-    let problem = params::PROBLEM_FILE.split("/").last().unwrap();
+    let problem = ga
+        .options
+        .problem_file
+        .as_ref()
+        .to_str()
+        .unwrap()
+        .split("/")
+        .last()
+        .unwrap();
+
     let path = String::from("solutions/ga/") + problem;
     solution.write(path);
+}
+
+fn get_problem_files(run_all: bool) -> Vec<PathBuf> {
+    match run_all {
+        true => fs::read_dir("./instances/ruiz/json")
+            .unwrap()
+            .into_iter()
+            .map(|p| p.unwrap().path())
+            .collect(),
+        false => vec![PathBuf::from(params::PROBLEM_FILE)],
+    }
 }

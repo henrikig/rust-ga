@@ -130,3 +130,5 @@ dmypy.json
 
 Cargo.lock
 Cargo.toml
+
+solutions/

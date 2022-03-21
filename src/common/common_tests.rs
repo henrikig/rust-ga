@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod common_tests {
 
+    use crate::common::instance::parse;
     use crate::common::makespan::Makespan;
-    use crate::common::parser::parse;
 
     #[test]
     pub fn common_test_makespan_and_parse() {

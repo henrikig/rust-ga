@@ -1,14 +1,14 @@
-use crate::{
-    common::makespan::Makespan,
-    genetic_algorithm::{entities::chromosome::Chromosome, params},
-};
+use crate::{common::makespan::Makespan, genetic_algorithm::entities::chromosome::Chromosome};
 
-use rand::{prelude::SliceRandom, Rng};
+use crate::common::best_insertion::find_best_insertion;
 
+use rand::Rng;
+
+#[derive(Clone)]
 pub enum XTYPE {
-    _SJOX,
+    _SJ2OX,
     _SB2OX,
-    _BCBC,
+    _BCBX,
 }
 
 pub trait Crossover {
@@ -20,11 +20,11 @@ pub trait Crossover {
     ) -> (Chromosome, Chromosome);
 }
 
-pub struct SJOX;
+pub struct SJ2OX;
 pub struct SB2OX;
-pub struct BCBC;
+pub struct BCBX;
 
-impl Crossover for SJOX {
+impl Crossover for SJ2OX {
     fn apply(
         p1: &Chromosome,
         p2: &Chromosome,
@@ -32,8 +32,7 @@ impl Crossover for SJOX {
         _makespan: &mut Makespan,
     ) -> (Chromosome, Chromosome) {
         // Generate new permutations based on parents
-        let mut c1: Vec<u32> = vec![u32::MAX; p1.jobs.len()];
-        let mut c2: Vec<u32> = vec![u32::MAX; p2.jobs.len()];
+        let (mut c1, mut c2) = generate_children(p1, p2);
 
         // Draw a cut point, k, from range [0, n_jobs)
         let k = match k {
@@ -49,34 +48,11 @@ impl Crossover for SJOX {
         let mut p1_order: Vec<u32> = Vec::new();
         let mut p2_order: Vec<u32> = Vec::new();
 
-        // Fill in all building blocks - sequences where both parents have the same
-        // jobs in same positions in range [k, n_jobs]
-        p1.jobs
-            .iter()
-            .zip(p2.jobs.iter())
-            .enumerate()
-            .for_each(|(i, (j1, j2))| {
-                if j1 == j2 {
-                    c1[i] = *j1;
-                    c2[i] = *j1;
-                } else {
-                    // TODO: do this in another way for performance boost
-                    if !c2.contains(j1) {
-                        p1_order.push(*j1);
-                    }
-                    if !c1.contains(j2) {
-                        p2_order.push(*j2);
-                    }
-                }
-            });
+        // Copy over blocks of size > 1 from parents to children
+        match_blocks(p1, p2, &mut c1, &mut c2, &mut p1_order, &mut p2_order);
 
         // Insert the jobs that are yet not allocated in order of opposite parent
-        for i in k..c1.len() {
-            if c1[i] == u32::MAX {
-                c1[i] = p2_order.remove(0);
-                c2[i] = p1_order.remove(0);
-            }
-        }
+        insert_remaining(k, &mut c1, p2_order, &mut c2, p1_order);
 
         return (Chromosome::from(c1), Chromosome::from(c2));
     }
@@ -90,15 +66,13 @@ impl Crossover for SB2OX {
         _makespan: &mut Makespan,
     ) -> (Chromosome, Chromosome) {
         // Generate new permutations based on parents
-        let mut c1: Vec<u32> = vec![u32::MAX; p1.jobs.len()];
-        let mut c2: Vec<u32> = vec![u32::MAX; p2.jobs.len()];
+        let (mut c1, mut c2) = generate_children(p1, p2);
 
         // Draw two different cut points, k1, k2
         let k1 = rand::thread_rng().gen_range(0..p1.jobs.len());
         let k2 = rand::thread_rng().gen_range(0..p1.jobs.len());
         let start = std::cmp::min(k1, k2);
         let stop = std::cmp::max(k1, k2);
-
         // Copy elements between cut points from p1, p2 directly to respective children c1, c2
         c1[start..stop].copy_from_slice(&p1.jobs[start..stop]);
         c2[start..stop].copy_from_slice(&p2.jobs[start..stop]);
@@ -107,38 +81,17 @@ impl Crossover for SB2OX {
         let mut p1_order: Vec<u32> = Vec::new();
         let mut p2_order: Vec<u32> = Vec::new();
 
-        // Fill in all building blocks of size > 1 - sequences where both parents have the same
-        // jobs in same positions
-        for (i, (j1, j2)) in p1.jobs.iter().zip(p2.jobs.iter()).enumerate() {
-            if (j1 == j2)
-                && ((i != 0 && p1.jobs[i - 1] == p2.jobs[i - 1])
-                    || (i != c1.len() - 1 && p1.jobs[i + 1] == p2.jobs[i + 1]))
-            {
-                c1[i] = *j1;
-                c2[i] = *j2;
-            } else {
-                // TODO: do this in another way for performance boost
-                if !c2.contains(j1) {
-                    p1_order.push(*j1);
-                }
-                if !c1.contains(j2) {
-                    p2_order.push(*j2);
-                }
-            }
-        }
+        // Copy over blocks of size > 1 from parents to children
+        match_blocks(p1, p2, &mut c1, &mut c2, &mut p1_order, &mut p2_order);
 
-        for i in 0..c1.len() {
-            if c1[i] == u32::MAX {
-                c1[i] = p2_order.remove(0);
-                c2[i] = p1_order.remove(0);
-            }
-        }
+        // Insert the jobs that are yet not allocated in order of opposite parent
+        insert_remaining(0, &mut c1, p2_order, &mut c2, p1_order);
 
         return (Chromosome::from(c1), Chromosome::from(c2));
     }
 }
 
-impl Crossover for BCBC {
+impl Crossover for BCBX {
     fn apply(
         p1: &Chromosome,
         p2: &Chromosome,
@@ -168,65 +121,70 @@ impl Crossover for BCBC {
         let c2 = filter(p2.jobs.to_vec(), block1);
 
         // Test each possible insertion, record best index
-        let c1 = find_best_insertion(c1, block2, makespan);
-        let c2 = find_best_insertion(c2, block1, makespan);
-
-        // TODO:
-        // With probability x%, insert block into best position, otherwise random position
+        let c1 = find_best_insertion(c1, block2, makespan, true);
+        let c2 = find_best_insertion(c2, block1, makespan, true);
 
         // Return new chromosomes
         (Chromosome::from(c1), Chromosome::from(c2))
     }
 }
 
-pub fn find_best_insertion(jobs: Vec<u32>, block: &[u32], makespan: &mut Makespan) -> Vec<u32> {
-    let n_jobs = jobs.len();
-    let mut jobs: Vec<u32> = block.iter().cloned().chain(jobs.iter().cloned()).collect();
-    let (mut best_makespan, _) = makespan.makespan(&jobs);
-    let k = block.len();
+fn generate_children(p1: &Chromosome, p2: &Chromosome) -> (Vec<u32>, Vec<u32>) {
+    let c1: Vec<u32> = vec![u32::MAX; p1.jobs.len()];
+    let c2: Vec<u32> = vec![u32::MAX; p2.jobs.len()];
+    (c1, c2)
+}
 
-    // Store one random solution which may be returned
-    let random_idx: usize = rand::thread_rng().gen_range(0..n_jobs);
-    let mut random_jobs: Vec<u32> = jobs.iter().cloned().collect();
-
-    // Initialise best jobs
-    let mut best_jobs: Vec<Vec<u32>> = vec![jobs.iter().cloned().collect()];
-
-    for i in 0..n_jobs {
-        // Shift block one step to the right
-        jobs[i..i + k + 1].rotate_right(1);
-        let (new_makespan, _) = makespan.makespan(&jobs);
-
-        // Update random solution if we are at the random index
-        if i == random_idx {
-            random_jobs = jobs.iter().cloned().collect()
-        }
-
-        // Update best jobs if the current has a lower makespan
-        if new_makespan < best_makespan {
-            best_makespan = new_makespan;
-            best_jobs = vec![jobs.iter().cloned().collect()];
-        // Add current to best jobs if makespan is equal to best jobs
-        } else if new_makespan == best_makespan {
-            best_jobs.push(jobs.iter().cloned().collect());
+fn match_blocks(
+    p1: &Chromosome,
+    p2: &Chromosome,
+    c1: &mut Vec<u32>,
+    c2: &mut Vec<u32>,
+    p1_order: &mut Vec<u32>,
+    p2_order: &mut Vec<u32>,
+) {
+    // Fill in all building blocks of size > 1 - sequences where both parents have the same
+    // jobs in same positions
+    for (i, (j1, j2)) in p1.jobs.iter().zip(p2.jobs.iter()).enumerate() {
+        if (j1 == j2)
+            && ((i != 0 && p1.jobs[i - 1] == p2.jobs[i - 1])
+                || (i != c1.len() - 1 && p1.jobs[i + 1] == p2.jobs[i + 1]))
+        {
+            c1[i] = *j1;
+            c2[i] = *j2;
+        } else {
+            // TODO: do this in another way for performance boost
+            if !c2.contains(j1) {
+                p1_order.push(*j1);
+            }
+            if !c1.contains(j2) {
+                p2_order.push(*j2);
+            }
         }
     }
+}
 
-    // Return either one of the best solutions, or the chosen random solution
-    if rand::thread_rng().gen::<f32>() < params::KEEP_BEST {
-        best_jobs.choose(&mut rand::thread_rng()).unwrap().to_vec()
-    } else {
-        random_jobs
+fn insert_remaining(
+    k: usize,
+    c1: &mut Vec<u32>,
+    mut p2_order: Vec<u32>,
+    c2: &mut Vec<u32>,
+    mut p1_order: Vec<u32>,
+) {
+    for i in k..c1.len() {
+        if c1[i] == u32::MAX {
+            c1[i] = p2_order.remove(0);
+            c2[i] = p1_order.remove(0);
+        }
     }
 }
 
 #[cfg(test)]
 mod xover_test {
+    use crate::common::best_insertion::find_best_insertion;
     use crate::common::instance::Instance;
     use crate::common::makespan::Makespan;
     use crate::genetic_algorithm::operators::crossover::{self, Chromosome, Crossover};
-
-    use super::find_best_insertion;
 
     #[test]
     fn test_block_insertion() {
@@ -243,7 +201,7 @@ mod xover_test {
         };
 
         let jobs = filter(jobs.jobs.to_vec(), block);
-        let jobs = find_best_insertion(jobs, block, &mut makespan);
+        let jobs = find_best_insertion(jobs, block, &mut makespan, true);
 
         // Possible permutations
         // [2, 3, 0, 1, 4]
@@ -267,7 +225,7 @@ mod xover_test {
         ]);
 
         let (c1, c2) =
-            crossover::SJOX::apply(&p1, &p2, Some(8), &mut Makespan::new(&test_instance()));
+            crossover::SJ2OX::apply(&p1, &p2, Some(8), &mut Makespan::new(&test_instance()));
 
         assert_eq!(
             c2.jobs,

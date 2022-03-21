@@ -1,3 +1,4 @@
+use crate::common::best_insertion::find_best_insertion;
 use crate::common::makespan::Makespan;
 use crate::genetic_algorithm::entities::chromosome::Chromosome;
 use rand::seq::SliceRandom;
@@ -26,24 +27,7 @@ impl Constructor for MDDR<'_> {
             let job = jobs.remove(jobs.len() - 1);
 
             // Find current job's best insertion point in output jobs
-            c.insert(0, job);
-            let mut best_order: Vec<u32> = c.iter().cloned().collect();
-            let mut best_makespan = self.makespan.makespan(&best_order);
-
-            for i in 0..c.len() - 1 {
-                c[i..i + 2].rotate_right(1);
-
-                let makespan = self.makespan.makespan(&c);
-
-                if makespan < best_makespan {
-                    best_makespan = makespan;
-                    best_order = c.iter().cloned().collect();
-                }
-            }
-            // Add job to this location and proceed
-            c = best_order;
-
-            // Return a new chromosome from the given permutation
+            c = find_best_insertion(c, &[job], &mut self.makespan, false);
         }
 
         Chromosome::from(c)
@@ -61,7 +45,7 @@ impl Iterator for MDDR<'_> {
 #[cfg(test)]
 mod test {
     use crate::{
-        common::{makespan::Makespan, parser::parse},
+        common::{instance::parse, makespan::Makespan},
         genetic_algorithm::{entities::chromosome::Chromosome, params},
     };
 
@@ -92,5 +76,32 @@ mod test {
             heuristic.iter().map(|s| s.makespan.unwrap()).sum::<u32>()
                 <= random.iter().map(|s| s.makespan.unwrap()).sum::<u32>()
         )
+    }
+
+    #[test]
+    fn test_number_unique_solutions() {
+        let instance = parse(params::PROBLEM_FILE).unwrap();
+
+        let mut makespan = Makespan::new(&instance);
+
+        let constructor = MDDR {
+            makespan: &mut makespan,
+        };
+
+        let mut population: Vec<Chromosome> = constructor.take(100).collect();
+
+        let mut already_seen = Vec::new();
+
+        // See how many unique permutations are in the population
+        population.retain(|c| match already_seen.contains(&c.jobs) {
+            true => false,
+            _ => {
+                already_seen.push(c.jobs.to_vec());
+                true
+            }
+        });
+
+        // Assure there is some diversity
+        assert!(population.len() > 50)
     }
 }

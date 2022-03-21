@@ -2,7 +2,10 @@
 pub mod tests {
 
     use crate::{
-        common::{instance::Instance, makespan::Makespan, parser::parse},
+        common::{
+            instance::{parse, Instance},
+            makespan::Makespan,
+        },
         genetic_algorithm::entities::chromosome::Chromosome,
     };
 
@@ -45,7 +48,7 @@ pub mod tests {
             ],
             setup_times: vec![
                 vec![
-                    vec![1, 2, 3, 4, 5],
+                    vec![4, 2, 3, 4, 5],
                     vec![1, 2, 3, 4, 5],
                     vec![1, 2, 3, 4, 5],
                     vec![1, 2, 3, 4, 5],

@@ -20,12 +20,12 @@ fn sort_jobs(instance: &Instance) -> Vec<u32> {
         processing_times.push((job, instance.processing_times[job as usize].iter().sum()));
     }
     // Sort jobs in decending order of total processing time
-    processing_times.sort_by_key(|&(job, processing_time)| processing_time);
+    processing_times.sort_by_key(|&(_job, processing_time)| processing_time);
     processing_times.reverse();
     // Return only the job numbers in decending order of total processing times
     let sorted: Vec<u32> = processing_times
         .iter()
-        .map(|(job, processing_time)| *job)
+        .map(|(job, _processing_time)| *job)
         .collect::<Vec<u32>>();
     return sorted;
 }
@@ -52,13 +52,19 @@ fn insert_job(makespan: &mut Makespan, schedule: &Vec<u32>, next_job: u32) -> Ve
 
 #[cfg(test)]
 mod test {
-    use crate::common::{instance::Instance, makespan::Makespan, makespan_old, parser::parse};
+    use crate::common::{instance::parse, instance::Instance, makespan::Makespan};
+    use std::env;
 
     use super::{insert_job, neh, sort_jobs};
 
     #[test]
     fn sort_jobs_test() {
-        let i: Instance = parse("instances\\ruiz\\json\\n20m2-1.json").unwrap();
+        let path = match env::consts::OS {
+            "windows" => "instances\\ruiz\\json\\n20m2-1.json",
+            "macos" => "./instances/ruiz/json/n20m2-1.json",
+            _ => "./instances/ruiz/json/n20m2-1.json",
+        };
+        let i: Instance = parse(path).unwrap();
         let m: Makespan = Makespan {
             count: 1,
             instance: i,
@@ -69,39 +75,64 @@ mod test {
 
     #[test]
     fn insert_job_test() {
-        let i: Instance = parse("instances\\ruiz\\json\\n20m2-1.json").unwrap();
+        let path = match env::consts::OS {
+            "windows" => "instances\\ruiz\\json\\n20m2-1.json",
+            "macos" => "./instances/ruiz/json/n20m2-1.json",
+            _ => "./instances/ruiz/json/n20m2-1.json",
+        };
+        let i: Instance = parse(path).unwrap();
         let mut m: Makespan = Makespan {
             count: 1,
             instance: i,
         };
         let order: Vec<u32> = sort_jobs(&m.instance);
         let schedule: Vec<u32> = order[0..4].to_vec();
-        let new_schedule = insert_job(&mut m, &schedule, order[5]);
+        let _new_schedule = insert_job(&mut m, &schedule, order[5]);
     }
 
     #[test]
-    fn neh_test() {
-        let i: Instance = parse("instances\\ruiz\\json\\n20m2-1.json").unwrap();
-        let mut m: Makespan = Makespan {
-            count: 1,
-            instance: i,
-        };
+    fn neh_test_instance1() {
+        let makespan = neh_from_file("./instances/ruiz/json/n20m2-1.json");
+        assert_eq!(makespan, 675);
+    }
+
+    #[test]
+    fn neh_test_instance2() {
+        let makespan = neh_from_file("./instances/ruiz/json/n20m2-2.json");
+        assert_eq!(makespan, 673);
+    }
+
+    #[test]
+    fn neh_test_instance3() {
+        let makespan = neh_from_file("./instances/ruiz/json/n20m2-3.json");
+        assert_eq!(makespan, 590);
+    }
+
+    #[test]
+    fn neh_test_instance4() {
+        let makespan = neh_from_file("./instances/ruiz/json/n20m2-4.json");
+        assert_eq!(makespan, 598);
+    }
+
+    #[test]
+    fn schedule() {
+        let i: Instance = parse("./instances/ruiz/json/n20m2-1.json").unwrap();
+        let jobs = (0..i.jobs).collect();
+        let mut m = Makespan::new(&i);
+
+        let (make, mc) = m.makespan(&jobs);
+        dbg!(make);
+        for stage in mc {
+            println!("{:?}", stage);
+        }
+    }
+
+    fn neh_from_file(path: &str) -> u32 {
+        let i: Instance = parse(path).unwrap();
+        let mut m = Makespan::new(&i);
+
         let schedule = neh(&mut m);
         let (make, _) = m.makespan(&schedule);
-        println!("Schedule: {:?}", schedule);
-        println!("Makespan NEH: {}", make);
-    }
-
-    #[test]
-    fn neh_test_2() {
-        let i: Instance = parse("instances\\ruiz\\json\\n20m2-1.json").unwrap();
-        let mut m: Makespan = Makespan {
-            count: 1,
-            instance: i,
-        };
-        let schedule = neh(&mut m);
-        let make = makespan_old::makespan(&schedule, &m.instance);
-        println!("Schedule: {:?}", schedule);
-        println!("Makespan NEH: {}", make.0);
+        make
     }
 }
