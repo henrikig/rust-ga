@@ -1,12 +1,16 @@
 use crate::common::{instance::Instance, makespan::Makespan};
 
 // Implements the NEH construction heuristic by an instance of makespan
-pub fn neh(makespan: &mut Makespan) -> Vec<u32> {
+pub fn neh(makespan: &mut Makespan) -> (Vec<u32>, u32) {
     // Order jobs in decending order of total processing time
     let job_order: Vec<u32> = sort_jobs(&makespan.instance);
-    let mut schedule: Vec<u32> = Vec::with_capacity(makespan.instance.jobs as usize);
+    let mut schedule: (Vec<u32>, u32) = (
+        Vec::with_capacity(makespan.instance.jobs as usize),
+        u32::MAX,
+    );
+
     for job in job_order.iter() {
-        schedule = insert_job(makespan, &schedule, *job);
+        schedule = insert_job(makespan, &schedule.0, job);
     }
     return schedule;
 }
@@ -30,24 +34,24 @@ fn sort_jobs(instance: &Instance) -> Vec<u32> {
     return sorted;
 }
 
-// Returns the schedule with the lowest makespan after inserting the next job in all positions
-fn insert_job(makespan: &mut Makespan, schedule: &Vec<u32>, next_job: u32) -> Vec<u32> {
+// Returns the schedule with the lowest makespan after inserting the next job in all positions, and the makespan of the schedule
+pub fn insert_job(makespan: &mut Makespan, schedule: &Vec<u32>, next_job: &u32) -> (Vec<u32>, u32) {
     // Make tuple to keep track of shortest makespan and the corresponding schedule
-    let mut min_time: (u32, Vec<u32>) = (u32::MAX, Vec::with_capacity(schedule.len() + 1));
+    let mut min_time: (Vec<u32>, u32) = (Vec::with_capacity(schedule.len() + 1), u32::MAX);
     // Loop thorough all positions the next job can be inserted into
     for index in 0..schedule.len() + 1 {
         // Make an instance of the schedule to test
         let mut test_schedule: Vec<u32> = schedule.clone();
-        test_schedule.insert(index, next_job);
+        test_schedule.insert(index, *next_job);
         // Find the makespan of the test schedule
         let (time, _) = makespan.makespan(&test_schedule);
         // If the test schedule has a makespan lower than the current best, update the time and set the new schedule as the current best
-        if min_time.0 > time {
-            min_time = (time, test_schedule);
+        if min_time.1 > time {
+            min_time = (test_schedule, time);
         }
     }
     // Return the schedule with the shortest makespan
-    return min_time.1;
+    return min_time;
 }
 
 #[cfg(test)]
@@ -87,7 +91,7 @@ mod test {
         };
         let order: Vec<u32> = sort_jobs(&m.instance);
         let schedule: Vec<u32> = order[0..4].to_vec();
-        let _new_schedule = insert_job(&mut m, &schedule, order[5]);
+        let _new_schedule = insert_job(&mut m, &schedule, &order[5]);
     }
 
     #[test]
@@ -132,7 +136,7 @@ mod test {
         let mut m = Makespan::new(&i);
 
         let schedule = neh(&mut m);
-        let (make, _) = m.makespan(&schedule);
+        let (make, _) = m.makespan(&schedule.0);
         make
     }
 }

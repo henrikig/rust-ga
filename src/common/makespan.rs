@@ -36,6 +36,7 @@ impl Makespan {
         }
     }
 
+    // returns the makespan of the schedule and the machine completions
     pub fn makespan(&mut self, initial_job_order: &Vec<u32>) -> (u32, Vec<Vec<Vec<(u32, u32)>>>) {
         let instance: &Instance = &self.instance;
         let n_jobs: usize = initial_job_order.len();
