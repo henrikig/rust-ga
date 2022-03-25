@@ -8,10 +8,10 @@ use serde_derive::Serialize;
 
 #[derive(Clone, Serialize)]
 pub enum MTYPE {
-    _Shift,
-    _Reverse,
-    _Swap,
-    _Greedy,
+    Shift,
+    Reverse,
+    Swap,
+    Greedy,
 }
 
 pub trait Mutation {

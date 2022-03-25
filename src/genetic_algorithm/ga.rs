@@ -56,9 +56,9 @@ impl GA {
                 if self.rng.gen::<f32>() < self.options.xover_prob {
                     // Crossover
                     let (c1, c2) = match self.options.xover_type {
-                        XTYPE::_SJ2OX => SJ2OX::apply(&p[0], &p[1], None, &mut self.makespan),
-                        XTYPE::_SB2OX => SB2OX::apply(&p[0], &p[1], None, &mut self.makespan),
-                        XTYPE::_BCBX => BCBX::apply(&p[0], &p[1], None, &mut self.makespan),
+                        XTYPE::SJ2OX => SJ2OX::apply(&p[0], &p[1], None, &mut self.makespan),
+                        XTYPE::SB2OX => SB2OX::apply(&p[0], &p[1], None, &mut self.makespan),
+                        XTYPE::BCBX => BCBX::apply(&p[0], &p[1], None, &mut self.makespan),
                     };
 
                     for (i, parent) in p.iter_mut().enumerate() {
@@ -75,10 +75,10 @@ impl GA {
             self.mating_pool.iter_mut().for_each(|c| {
                 if self.rng.gen::<f32>() < self.options.mutation_prob {
                     match self.options.mutation_type {
-                        MTYPE::_Shift => SHIFT::apply(c, &mut self.makespan),
-                        MTYPE::_Reverse => Reverse::apply(c, &mut self.makespan),
-                        MTYPE::_Swap => Swap::apply(c, &mut self.makespan),
-                        MTYPE::_Greedy => Greedy::apply(c, &mut self.makespan),
+                        MTYPE::Shift => SHIFT::apply(c, &mut self.makespan),
+                        MTYPE::Reverse => Reverse::apply(c, &mut self.makespan),
+                        MTYPE::Swap => Swap::apply(c, &mut self.makespan),
+                        MTYPE::Greedy => Greedy::apply(c, &mut self.makespan),
                     }
                 }
             });
@@ -130,21 +130,19 @@ impl GA {
 
             // Crossover
             let (mut c1, mut c2) = match self.options.xover_type {
-                XTYPE::_SJ2OX => SJ2OX::apply(&p1, &p2, None, &mut self.makespan),
-                XTYPE::_SB2OX => SB2OX::apply(&p1, &p2, None, &mut self.makespan),
-                XTYPE::_BCBX => BCBX::apply(&p1, &p2, None, &mut self.makespan),
+                XTYPE::SJ2OX => SJ2OX::apply(&p1, &p2, None, &mut self.makespan),
+                XTYPE::SB2OX => SB2OX::apply(&p1, &p2, None, &mut self.makespan),
+                XTYPE::BCBX => BCBX::apply(&p1, &p2, None, &mut self.makespan),
             };
 
             // Mutate
             let mut mutate = |c| {
                 if self.rng.gen::<f32>() < self.options.mutation_prob {
                     match self.options.mutation_type {
-                        mutation::MTYPE::_Shift => mutation::SHIFT::apply(c, &mut self.makespan),
-                        mutation::MTYPE::_Reverse => {
-                            mutation::Reverse::apply(c, &mut self.makespan)
-                        }
-                        mutation::MTYPE::_Swap => mutation::Swap::apply(c, &mut self.makespan),
-                        mutation::MTYPE::_Greedy => mutation::Greedy::apply(c, &mut self.makespan),
+                        mutation::MTYPE::Shift => mutation::SHIFT::apply(c, &mut self.makespan),
+                        mutation::MTYPE::Reverse => mutation::Reverse::apply(c, &mut self.makespan),
+                        mutation::MTYPE::Swap => mutation::Swap::apply(c, &mut self.makespan),
+                        mutation::MTYPE::Greedy => mutation::Greedy::apply(c, &mut self.makespan),
                     }
                 }
             };

@@ -125,11 +125,11 @@ impl Options {
 
         // Add number of chromosomes from MDDR constructor as specified
         match self.construction {
-            Construction::_MDDR(num) => {
+            Construction::MDDR(num) => {
                 let mut constructed: Vec<Chromosome> = MDDR {
                     makespan: &mut makespan,
                 }
-                .take(num)
+                .take((self.pop_size as f32 * num) as usize)
                 .collect();
 
                 population.append(&mut constructed);
@@ -199,14 +199,14 @@ impl Default for OptionsGrid {
             elitism: vec![2],
             keep_best: vec![0.8, 1.0],
             xover_prob: vec![0.2, 0.4],
-            xover_type: vec![XTYPE::_SJ2OX, XTYPE::_SB2OX, XTYPE::_BCBX],
+            xover_type: vec![XTYPE::SJ2OX, XTYPE::SB2OX, XTYPE::BCBX],
             construction: vec![
-                // Construction::_MDDR(20),
-                Construction::_MDDR(50),
-                Construction::_Random,
+                // Construction::_MDDR(1.0),
+                Construction::MDDR(0.5),
+                Construction::Random,
             ],
             mutation_prob: vec![0.2],
-            mutation_type: vec![MTYPE::_Greedy, MTYPE::_Shift, MTYPE::_Swap, MTYPE::_Reverse],
+            mutation_type: vec![MTYPE::Greedy, MTYPE::Shift, MTYPE::Swap, MTYPE::Reverse],
             reversal_percent: vec![10],
             non_improving_iterations: vec![50, 100, 150],
             allways_keep: vec![40],
@@ -279,6 +279,13 @@ pub struct Params {
 
     // How large portion of the jobs to be reversed in reversal mutation
     pub reversal_percent: usize,
+
+    // Iterations to run in steady state before changing the less fit chromosomes
+    pub non_improving_iterations: usize,
+
+    // Chromosomes to keep in case of a genocide
+    // Must be smaller than pop_size
+    pub allways_keep: usize,
 }
 
 impl From<&Options> for Params {
@@ -290,22 +297,24 @@ impl From<&Options> for Params {
             keep_best: options.keep_best,
             xover_prob: options.xover_prob,
             xover_type: match options.xover_type {
-                XTYPE::_SJ2OX => XTYPE::_SJ2OX,
-                XTYPE::_SB2OX => XTYPE::_SB2OX,
-                XTYPE::_BCBX => XTYPE::_BCBX,
+                XTYPE::SJ2OX => XTYPE::SJ2OX,
+                XTYPE::SB2OX => XTYPE::SB2OX,
+                XTYPE::BCBX => XTYPE::BCBX,
             },
             construction: match options.construction {
-                Construction::_Random => Construction::_Random,
-                Construction::_MDDR(num) => Construction::_MDDR(num),
+                Construction::Random => Construction::Random,
+                Construction::MDDR(num) => Construction::MDDR(num),
             },
             mutation_prob: options.mutation_prob,
             mutation_type: match options.mutation_type {
-                MTYPE::_Shift => MTYPE::_Shift,
-                MTYPE::_Reverse => MTYPE::_Reverse,
-                MTYPE::_Swap => MTYPE::_Swap,
-                MTYPE::_Greedy => MTYPE::_Greedy,
+                MTYPE::Shift => MTYPE::Shift,
+                MTYPE::Reverse => MTYPE::Reverse,
+                MTYPE::Swap => MTYPE::Swap,
+                MTYPE::Greedy => MTYPE::Greedy,
             },
             reversal_percent: options.reversal_percent,
+            non_improving_iterations: options.non_improving_iterations,
+            allways_keep: options.allways_keep,
         }
     }
 }

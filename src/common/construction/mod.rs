@@ -7,8 +7,8 @@ pub mod neh;
 
 #[derive(Debug, Clone, Serialize)]
 pub enum Construction {
-    _Random,
-    _MDDR(usize),
+    Random,
+    MDDR(f32),
 }
 
 pub trait Constructor {
