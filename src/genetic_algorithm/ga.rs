@@ -97,9 +97,17 @@ impl GA {
         // Calculate makespan for all individuals in population
         self.makespan();
         self.population.sort();
+        let mut non_improvement_counter: usize = 0;
 
         // Go through generations
         for iteration in 0..self.options.iterations {
+            // Replace the chromosomes with the worst fit if there has been no improvement in the best fit for y iterations
+            if non_improvement_counter >= self.options.non_improving_iterations {
+                for index in self.options.allways_keep..self.options.pop_size {
+                    self.population[index] = Chromosome::new(&self.instance);
+                }
+            }
+
             // Select two individuals from tournament selection
             let p1 = self.tournament();
             let p2 = self.tournament();
@@ -133,6 +141,11 @@ impl GA {
 
             // Check if individuals are better than current worst & not already in population
             let mut replace = |c: Chromosome| {
+                if c < *self.population.first().unwrap() {
+                    non_improvement_counter = 0;
+                } else {
+                    non_improvement_counter += 1;
+                }
                 if &c < self.population.iter().last().unwrap() && !self.population.contains(&c) {
                     // Replace if so (inserting into correct position)
                     self.population.remove(self.population.len() - 1);

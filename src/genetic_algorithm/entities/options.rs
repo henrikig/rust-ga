@@ -79,6 +79,13 @@ pub struct Options {
 
     // How large portion of the jobs to be reversed in reversal mutation
     pub reversal_percent: usize,
+
+    // Iterations to run in steady state before changing the less fit chromosomes
+    pub non_improving_iterations: usize,
+
+    // Chromosomes to keep in case of a genocide
+    // Must be smaller than pop_size
+    pub allways_keep: usize,
 }
 
 impl Default for Options {
@@ -98,6 +105,8 @@ impl Default for Options {
             mutation_prob: params::MUTATION_PROB,
             mutation_type: params::MTYPE,
             reversal_percent: params::REVERSAL_PERCENT,
+            non_improving_iterations: params::NON_IMPROVING_ITERATIONS,
+            allways_keep: params::GENOSIDE_SIZE,
         }
     }
 }
@@ -176,6 +185,10 @@ pub struct OptionsGrid {
 
     // How large portion of the jobs to be reversed in reversal mutation
     pub reversal_percent: Vec<usize>,
+
+    pub non_improving_iterations: Vec<usize>,
+
+    pub allways_keep: Vec<usize>,
 }
 
 // Set the default values
@@ -195,6 +208,8 @@ impl Default for OptionsGrid {
             mutation_prob: vec![0.2],
             mutation_type: vec![MTYPE::_Greedy, MTYPE::_Shift, MTYPE::_Swap, MTYPE::_Reverse],
             reversal_percent: vec![10],
+            non_improving_iterations: vec![50, 100, 150],
+            allways_keep: vec![40],
         }
     }
 }
@@ -210,7 +225,9 @@ impl OptionsGrid {
             self.construction,
             self.mutation_prob,
             self.mutation_type,
-            self.reversal_percent
+            self.reversal_percent,
+            self.non_improving_iterations,
+            self.allways_keep
         )
         .map(|opt| Options {
             pop_size: opt.0,
@@ -222,6 +239,8 @@ impl OptionsGrid {
             mutation_prob: opt.6,
             mutation_type: opt.7,
             reversal_percent: opt.8,
+            non_improving_iterations: opt.9,
+            allways_keep: opt.10,
             problem_file: Cow::Owned(options.problem_file.as_ref().clone()),
             ..options
         })
