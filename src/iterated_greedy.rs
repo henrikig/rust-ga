@@ -40,7 +40,7 @@ use crate::common::{
 
 // All schedules are tuples of the schedule and makespan of the schedule
 
-pub fn iterative_greedy(makespan: &mut Makespan) -> (Vec<u32>, u32) {
+pub fn iterated_greedy(makespan: &mut Makespan) -> (Vec<u32>, u32) {
     let mut current_schedule: (Vec<u32>, u32) = neh(makespan);
     current_schedule = iterative_improvement_insertion(makespan, &current_schedule.0);
     let mut best_schedule: (Vec<u32>, u32) = (current_schedule.0.clone(), current_schedule.1);
@@ -165,11 +165,11 @@ mod ig_tests {
     }
 
     #[test]
-    fn iterative_greedy_test() {
+    fn iterated_greedy_test() {
         let i: Instance = parse("instances\\ruiz\\json\\n20m2-1.json").unwrap();
         let mut m: Makespan = Makespan::new(&i);
 
-        let ig = iterative_greedy(&mut m);
+        let ig = iterated_greedy(&mut m);
 
         let schedule: Vec<u32> = (0..20).collect();
         let schedule_makespan = m.makespan(&schedule).0;
