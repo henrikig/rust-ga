@@ -6,8 +6,8 @@ import re
 import sys
 
 
-FILE = "../solutions/ga/n20m2-1.json"
-INSTANCE = "../instances/ruiz/json/n20m2-1.json"
+FILE = "../../solutions/ga/n20m2-01.json"
+INSTANCE = "../../instances/ruiz/json/n20m2-01.json"
 
 
 def visualize_schedule(solution: str, instance: str):
@@ -27,7 +27,7 @@ def visualize_schedule(solution: str, instance: str):
                 solution["machine_completions"][stage][machine]
             ):
                 # get current job's processing time
-                production_time = instance["production_times"][job][stage]
+                production_time = instance["processing_times"][job][stage]
 
                 # get current job's setup time
                 if machine_run == 0:
@@ -54,7 +54,7 @@ def visualize_schedule(solution: str, instance: str):
 
     df = pd.DataFrame(schedule)
 
-    legend_order = [f"J{job}" for job in range(instance["products"])]
+    legend_order = [f"J{job}" for job in range(instance["jobs"])]
     legend_order.sort(key=natural_keys)
 
     fig = px.timeline(
@@ -88,6 +88,9 @@ def natural_keys(text):
 
 
 if __name__ == "__main__":
+    import os
+
+    print(os.getcwd())
 
     if len(sys.argv) > 1:
         instance = sys.argv[1]
