@@ -1,4 +1,5 @@
 use clap::Parser;
+use itertools::iproduct;
 use rand::thread_rng;
 use std::{borrow::Cow, path::PathBuf};
 
@@ -45,7 +46,7 @@ pub struct Options {
     // Run through all possible parameter values
     pub all_params: bool,
 
-    // Runs through all problem files if true
+    // Runs in steady state if true
     pub steady_state: bool,
 
     // Size of the population
@@ -143,5 +144,86 @@ impl Options {
             options: self,
             rng,
         };
+    }
+}
+
+// Struct containing all possible parameter values for each option
+pub struct OptionsGrid {
+    // Size of the population
+    pub pop_sizes: Vec<usize>,
+
+    // Number of best individuals unconditionally proceeding to next generation
+    pub elitism: Vec<usize>,
+
+    // Probability the best offspring is kept
+    pub keep_best: Vec<f32>,
+
+    // Probability crossover is performed
+    pub xover_prob: Vec<f32>,
+
+    // Crossover type to be used
+    pub xover_type: Vec<XTYPE>,
+
+    // Construction heuristic used for initial population
+    pub construction: Vec<Construction>,
+
+    // Probability an individual undergoes mutation
+    pub mutation_prob: Vec<f32>,
+
+    // Mutation type to be used
+    pub mutation_type: Vec<MTYPE>,
+
+    // How large portion of the jobs to be reversed in reversal mutation
+    pub reversal_percent: Vec<usize>,
+}
+
+// Set the default values
+impl Default for OptionsGrid {
+    fn default() -> OptionsGrid {
+        OptionsGrid {
+            pop_sizes: vec![50, 100],
+            elitism: vec![2],
+            keep_best: vec![0.8, 1.0],
+            xover_prob: vec![0.2, 0.4],
+            xover_type: vec![XTYPE::_SJ2OX, XTYPE::_SB2OX, XTYPE::_BCBX],
+            construction: vec![
+                // Construction::_MDDR(20),
+                Construction::_MDDR(50),
+                Construction::_Random,
+            ],
+            mutation_prob: vec![0.2],
+            mutation_type: vec![MTYPE::_Greedy, MTYPE::_Shift, MTYPE::_Swap, MTYPE::_Reverse],
+            reversal_percent: vec![10],
+        }
+    }
+}
+
+impl OptionsGrid {
+    pub fn get_options(self, options: Options) -> Vec<Options> {
+        iproduct!(
+            self.pop_sizes,
+            self.elitism,
+            self.keep_best,
+            self.xover_prob,
+            self.xover_type,
+            self.construction,
+            self.mutation_prob,
+            self.mutation_type,
+            self.reversal_percent
+        )
+        .map(|opt| Options {
+            pop_size: opt.0,
+            elitism: opt.1,
+            keep_best: opt.2,
+            xover_prob: opt.3,
+            xover_type: opt.4,
+            construction: opt.5,
+            mutation_prob: opt.6,
+            mutation_type: opt.7,
+            reversal_percent: opt.8,
+            problem_file: Cow::Owned(options.problem_file.as_ref().clone()),
+            ..options
+        })
+        .collect()
     }
 }
