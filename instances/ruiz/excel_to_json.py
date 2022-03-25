@@ -2,6 +2,7 @@
 Converter to make excel file to json to be used in Rust.
 """
 
+from email import header
 from pydoc import importfile
 import pandas as pd
 import numpy as np
@@ -24,7 +25,7 @@ def split_dataframe(df: pd.DataFrame, height: int, width: int, n: int) -> list:
     
     return df_list
 
-# Tests if all but first entry in the first row is zero values
+# Tests if all but first entry in the first row are zero values
 def well_behaved(df: pd.DataFrame, width: int) -> bool:
     well_behaved = True
     for index in range(1,width):
@@ -79,7 +80,7 @@ df = pd.read_excel(io="n=50\m=2\\n=50, m=2.xls", header=None)
 height = 153
 n50m2 = split_dataframe(df=df, height=height, width=width, n=80)
 
-df = pd.read_excel(io="n=50\m=4\\n=50, m=4.xls")
+df = pd.read_excel(io="n=50\m=4\\n=50, m=4.xls", header=None)
 height = 253
 n50m4 = split_dataframe(df=df, height=height, width=width, n=80)
 
@@ -164,40 +165,80 @@ n120m8_125_variable = split_dataframe(df=df, height=height, width=width, n=10)
 # Conversion of dataframes to .json
 
 for index in range(80):
-    to_json(df=n20m2[index], save_as=f"n20m2-{index+1}")
-    to_json(df=n20m4[index], save_as=f"n20m4-{index+1}")
-    to_json(df=n20m8[index], save_as=f"n20m8-{index+1}")
-    to_json(df=n50m2[index], save_as=f"n50m2-{index+1}")
-    to_json(df=n50m4[index], save_as=f"n50m4-{index+1}")
-    to_json(df=n50m8[index], save_as=f"n50m8-{index+1}")
-    to_json(df=n80m2[index], save_as=f"n80m2-{index+1}")
+    if index < 9:
+        to_json(df=n20m2[index], save_as=f"n20m2-0{index+1}")
+        to_json(df=n20m4[index], save_as=f"n20m4-0{index+1}")
+        to_json(df=n20m8[index], save_as=f"n20m8-0{index+1}")
+        to_json(df=n50m2[index], save_as=f"n50m2-0{index+1}")
+        to_json(df=n50m4[index], save_as=f"n50m4-0{index+1}")
+        to_json(df=n50m8[index], save_as=f"n50m8-0{index+1}")
+        to_json(df=n80m2[index], save_as=f"n80m2-0{index+1}")
+    else:
+        to_json(df=n20m2[index], save_as=f"n20m2-{index+1}")
+        to_json(df=n20m4[index], save_as=f"n20m4-{index+1}")
+        to_json(df=n20m8[index], save_as=f"n20m8-{index+1}")
+        to_json(df=n50m2[index], save_as=f"n50m2-{index+1}")
+        to_json(df=n50m4[index], save_as=f"n50m4-{index+1}")
+        to_json(df=n50m8[index], save_as=f"n50m8-{index+1}")
+        to_json(df=n80m2[index], save_as=f"n80m2-{index+1}")
 
 for index in range(40):
-    to_json(df=n80m4_constant[index], save_as=f"n80m4-{index+1}")
-    to_json(df=n80m4_variable[index], save_as=f"n80m4-{index+41}")
+    if index < 9:
+        to_json(df=n80m4_constant[index], save_as=f"n80m4-0{index+1}")
+        to_json(df=n80m4_variable[index], save_as=f"n80m4-{index+41}")
+    else:
+        to_json(df=n80m4_constant[index], save_as=f"n80m4-{index+1}")
+        to_json(df=n80m4_variable[index], save_as=f"n80m4-{index+41}")
 
 for index in range(20):
-    to_json(df=n80m8_25[index], save_as=f"n80m8-{index+1}")
-    to_json(df=n80m8_50[index], save_as=f"n80m8-{index+21}")
-    to_json(df=n80m8_100[index], save_as=f"n80m8-{index+41}")
-    to_json(df=n80m8_125[index], save_as=f"n80m8-{index+61}")
+    if index < 9:
+        to_json(df=n80m8_25[index], save_as=f"n80m8-0{index+1}")
+        to_json(df=n80m8_25[index], save_as=f"n80m8-{index+1}")
+        to_json(df=n80m8_50[index], save_as=f"n80m8-{index+21}")
+        to_json(df=n80m8_100[index], save_as=f"n80m8-{index+41}")
+        to_json(df=n80m8_125[index], save_as=f"n80m8-{index+61}")
+    else:
+        to_json(df=n80m8_25[index], save_as=f"n80m8-{index+1}")
+        to_json(df=n80m8_50[index], save_as=f"n80m8-{index+21}")
+        to_json(df=n80m8_100[index], save_as=f"n80m8-{index+41}")
+        to_json(df=n80m8_125[index], save_as=f"n80m8-{index+61}")
 
 for index in range(40):
-    to_json(df=n120m2_constant[index], save_as=f"n120m2-{index+1}")
-    to_json(df=n120m2_variable[index], save_as=f"n120m2-{index+41}")
+    if index < 9:
+        to_json(df=n120m2_constant[index], save_as=f"n120m2-0{index+1}")
+        to_json(df=n120m2_variable[index], save_as=f"n120m2-{index+41}")
+    else:
+        to_json(df=n120m2_constant[index], save_as=f"n120m2-{index+1}")
+        to_json(df=n120m2_variable[index], save_as=f"n120m2-{index+41}")
 
 for index in range(20):
-    to_json(df=n120m4_25[index], save_as=f"n120m4-{index+1}")
-    to_json(df=n120m4_50[index], save_as=f"n120m4-{index+21}")
-    to_json(df=n120m4_100[index], save_as=f"n120m4-{index+41}")
-    to_json(df=n120m4_125[index], save_as=f"n120m4-{index+61}")
+    if index < 9:
+        to_json(df=n120m4_25[index], save_as=f"n120m4-0{index+1}")
+        to_json(df=n120m4_50[index], save_as=f"n120m4-{index+21}")
+        to_json(df=n120m4_100[index], save_as=f"n120m4-{index+41}")
+        to_json(df=n120m4_125[index], save_as=f"n120m4-{index+61}")
+    else:
+        to_json(df=n120m4_25[index], save_as=f"n120m4-{index+1}")
+        to_json(df=n120m4_50[index], save_as=f"n120m4-{index+21}")
+        to_json(df=n120m4_100[index], save_as=f"n120m4-{index+41}")
+        to_json(df=n120m4_125[index], save_as=f"n120m4-{index+61}")
 
 for index in range(10):
-    to_json(df=n120m8_25_constant[index], save_as=f"n120m8-{index+1}")
-    to_json(df=n120m8_25_variable[index], save_as=f"n120m8-{index+11}")
-    to_json(df=n120m8_50_constant[index], save_as=f"n120m8-{index+21}")
-    to_json(df=n120m8_50_variable[index], save_as=f"n120m8-{index+31}")
-    to_json(df=n120m8_100_constant[index], save_as=f"n120m8-{index+41}")
-    to_json(df=n120m8_100_variable[index], save_as=f"n120m8-{index+51}")
-    to_json(df=n120m8_125_constant[index], save_as=f"n120m8-{index+61}")
-    to_json(df=n120m8_125_variable[index], save_as=f"n120m8-{index+71}")
+    if index < 9:
+        to_json(df=n120m8_25_constant[index], save_as=f"n120m8-0{index+1}")
+        to_json(df=n120m8_25_variable[index], save_as=f"n120m8-{index+11}")
+        to_json(df=n120m8_50_constant[index], save_as=f"n120m8-{index+21}")
+        to_json(df=n120m8_50_variable[index], save_as=f"n120m8-{index+31}")
+        to_json(df=n120m8_100_constant[index], save_as=f"n120m8-{index+41}")
+        to_json(df=n120m8_100_variable[index], save_as=f"n120m8-{index+51}")
+        to_json(df=n120m8_125_constant[index], save_as=f"n120m8-{index+61}")
+        to_json(df=n120m8_125_variable[index], save_as=f"n120m8-{index+71}")
+    else:
+        to_json(df=n120m8_25_constant[index], save_as=f"n120m8-{index+1}")
+        to_json(df=n120m8_25_variable[index], save_as=f"n120m8-{index+11}")
+        to_json(df=n120m8_50_constant[index], save_as=f"n120m8-{index+21}")
+        to_json(df=n120m8_50_variable[index], save_as=f"n120m8-{index+31}")
+        to_json(df=n120m8_100_constant[index], save_as=f"n120m8-{index+41}")
+        to_json(df=n120m8_100_variable[index], save_as=f"n120m8-{index+51}")
+        to_json(df=n120m8_125_constant[index], save_as=f"n120m8-{index+61}")
+        to_json(df=n120m8_125_variable[index], save_as=f"n120m8-{index+71}")
