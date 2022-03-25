@@ -1,6 +1,7 @@
 use clap::Parser;
 use itertools::iproduct;
 use rand::thread_rng;
+use serde_derive::Serialize;
 use std::{borrow::Cow, path::PathBuf};
 
 use crate::{
@@ -225,5 +226,67 @@ impl OptionsGrid {
             ..options
         })
         .collect()
+    }
+}
+
+#[derive(Clone, Serialize)]
+pub struct Params {
+    // Runs in steady state if true
+    pub steady_state: bool,
+
+    // Size of the population
+    pub pop_size: usize,
+
+    // Number of best individuals unconditionally proceeding to next generation
+    pub elitism: usize,
+
+    // Probability the best offspring is kept
+    pub keep_best: f32,
+
+    // Probability crossover is performed
+    pub xover_prob: f32,
+
+    // Crossover type to be used
+    pub xover_type: XTYPE,
+
+    // Construction heuristic used for initial population
+    pub construction: Construction,
+
+    // Probability an individual undergoes mutation
+    pub mutation_prob: f32,
+
+    // Mutation type to be used
+    pub mutation_type: MTYPE,
+
+    // How large portion of the jobs to be reversed in reversal mutation
+    pub reversal_percent: usize,
+}
+
+impl From<&Options> for Params {
+    fn from(options: &Options) -> Self {
+        Params {
+            steady_state: options.steady_state,
+            pop_size: options.pop_size,
+            elitism: options.elitism,
+            keep_best: options.keep_best,
+            xover_prob: options.xover_prob,
+            xover_type: match options.xover_type {
+                XTYPE::_SJ2OX => XTYPE::_SJ2OX,
+                XTYPE::_SB2OX => XTYPE::_SB2OX,
+                XTYPE::_BCBX => XTYPE::_BCBX,
+            },
+            construction: match options.construction {
+                Construction::_Random => Construction::_Random,
+                Construction::_MDDR(num) => Construction::_MDDR(num),
+            },
+            mutation_prob: options.mutation_prob,
+            mutation_type: match options.mutation_type {
+                MTYPE::_Shift => MTYPE::_Shift,
+                MTYPE::_Reverse => MTYPE::_Reverse,
+                MTYPE::_Swap => MTYPE::_Swap,
+                MTYPE::_Greedy => MTYPE::_Greedy,
+            },
+            reversal_percent: options.reversal_percent,
+        }
     }
 }

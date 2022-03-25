@@ -3,8 +3,9 @@ use crate::{common::makespan::Makespan, genetic_algorithm::entities::chromosome:
 use crate::common::best_insertion::find_best_insertion;
 
 use rand::Rng;
+use serde_derive::Serialize;
 
-#[derive(Clone)]
+#[derive(Clone, Serialize)]
 pub enum XTYPE {
     _SJ2OX,
     _SB2OX,

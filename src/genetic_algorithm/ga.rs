@@ -3,19 +3,17 @@ use crate::common::makespan::Makespan;
 use crate::genetic_algorithm::entities::options::Args;
 
 use super::entities::chromosome::Chromosome;
-use super::entities::options::{Options, OptionsGrid};
+use super::entities::options::{Options, OptionsGrid, Params};
 use super::operators::crossover::{Crossover, BCBX, SB2OX, SJ2OX, XTYPE};
 use super::operators::mutation::{self, Greedy, Mutation, Reverse, Swap, MTYPE, SHIFT};
 use super::params;
 
 use clap::StructOpt;
 use csv::Writer;
-use rand::prelude::ThreadRng;
-use rand::seq::SliceRandom;
-use rand::Rng;
+use lexical_sort::natural_lexical_cmp;
+use rand::{prelude::ThreadRng, seq::SliceRandom, Rng};
 use std::borrow::Cow;
-use std::error::Error;
-use std::{fs, path::PathBuf};
+use std::{error::Error, fs, path::PathBuf};
 
 pub struct GA {
     pub instance: Instance,
@@ -184,9 +182,10 @@ impl GA {
 }
 
 pub fn main() {
-    // Parse arguments (run steady state, run all problems, test all parameters)
+    // Parse arguments (run steady state (-s), run all problems (-r), test all parameters (-a))
     let args = Args::parse();
 
+    // Based on arguments, we either run all problems or a single one
     if args.run_all {
         run_all(&args);
     } else {
@@ -194,15 +193,33 @@ pub fn main() {
     }
 }
 
+// Run all problems for all parameter combinations
 pub fn run_all(args: &Args) {
-    // Get problem files, either the default, or all problem files
+    // Get vector of all problem files (twice as we have to consume them)
     let problem_files = get_problem_files(true);
     let problem_files_consumed = get_problem_files(true);
+
+    // Make sure problem files are in same order
+    assert_eq!(
+        &problem_files, &problem_files_consumed,
+        "Order of problem files does not equal"
+    );
+
     let num_problems = problem_files.len();
 
+    // Initiate 2D vector of results: results[problem_file][parameter_combination]
     let mut results: Vec<Vec<String>> = Vec::with_capacity(problem_files.len());
 
+    // Iterate all problem files
     for (i, problem_file) in problem_files.into_iter().enumerate() {
+        println!(
+            "Running instance {} ({} / {})",
+            &problem_files_consumed[i].display(),
+            i + 1,
+            num_problems
+        );
+
+        // Get default options to be used in constructing OptionsGrid
         let options = Options {
             problem_file: Cow::Owned(problem_file),
             run_all: args.run_all,
@@ -211,11 +228,20 @@ pub fn run_all(args: &Args) {
             ..Options::default()
         };
 
+        // Get vector of all option combinations possible
         let all_options = OptionsGrid::default().get_options(options);
-        let row_len = all_options.len() + 1;
 
-        // If we test all parameter combinations, store result from each in vector
-        let mut row = Vec::with_capacity(row_len);
+        if i == 0 {
+            write_params_to_file(
+                String::from(params::SOLUTION_FOLDER) + "/params.csv",
+                &all_options,
+            )
+            .unwrap();
+        }
+
+        // Store filename and result from each parameter combination in vector
+        let mut row = Vec::with_capacity(all_options.len() + 1);
+
         row.push(String::from(
             problem_files_consumed.get(i).unwrap().to_str().unwrap(),
         ));
@@ -225,11 +251,15 @@ pub fn run_all(args: &Args) {
         });
 
         results.push(row);
-
-        println!("Problem {} / {}", i + 1, num_problems);
     }
 
-    write_results(&PathBuf::from("solutions/results.csv"), &results).unwrap();
+    results.sort_by(|a, b| natural_lexical_cmp(&a[0], &b[0]));
+
+    write_results(
+        String::from(params::SOLUTION_FOLDER) + "/results.csv",
+        &results,
+    )
+    .unwrap();
     println!("All problems run, results are stored in `solutions/results.csv`");
 }
 
@@ -291,12 +321,26 @@ fn get_problem_files(run_all: bool) -> Vec<PathBuf> {
     }
 }
 
-fn write_results(filename: &PathBuf, records: &Vec<Vec<String>>) -> Result<(), Box<dyn Error>> {
+fn write_results(filename: String, records: &Vec<Vec<String>>) -> Result<(), Box<dyn Error>> {
     let mut wtr = Writer::from_path(filename)?;
 
     for record in records {
         wtr.write_record(record)?;
     }
+
+    wtr.flush()?;
+    Ok(())
+}
+
+fn write_params_to_file(
+    filename: String,
+    all_options: &Vec<Options>,
+) -> Result<(), Box<dyn Error>> {
+    let mut wtr = Writer::from_path(filename).unwrap();
+    all_options
+        .iter()
+        .map(|o| Params::from(o))
+        .for_each(|p| wtr.serialize(p).unwrap());
 
     wtr.flush()?;
     Ok(())

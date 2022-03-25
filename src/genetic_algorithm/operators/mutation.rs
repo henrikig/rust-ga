@@ -4,8 +4,9 @@ use crate::{
 };
 
 use rand::Rng;
+use serde_derive::Serialize;
 
-#[derive(Clone)]
+#[derive(Clone, Serialize)]
 pub enum MTYPE {
     _Shift,
     _Reverse,

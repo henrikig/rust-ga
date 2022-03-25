@@ -15,3 +15,6 @@ pub const CONSTRUCTION: Construction = Construction::_MDDR(20);
 pub const MUTATION_PROB: f32 = 0.05;
 pub const MTYPE: MTYPE = MTYPE::_Greedy;
 pub const REVERSAL_PERCENT: usize = 10;
+
+// Solution folder for parameter grid search
+pub const SOLUTION_FOLDER: &str = "./solutions/";
