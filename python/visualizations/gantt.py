@@ -88,10 +88,6 @@ def natural_keys(text):
 
 
 if __name__ == "__main__":
-    import os
-
-    print(os.getcwd())
-
     if len(sys.argv) > 1:
         instance = sys.argv[1]
         FILE = "../solutions/ga/" + instance
