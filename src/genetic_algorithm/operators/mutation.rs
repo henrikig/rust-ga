@@ -34,6 +34,7 @@ impl Mutation for SHIFT {
         let job = c.jobs.remove(from);
         // Insert it into new place
         c.jobs.insert(to, job);
+        c.updated = true;
     }
 }
 
@@ -45,6 +46,7 @@ impl Mutation for Reverse {
         let start = rand::thread_rng().gen_range(0..c.jobs.len() - size);
 
         c.jobs[start..start + size].reverse();
+        c.updated = true;
     }
 }
 
@@ -60,6 +62,7 @@ impl Mutation for Swap {
         }
 
         c.jobs.swap(j1, j2);
+        c.updated = true;
     }
 }
 
@@ -72,6 +75,7 @@ impl Mutation for Greedy {
         let new_jobs = find_best_insertion(c.jobs.to_vec(), &[job], m, false);
 
         c.jobs = new_jobs;
+        c.updated = true;
     }
 }
 

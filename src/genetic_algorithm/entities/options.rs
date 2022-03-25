@@ -142,7 +142,12 @@ impl Options {
             population.push(Chromosome::new(&instance));
         }
 
-        let makespan = Makespan::new(&instance);
+        let mut makespan = Makespan::new(&instance);
+
+        // Calculate makespan for initial population
+        population
+            .iter_mut()
+            .for_each(|c| c.makespan(&mut makespan));
 
         let rng = thread_rng();
 

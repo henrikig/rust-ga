@@ -275,6 +275,7 @@ mod xover_test {
         Chromosome {
             jobs,
             makespan: None,
+            updated: true,
         }
     }
 }
