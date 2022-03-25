@@ -32,7 +32,15 @@ impl Default for GA {
 
 impl GA {
     pub fn run(&mut self) {
+        let mut non_improvement_counter: usize = 0;
         for iteration in 0..self.options.iterations {
+            // Replace the chromosomes with the worst fit if there has been no improvement in the best fit for y iterations
+            if non_improvement_counter >= self.options.non_improving_iterations {
+                for index in self.options.allways_keep..self.options.pop_size {
+                    self.population[index] = Chromosome::new(&self.instance);
+                }
+            }
+
             // calculate makespan
             self.makespan();
 
@@ -75,8 +83,16 @@ impl GA {
                 }
             });
 
-            // Elitism
+            // Check if any of the new chromosomes are improvements to the current best
             self.population.sort();
+            self.mating_pool.sort();
+            if self.population.first() < self.mating_pool.first() {
+                non_improvement_counter += 1;
+            } else {
+                non_improvement_counter = 0;
+            }
+
+            // Elitism
             for c in self.population.iter().take(self.options.elitism) {
                 self.mating_pool.push(Chromosome::from(c.jobs.to_vec()));
             }
@@ -139,13 +155,14 @@ impl GA {
             makespan(&mut c1);
             makespan(&mut c2);
 
+            // If non of the new chromosomes are better than the current best, the count increases
+            if c1 < *self.population.first().unwrap() || c2 < *self.population.first().unwrap() {
+                non_improvement_counter = 0;
+            } else {
+                non_improvement_counter += 1;
+            }
             // Check if individuals are better than current worst & not already in population
             let mut replace = |c: Chromosome| {
-                if c < *self.population.first().unwrap() {
-                    non_improvement_counter = 0;
-                } else {
-                    non_improvement_counter += 1;
-                }
                 if &c < self.population.iter().last().unwrap() && !self.population.contains(&c) {
                     // Replace if so (inserting into correct position)
                     self.population.remove(self.population.len() - 1);
