@@ -7,7 +7,7 @@ use std::{
 
 use crate::common::{instance::Instance, makespan::Makespan};
 
-#[derive(Debug, Eq)]
+#[derive(Debug, Eq, Clone)]
 pub struct Chromosome {
     pub jobs: Vec<u32>,
     pub makespan: Option<u32>,

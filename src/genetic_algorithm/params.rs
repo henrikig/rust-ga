@@ -19,5 +19,9 @@ pub const MUTATION_PROB: f32 = 0.05;
 pub const MTYPE: MTYPE = MTYPE::Greedy;
 pub const REVERSAL_PERCENT: usize = 10;
 
+// CROWDING
+pub const PERFORM_CROWDING: bool = true;
+pub const CROWDING_SCALE: f64 = 0.5;
+
 // Solution folder for parameter grid search
 pub const SOLUTION_FOLDER: &str = "./solutions/";

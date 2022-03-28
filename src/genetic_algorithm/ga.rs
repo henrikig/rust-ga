@@ -5,6 +5,7 @@ use crate::genetic_algorithm::entities::options::Args;
 use super::entities::chromosome::Chromosome;
 use super::entities::options::{Options, OptionsGrid, Params};
 use super::operators::crossover::{Crossover, BCBX, SB2OX, SJ2OX, XTYPE};
+use super::operators::crowding;
 use super::operators::local_search::ls_ig;
 use super::operators::mutation::{self, Greedy, Mutation, Reverse, Swap, MTYPE, SHIFT};
 use super::params;
@@ -53,17 +54,28 @@ impl GA {
             for p in self.mating_pool.chunks_exact_mut(2) {
                 if self.rng.gen::<f32>() < self.options.xover_prob {
                     // Crossover
-                    let (c1, c2) = match self.options.xover_type {
+                    let (mut c1, mut c2) = match self.options.xover_type {
                         XTYPE::SJ2OX => SJ2OX::apply(&p[0], &p[1], None, &mut self.makespan),
                         XTYPE::SB2OX => SB2OX::apply(&p[0], &p[1], None, &mut self.makespan),
                         XTYPE::BCBX => BCBX::apply(&p[0], &p[1], None, &mut self.makespan),
                     };
 
-                    for (i, parent) in p.iter_mut().enumerate() {
-                        if i == 0 {
-                            *parent = Chromosome::from(c1.jobs.to_vec());
-                        } else {
-                            *parent = Chromosome::from(c2.jobs.to_vec());
+                    if params::PERFORM_CROWDING {
+                        c1.makespan(&mut self.makespan);
+                        c2.makespan(&mut self.makespan);
+
+                        let [winner1, winner2] =
+                            crowding::survivor_selection(&[c1, c2], p, params::CROWDING_SCALE);
+
+                        p[0] = winner1;
+                        p[1] = winner2;
+                    } else {
+                        for (i, parent) in p.iter_mut().enumerate() {
+                            if i == 0 {
+                                *parent = Chromosome::from(c1.jobs.to_vec());
+                            } else {
+                                *parent = Chromosome::from(c2.jobs.to_vec());
+                            }
                         }
                     }
                 }
@@ -183,7 +195,14 @@ impl GA {
             }
             // Check if individuals are better than current worst & not already in population
             let mut replace = |c: Chromosome| {
-                if &c < self.population.iter().last().unwrap() && !self.population.contains(&c) {
+                if &c < self.population.iter().last().unwrap()
+                    && !self
+                        .population
+                        .iter()
+                        .map(|o| &o.jobs)
+                        .collect::<Vec<&Vec<u32>>>()
+                        .contains(&&c.jobs)
+                {
                     // Replace if so (inserting into correct position)
                     self.population.remove(self.population.len() - 1);
                     let idx = self.population.binary_search(&c).unwrap_or_else(|x| x);
