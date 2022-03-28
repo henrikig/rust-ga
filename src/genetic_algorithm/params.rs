@@ -7,11 +7,12 @@ pub const POPULATION_SIZE: usize = 100;
 pub const ITERATIONS: usize = 500;
 pub const ELITISM: usize = 2;
 pub const KEEP_BEST: f32 = 0.8;
-pub const NON_IMPROVING_ITERATIONS: usize = 50; // use 50, 100, 150 (because of implementation)
-pub const GENOSIDE_SIZE: usize = 80; // Has to be smaller than the population_size
 pub const XOVER_PROB: f32 = 0.5;
 pub const XOVER: XTYPE = XTYPE::_SJ2OX;
 pub const CONSTRUCTION: Construction = Construction::_MDDR(20);
+pub const NON_IMPROVING_ITERATIONS: usize = 50; // use 50, 100, 150 (because of implementation)
+pub const ALLWAYS_KEEP: usize = 20; // Has to be smaller than the population_size
+pub const APPROX_CALC: usize = 300;
 
 // MUTATION
 pub const MUTATION_PROB: f32 = 0.05;

@@ -40,15 +40,23 @@ use crate::common::{
 
 // All schedules are tuples of the schedule and makespan of the schedule
 
-pub fn iterated_greedy(makespan: &mut Makespan) -> (Vec<u32>, u32) {
-    let mut current_schedule: (Vec<u32>, u32) = neh(makespan);
+pub fn iterated_greedy(
+    makespan: &mut Makespan,
+    schedule: Option<(Vec<u32>, u32)>,
+    approx_calc: u32,
+) -> (Vec<u32>, u32) {
+    let mut current_schedule: (Vec<u32>, u32);
+    match schedule {
+        Some(s) => current_schedule = s,
+        None => current_schedule = neh(makespan),
+    }
     current_schedule = iterative_improvement_insertion(makespan, &current_schedule.0);
     let mut best_schedule: (Vec<u32>, u32) = (current_schedule.0.clone(), current_schedule.1);
     let t: f64 = 0.2; // Ruiz used 0, 0.1, 0.2, 0.3, 0.4, and 0.5
     let temp: f64 = find_temp(&makespan, t);
     let mut rng = rand::thread_rng();
     let d = 3;
-    while makespan.count < 5000 {
+    while makespan.count < approx_calc {
         let mut schedule_permutation = current_schedule.clone();
         let mut deleted_jobs: Vec<u32> = Vec::with_capacity(makespan.instance.jobs as usize);
         for _ in 0..d {
@@ -72,10 +80,6 @@ pub fn iterated_greedy(makespan: &mut Makespan) -> (Vec<u32>, u32) {
         {
             current_schedule = (schedule_permutation.0.clone(), schedule_permutation.1);
         }
-        println!(
-            "Makespan count: {}, current_schedule makespan: {}, best_schedule makespan: {}",
-            makespan.count, current_schedule.1, best_schedule.1
-        );
     }
     return best_schedule;
 }
@@ -169,7 +173,7 @@ mod ig_tests {
         let i: Instance = parse("instances\\ruiz\\json\\n20m2-1.json").unwrap();
         let mut m: Makespan = Makespan::new(&i);
 
-        let ig = iterated_greedy(&mut m);
+        let ig = iterated_greedy(&mut m, None, 5000);
 
         let schedule: Vec<u32> = (0..20).collect();
         let schedule_makespan = m.makespan(&schedule).0;

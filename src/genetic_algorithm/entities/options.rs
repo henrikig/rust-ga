@@ -34,6 +34,10 @@ pub struct Args {
     /// Steady state generational scheme
     #[clap(short, long)]
     pub steady_state: bool,
+
+    /// Local search after mutation
+    #[clap(short, long)]
+    pub local_search: bool,
 }
 
 #[derive(Clone)]
@@ -49,6 +53,9 @@ pub struct Options {
 
     // Runs in steady state if true
     pub steady_state: bool,
+
+    // Local search after mutations
+    pub local_search: bool,
 
     // Size of the population
     pub pop_size: usize,
@@ -86,6 +93,9 @@ pub struct Options {
     // Chromosomes to keep in case of a genocide
     // Must be smaller than pop_size
     pub allways_keep: usize,
+
+    // Approximate makespan calculations in each local search
+    pub approx_calc: usize,
 }
 
 impl Default for Options {
@@ -95,6 +105,7 @@ impl Default for Options {
             run_all: false,
             all_params: false,
             steady_state: false,
+            local_search: true,
             pop_size: params::POPULATION_SIZE,
             iterations: params::ITERATIONS,
             elitism: params::ELITISM,
@@ -106,7 +117,8 @@ impl Default for Options {
             mutation_type: params::MTYPE,
             reversal_percent: params::REVERSAL_PERCENT,
             non_improving_iterations: params::NON_IMPROVING_ITERATIONS,
-            allways_keep: params::GENOSIDE_SIZE,
+            allways_keep: params::ALLWAYS_KEEP,
+            approx_calc: params::APPROX_CALC,
         }
     }
 }
@@ -189,6 +201,8 @@ pub struct OptionsGrid {
     pub non_improving_iterations: Vec<usize>,
 
     pub allways_keep: Vec<usize>,
+
+    pub approx_calc: Vec<usize>,
 }
 
 // Set the default values
@@ -209,7 +223,8 @@ impl Default for OptionsGrid {
             mutation_type: vec![MTYPE::_Greedy, MTYPE::_Shift, MTYPE::_Swap, MTYPE::_Reverse],
             reversal_percent: vec![10],
             non_improving_iterations: vec![50, 100, 150],
-            allways_keep: vec![40],
+            allways_keep: vec![20, 40],
+            approx_calc: vec![100, 200, 300],
         }
     }
 }
@@ -227,7 +242,8 @@ impl OptionsGrid {
             self.mutation_type,
             self.reversal_percent,
             self.non_improving_iterations,
-            self.allways_keep
+            self.allways_keep,
+            self.approx_calc
         )
         .map(|opt| Options {
             pop_size: opt.0,
@@ -241,6 +257,7 @@ impl OptionsGrid {
             reversal_percent: opt.8,
             non_improving_iterations: opt.9,
             allways_keep: opt.10,
+            approx_calc: opt.11,
             problem_file: Cow::Owned(options.problem_file.as_ref().clone()),
             ..options
         })
@@ -279,6 +296,12 @@ pub struct Params {
 
     // How large portion of the jobs to be reversed in reversal mutation
     pub reversal_percent: usize,
+
+    pub non_improving_iterations: usize,
+
+    pub allways_keep: usize,
+
+    pub approx_calc: usize,
 }
 
 impl From<&Options> for Params {
@@ -306,6 +329,9 @@ impl From<&Options> for Params {
                 MTYPE::_Greedy => MTYPE::_Greedy,
             },
             reversal_percent: options.reversal_percent,
+            non_improving_iterations: options.non_improving_iterations,
+            allways_keep: options.allways_keep,
+            approx_calc: options.approx_calc,
         }
     }
 }

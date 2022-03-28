@@ -5,6 +5,7 @@ use crate::genetic_algorithm::entities::options::Args;
 use super::entities::chromosome::Chromosome;
 use super::entities::options::{Options, OptionsGrid, Params};
 use super::operators::crossover::{Crossover, BCBX, SB2OX, SJ2OX, XTYPE};
+use super::operators::local_search::ls_ig;
 use super::operators::mutation::{self, Greedy, Mutation, Reverse, Swap, MTYPE, SHIFT};
 use super::params;
 
@@ -83,6 +84,13 @@ impl GA {
                 }
             });
 
+            // Local search
+            if self.options.local_search {
+                self.mating_pool
+                    .iter_mut()
+                    .for_each(|c| ls_ig(c, &mut self.makespan, self.options.approx_calc as u32));
+            }
+
             // Check if any of the new chromosomes are improvements to the current best
             self.population.sort();
             self.mating_pool.sort();
@@ -150,6 +158,12 @@ impl GA {
             };
             mutate(&mut c1);
             mutate(&mut c2);
+
+            // Local search
+            if self.options.local_search {
+                ls_ig(&mut c1, &mut self.makespan, self.options.approx_calc as u32);
+                ls_ig(&mut c2, &mut self.makespan, self.options.approx_calc as u32)
+            }
 
             let mut makespan = |c: &mut Chromosome| c.makespan(&mut self.makespan);
             makespan(&mut c1);
