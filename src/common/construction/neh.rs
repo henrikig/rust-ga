@@ -64,9 +64,9 @@ mod test {
     #[test]
     fn sort_jobs_test() {
         let path = match env::consts::OS {
-            "windows" => "instances\\ruiz\\json\\n20m2-1.json",
-            "macos" => "./instances/ruiz/json/n20m2-1.json",
-            _ => "./instances/ruiz/json/n20m2-1.json",
+            "windows" => "instances\\ruiz\\json\\n20m2-01.json",
+            "macos" => "./instances/ruiz/json/n20m2-01.json",
+            _ => "./instances/ruiz/json/n20m2-1.0json",
         };
         let i: Instance = parse(path).unwrap();
         let m: Makespan = Makespan {
@@ -80,9 +80,9 @@ mod test {
     #[test]
     fn insert_job_test() {
         let path = match env::consts::OS {
-            "windows" => "instances\\ruiz\\json\\n20m2-1.json",
-            "macos" => "./instances/ruiz/json/n20m2-1.json",
-            _ => "./instances/ruiz/json/n20m2-1.json",
+            "windows" => "instances\\ruiz\\json\\n20m2-01.json",
+            "macos" => "./instances/ruiz/json/n20m2-01.json",
+            _ => "./instances/ruiz/json/n20m2-01.json",
         };
         let i: Instance = parse(path).unwrap();
         let mut m: Makespan = Makespan {
@@ -94,33 +94,42 @@ mod test {
         let _new_schedule = insert_job(&mut m, &schedule, &order[5]);
     }
 
+    fn neh_from_file(path: &str) -> u32 {
+        let i: Instance = parse(path).unwrap();
+        let mut m = Makespan::new(&i);
+
+        let schedule = neh(&mut m);
+        let (make, _) = m.makespan(&schedule.0);
+        make
+    }
+
     #[test]
     fn neh_test_instance1() {
-        let makespan = neh_from_file("./instances/ruiz/json/n20m2-1.json");
+        let makespan = neh_from_file("./instances/ruiz/json/n20m2-01.json");
         assert_eq!(makespan, 675);
     }
 
     #[test]
     fn neh_test_instance2() {
-        let makespan = neh_from_file("./instances/ruiz/json/n20m2-2.json");
+        let makespan = neh_from_file("./instances/ruiz/json/n20m2-02.json");
         assert_eq!(makespan, 673);
     }
 
     #[test]
     fn neh_test_instance3() {
-        let makespan = neh_from_file("./instances/ruiz/json/n20m2-3.json");
+        let makespan = neh_from_file("./instances/ruiz/json/n20m2-03.json");
         assert_eq!(makespan, 590);
     }
 
     #[test]
     fn neh_test_instance4() {
-        let makespan = neh_from_file("./instances/ruiz/json/n20m2-4.json");
+        let makespan = neh_from_file("./instances/ruiz/json/n20m2-04.json");
         assert_eq!(makespan, 598);
     }
 
     #[test]
     fn schedule() {
-        let i: Instance = parse("./instances/ruiz/json/n20m2-1.json").unwrap();
+        let i: Instance = parse("./instances/ruiz/json/n20m2-01.json").unwrap();
         let jobs = (0..i.jobs).collect();
         let mut m = Makespan::new(&i);
 
@@ -129,14 +138,5 @@ mod test {
         for stage in mc {
             println!("{:?}", stage);
         }
-    }
-
-    fn neh_from_file(path: &str) -> u32 {
-        let i: Instance = parse(path).unwrap();
-        let mut m = Makespan::new(&i);
-
-        let schedule = neh(&mut m);
-        let (make, _) = m.makespan(&schedule.0);
-        make
     }
 }
