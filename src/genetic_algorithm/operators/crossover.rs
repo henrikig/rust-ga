@@ -7,9 +7,9 @@ use serde_derive::Serialize;
 
 #[derive(Clone, Serialize)]
 pub enum XTYPE {
-    _SJ2OX,
-    _SB2OX,
-    _BCBX,
+    SJ2OX,
+    SB2OX,
+    BCBX,
 }
 
 pub trait Crossover {
@@ -275,6 +275,7 @@ mod xover_test {
         Chromosome {
             jobs,
             makespan: None,
+            updated: true,
         }
     }
 }

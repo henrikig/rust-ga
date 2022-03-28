@@ -11,6 +11,7 @@ use crate::common::{instance::Instance, makespan::Makespan};
 pub struct Chromosome {
     pub jobs: Vec<u32>,
     pub makespan: Option<u32>,
+    pub updated: bool,
 }
 
 impl Chromosome {
@@ -21,12 +22,14 @@ impl Chromosome {
         Chromosome {
             jobs,
             makespan: None,
+            updated: true,
         }
     }
 
     pub fn makespan(&mut self, mks: &mut Makespan) {
         let (m, _) = mks.makespan(&self.jobs);
         self.makespan = Some(m);
+        self.updated = false;
     }
 }
 
@@ -53,6 +56,7 @@ impl From<Vec<u32>> for Chromosome {
         Chromosome {
             jobs: jobs.to_vec(),
             makespan: None,
+            updated: true,
         }
     }
 }

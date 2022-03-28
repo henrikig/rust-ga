@@ -42,9 +42,6 @@ impl GA {
                 }
             }
 
-            // calculate makespan
-            self.makespan();
-
             // Selection - fill up mating pool to be used for next generation
             self.mating_pool.clear();
 
@@ -57,9 +54,9 @@ impl GA {
                 if self.rng.gen::<f32>() < self.options.xover_prob {
                     // Crossover
                     let (c1, c2) = match self.options.xover_type {
-                        XTYPE::_SJ2OX => SJ2OX::apply(&p[0], &p[1], None, &mut self.makespan),
-                        XTYPE::_SB2OX => SB2OX::apply(&p[0], &p[1], None, &mut self.makespan),
-                        XTYPE::_BCBX => BCBX::apply(&p[0], &p[1], None, &mut self.makespan),
+                        XTYPE::SJ2OX => SJ2OX::apply(&p[0], &p[1], None, &mut self.makespan),
+                        XTYPE::SB2OX => SB2OX::apply(&p[0], &p[1], None, &mut self.makespan),
+                        XTYPE::BCBX => BCBX::apply(&p[0], &p[1], None, &mut self.makespan),
                     };
 
                     for (i, parent) in p.iter_mut().enumerate() {
@@ -76,10 +73,10 @@ impl GA {
             self.mating_pool.iter_mut().for_each(|c| {
                 if self.rng.gen::<f32>() < self.options.mutation_prob {
                     match self.options.mutation_type {
-                        MTYPE::_Shift => SHIFT::apply(c, &mut self.makespan),
-                        MTYPE::_Reverse => Reverse::apply(c, &mut self.makespan),
-                        MTYPE::_Swap => Swap::apply(c, &mut self.makespan),
-                        MTYPE::_Greedy => Greedy::apply(c, &mut self.makespan),
+                        MTYPE::Shift => SHIFT::apply(c, &mut self.makespan),
+                        MTYPE::Reverse => Reverse::apply(c, &mut self.makespan),
+                        MTYPE::Swap => Swap::apply(c, &mut self.makespan),
+                        MTYPE::Greedy => Greedy::apply(c, &mut self.makespan),
                     }
                 }
             });
@@ -92,9 +89,13 @@ impl GA {
             }
 
             // Check if any of the new chromosomes are improvements to the current best
+            // Sort population for elitism
             self.population.sort();
-            self.mating_pool.sort();
-            if self.population.first() < self.mating_pool.first() {
+            // Calculate makespan for new individuals in mating pool
+            self.makespan();
+
+            // Check if any of the new chromosomes are improvements to the current best
+            if self.population.first().unwrap() < self.mating_pool.iter().min().unwrap() {
                 non_improvement_counter += 1;
             } else {
                 non_improvement_counter = 0;
@@ -102,7 +103,10 @@ impl GA {
 
             // Elitism
             for c in self.population.iter().take(self.options.elitism) {
-                self.mating_pool.push(Chromosome::from(c.jobs.to_vec()));
+                let mut elite = Chromosome::from(c.jobs.to_vec());
+                elite.makespan = c.makespan;
+                elite.updated = false;
+                self.mating_pool.push(elite);
             }
 
             if iteration % 1000 == 0 {
@@ -111,15 +115,17 @@ impl GA {
 
             self.population.clear();
 
-            self.mating_pool
-                .iter()
-                .for_each(|c| self.population.push(Chromosome::from(c.jobs.to_vec())));
+            self.mating_pool.iter().for_each(|c| {
+                let mut new_c = Chromosome::from(c.jobs.to_vec());
+                new_c.makespan = c.makespan;
+                new_c.updated = false;
+                self.population.push(new_c);
+            })
         }
     }
 
     pub fn run_steady_state(&mut self) {
         // Calculate makespan for all individuals in population
-        self.makespan();
         self.population.sort();
         let mut non_improvement_counter: usize = 0;
 
@@ -128,7 +134,9 @@ impl GA {
             // Replace the chromosomes with the worst fit if there has been no improvement in the best fit for y iterations
             if non_improvement_counter >= self.options.non_improving_iterations {
                 for index in self.options.allways_keep..self.options.pop_size {
-                    self.population[index] = Chromosome::new(&self.instance);
+                    let mut new_c = Chromosome::new(&self.instance);
+                    new_c.makespan(&mut self.makespan);
+                    self.population[index] = new_c;
                 }
             }
 
@@ -138,21 +146,19 @@ impl GA {
 
             // Crossover
             let (mut c1, mut c2) = match self.options.xover_type {
-                XTYPE::_SJ2OX => SJ2OX::apply(&p1, &p2, None, &mut self.makespan),
-                XTYPE::_SB2OX => SB2OX::apply(&p1, &p2, None, &mut self.makespan),
-                XTYPE::_BCBX => BCBX::apply(&p1, &p2, None, &mut self.makespan),
+                XTYPE::SJ2OX => SJ2OX::apply(&p1, &p2, None, &mut self.makespan),
+                XTYPE::SB2OX => SB2OX::apply(&p1, &p2, None, &mut self.makespan),
+                XTYPE::BCBX => BCBX::apply(&p1, &p2, None, &mut self.makespan),
             };
 
             // Mutate
             let mut mutate = |c| {
                 if self.rng.gen::<f32>() < self.options.mutation_prob {
                     match self.options.mutation_type {
-                        mutation::MTYPE::_Shift => mutation::SHIFT::apply(c, &mut self.makespan),
-                        mutation::MTYPE::_Reverse => {
-                            mutation::Reverse::apply(c, &mut self.makespan)
-                        }
-                        mutation::MTYPE::_Swap => mutation::Swap::apply(c, &mut self.makespan),
-                        mutation::MTYPE::_Greedy => mutation::Greedy::apply(c, &mut self.makespan),
+                        mutation::MTYPE::Shift => mutation::SHIFT::apply(c, &mut self.makespan),
+                        mutation::MTYPE::Reverse => mutation::Reverse::apply(c, &mut self.makespan),
+                        mutation::MTYPE::Swap => mutation::Swap::apply(c, &mut self.makespan),
+                        mutation::MTYPE::Greedy => mutation::Greedy::apply(c, &mut self.makespan),
                     }
                 }
             };
@@ -194,8 +200,9 @@ impl GA {
     }
 
     pub fn makespan(&mut self) {
-        self.population
+        self.mating_pool
             .iter_mut()
+            .filter(|c| c.updated)
             .for_each(|c| c.makespan(&mut self.makespan));
     }
 
@@ -212,6 +219,7 @@ impl GA {
         // Create a new chromosome from the tournament winner
         let mut winner_clone = Chromosome::from(winner.jobs.to_vec());
         winner_clone.makespan = winner.makespan;
+        winner_clone.updated = false;
         winner_clone
     }
 
