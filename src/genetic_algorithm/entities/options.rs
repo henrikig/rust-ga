@@ -105,7 +105,7 @@ impl Default for Options {
             run_all: false,
             all_params: false,
             steady_state: false,
-            local_search: true,
+            local_search: params::LOCAL_SEARCH,
             pop_size: params::POPULATION_SIZE,
             iterations: params::ITERATIONS,
             elitism: params::ELITISM,
@@ -270,6 +270,7 @@ impl OptionsGrid {
     }
 }
 
+// Helper struct which is written to file when all problem files are run
 #[derive(Clone, Serialize)]
 pub struct Params {
     // Runs in steady state if true

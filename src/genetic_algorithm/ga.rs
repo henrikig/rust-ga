@@ -193,24 +193,54 @@ impl GA {
             } else {
                 non_improvement_counter += 1;
             }
-            // Check if individuals are better than current worst & not already in population
-            let mut replace = |c: Chromosome| {
-                if &c < self.population.iter().last().unwrap()
-                    && !self
-                        .population
-                        .iter()
-                        .map(|o| &o.jobs)
-                        .collect::<Vec<&Vec<u32>>>()
-                        .contains(&&c.jobs)
-                {
-                    // Replace if so (inserting into correct position)
-                    self.population.remove(self.population.len() - 1);
-                    let idx = self.population.binary_search(&c).unwrap_or_else(|x| x);
-                    self.population.insert(idx, c);
-                }
-            };
-            replace(c1);
-            replace(c2);
+
+            /*
+                REPLACEMENT
+                If crowding
+                    Find k nearest neighbours to c_i (by use of distance metric)
+                    Replace least fit individual of these k individuals with c_i
+                Else
+                    Replace c_i with least fit element in whole population
+            */
+            if params::PERFORM_CROWDING {
+                let mut replace = |c: Chromosome| {
+                    let replace_idx = crowding::k_nearest_replacement(
+                        &c,
+                        &self.population,
+                        params::K_NEAREST,
+                        params::CROWDING_SCALE,
+                    );
+                    match replace_idx {
+                        Some(idx) => {
+                            self.population.remove(idx);
+                            let idx = self.population.binary_search(&c).unwrap_or_else(|x| x);
+                            self.population.insert(idx, c);
+                        }
+                        None => (),
+                    }
+                };
+                replace(c1);
+                replace(c2);
+            } else {
+                // Check if individuals are better than current worst & not already in population
+                let mut replace = |c: Chromosome| {
+                    if &c < self.population.iter().last().unwrap()
+                        && !self
+                            .population
+                            .iter()
+                            .map(|o| &o.jobs)
+                            .collect::<Vec<&Vec<u32>>>()
+                            .contains(&&c.jobs)
+                    {
+                        // Replace if so (inserting into correct position)
+                        self.population.remove(self.population.len() - 1);
+                        let idx = self.population.binary_search(&c).unwrap_or_else(|x| x);
+                        self.population.insert(idx, c);
+                    }
+                };
+                replace(c1);
+                replace(c2);
+            }
 
             if iteration % 1000 == 0 {
                 self.generation_status(iteration);

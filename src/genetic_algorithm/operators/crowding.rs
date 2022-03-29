@@ -112,11 +112,49 @@ fn find_winner(parent: &Chromosome, child: &Chromosome, scale: f64) -> Chromosom
     }
 }
 
+// Returns index of parent to replace if child wins replacement competition, else None
+pub fn k_nearest_replacement(
+    c: &Chromosome,
+    pop: &[Chromosome],
+    k: usize,
+    scale: f64,
+) -> Option<usize> {
+    // Calculate distance from c to every individual in pop
+    //[(0, 17), (1, 14), ..., (N, 12)]
+    let mut distances = pop
+        .iter()
+        .map(|o| DeviationDistance::distance(c, o))
+        .enumerate()
+        .collect::<Vec<(usize, i32)>>();
+
+    distances.sort_by(|(_, d1), (_, d2)| d1.cmp(d2));
+
+    // Find k closest individuals
+    let k_nearest = &distances[0..k];
+
+    // Find least fit of the k closest individuals
+    let least_fit = k_nearest
+        .iter()
+        .max_by_key(|(idx, _)| pop.get(*idx).unwrap().makespan.unwrap())
+        .unwrap()
+        .0;
+
+    // Arrange tournament between c and individual
+    let winner = find_winner(&c, pop.get(least_fit).unwrap(), scale);
+
+    // If c wins, return index of least fit individual, else None
+    if &winner == c {
+        Some(least_fit)
+    } else {
+        None
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::genetic_algorithm::{
         entities::chromosome::Chromosome,
-        operators::crowding::{DeviationDistance, Distance, ExactMatch},
+        operators::crowding::{k_nearest_replacement, DeviationDistance, Distance, ExactMatch},
     };
 
     use super::survivor_selection;
@@ -187,5 +225,65 @@ mod test {
         c2.makespan = Some(5);
 
         assert_eq!(res, [c2, c1]);
+    }
+
+    #[test]
+    fn knn_replacement_k1() {
+        let mut p1 = Chromosome::from(vec![0, 1, 2, 3, 4, 5]);
+        let mut p2 = Chromosome::from(vec![0, 1, 3, 2, 4, 5]);
+        let mut p3 = Chromosome::from(vec![5, 4, 3, 2, 1, 0]);
+        let mut c = Chromosome::from(vec![4, 5, 3, 2, 1, 0]);
+
+        p1.makespan = Some(10);
+        p2.makespan = Some(12);
+        p3.makespan = Some(20);
+        c.makespan = Some(15);
+
+        let pop = vec![p1, p2, p3];
+
+        // Scale = 0 should imply deterministic crowding
+        let replacement_idx = k_nearest_replacement(&c, &pop, 1, 0.0_f64);
+
+        assert_eq!(replacement_idx, Some(2));
+    }
+
+    #[test]
+    fn knn_replacement_k2() {
+        let mut p1 = Chromosome::from(vec![0, 1, 2, 3, 4, 5]);
+        let mut p2 = Chromosome::from(vec![0, 1, 3, 2, 4, 5]);
+        let mut p3 = Chromosome::from(vec![5, 4, 3, 2, 1, 0]);
+        let mut c = Chromosome::from(vec![4, 5, 3, 2, 1, 0]);
+
+        p1.makespan = Some(20);
+        p2.makespan = Some(20);
+        p3.makespan = Some(10);
+        c.makespan = Some(15);
+
+        let pop = vec![p1, p2, p3];
+
+        // Scale = 0 should imply deterministic crowding
+        let replacement_idx = k_nearest_replacement(&c, &pop, 2, 0.0_f64);
+
+        assert_eq!(replacement_idx, Some(1));
+    }
+
+    #[test]
+    fn knn_no_replacement() {
+        let mut p1 = Chromosome::from(vec![0, 1, 2, 3, 4, 5]);
+        let mut p2 = Chromosome::from(vec![0, 1, 3, 2, 4, 5]);
+        let mut p3 = Chromosome::from(vec![5, 4, 3, 2, 1, 0]);
+        let mut c = Chromosome::from(vec![4, 5, 3, 2, 1, 0]);
+
+        p1.makespan = Some(20);
+        p2.makespan = Some(12);
+        p3.makespan = Some(10);
+        c.makespan = Some(15);
+
+        let pop = vec![p1, p2, p3];
+
+        // Scale = 0 should imply deterministic crowding
+        let replacement_idx = k_nearest_replacement(&c, &pop, 2, 0.0_f64);
+
+        assert_eq!(replacement_idx, None);
     }
 }
