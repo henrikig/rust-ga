@@ -15,6 +15,7 @@ use csv::Writer;
 use lexical_sort::natural_lexical_cmp;
 use rand::{prelude::ThreadRng, seq::SliceRandom, Rng};
 use std::borrow::Cow;
+use std::path::Path;
 use std::{error::Error, fs, path::PathBuf};
 
 pub struct GA {
@@ -38,7 +39,9 @@ impl GA {
         for iteration in 0..self.options.iterations {
             // Replace the chromosomes with the worst fit if there has been no improvement in the best fit for y iterations
             if non_improvement_counter >= self.options.non_improving_iterations {
-                for index in self.options.allways_keep..self.options.pop_size {
+                let always_keep =
+                    (self.population.len() as f64 * self.options.allways_keep) as usize;
+                for index in always_keep..self.options.pop_size {
                     self.population[index] = Chromosome::new(&self.instance);
                 }
             }
@@ -145,7 +148,9 @@ impl GA {
         for iteration in 0..self.options.iterations {
             // Replace the chromosomes with the worst fit if there has been no improvement in the best fit for y iterations
             if non_improvement_counter >= self.options.non_improving_iterations {
-                for index in self.options.allways_keep..self.options.pop_size {
+                let always_keep =
+                    (self.population.len() as f64 * self.options.allways_keep) as usize;
+                for index in always_keep..self.options.pop_size {
                     let mut new_c = Chromosome::new(&self.instance);
                     new_c.makespan(&mut self.makespan);
                     self.population[index] = new_c;
@@ -361,7 +366,10 @@ pub fn run_all(args: &Args) {
         &results,
     )
     .unwrap();
-    println!("All problems run, results are stored in `solutions/results.csv`");
+    println!(
+        "All problems run, results are stored in `{}`",
+        params::SOLUTION_FOLDER
+    );
 }
 
 pub fn run_one(args: &Args) {
@@ -437,6 +445,10 @@ fn write_params_to_file(
     filename: String,
     all_options: &Vec<Options>,
 ) -> Result<(), Box<dyn Error>> {
+    match Path::new(params::SOLUTION_FOLDER).is_dir() {
+        false => fs::create_dir_all(params::SOLUTION_FOLDER)?,
+        _ => (),
+    }
     let mut wtr = Writer::from_path(filename).unwrap();
     all_options
         .iter()

@@ -92,7 +92,7 @@ pub struct Options {
 
     // Chromosomes to keep in case of a genocide
     // Must be smaller than pop_size
-    pub allways_keep: usize,
+    pub allways_keep: f64,
 
     // Approximate makespan calculations in each local search
     pub approx_calc: usize,
@@ -205,7 +205,7 @@ pub struct OptionsGrid {
 
     pub non_improving_iterations: Vec<usize>,
 
-    pub allways_keep: Vec<usize>,
+    pub allways_keep: Vec<f64>,
 
     pub approx_calc: Vec<usize>,
 }
@@ -214,22 +214,26 @@ pub struct OptionsGrid {
 impl Default for OptionsGrid {
     fn default() -> OptionsGrid {
         OptionsGrid {
-            pop_sizes: vec![50, 100],
+            pop_sizes: vec![50, 75, 100, 150, 200, 400],
             elitism: vec![2],
-            keep_best: vec![0.8, 1.0],
-            xover_prob: vec![0.2, 0.4],
-            xover_type: vec![XTYPE::SJ2OX, XTYPE::SB2OX, XTYPE::BCBX],
-            construction: vec![
-                // Construction::_MDDR(1.0),
-                Construction::MDDR(0.5),
-                Construction::Random,
+            keep_best: vec![0.8],
+            xover_prob: vec![0.5],
+            xover_type: vec![
+                XTYPE::BCBX, // XTYPE::SB2OX, XTYPE::SJ2OX
             ],
-            mutation_prob: vec![0.2],
-            mutation_type: vec![MTYPE::Greedy, MTYPE::Shift, MTYPE::Swap, MTYPE::Reverse],
+            construction: vec![
+                Construction::MDDR(0.5),
+                // Construction::_MDDR(1.0),
+                // Construction::Random,
+            ],
+            mutation_prob: vec![0.1],
+            mutation_type: vec![
+                MTYPE::Greedy, // MTYPE::Shift, MTYPE::Swap, MTYPE::Reverse
+            ],
             reversal_percent: vec![10],
-            non_improving_iterations: vec![50, 100, 150],
-            allways_keep: vec![20, 40],
-            approx_calc: vec![100, 200, 300],
+            non_improving_iterations: vec![150],
+            allways_keep: vec![0.9],
+            approx_calc: vec![100],
         }
     }
 }
@@ -308,7 +312,7 @@ pub struct Params {
 
     // Chromosomes to keep in case of a genocide
     // Must be smaller than pop_size
-    pub allways_keep: usize,
+    pub allways_keep: f64,
 
     pub approx_calc: usize,
 }
