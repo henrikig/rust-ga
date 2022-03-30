@@ -12,10 +12,13 @@ use super::params;
 
 use clap::StructOpt;
 use csv::Writer;
+use indicatif::{ProgressBar, ProgressStyle};
 use lexical_sort::natural_lexical_cmp;
 use rand::{prelude::ThreadRng, seq::SliceRandom, Rng};
+use rayon::prelude::*;
 use std::borrow::Cow;
 use std::path::Path;
+use std::sync::{Arc, Mutex};
 use std::{error::Error, fs, path::PathBuf};
 
 pub struct GA {
@@ -145,7 +148,7 @@ impl GA {
         let mut non_improvement_counter: usize = 0;
 
         // Go through generations
-        for iteration in 0..self.options.iterations {
+        for _ in 0..self.options.iterations {
             // Replace the chromosomes with the worst fit if there has been no improvement in the best fit for y iterations
             if non_improvement_counter >= self.options.non_improving_iterations {
                 let always_keep =
@@ -246,10 +249,6 @@ impl GA {
                 replace(c1);
                 replace(c2);
             }
-
-            if iteration % 1000 == 0 {
-                self.generation_status(iteration);
-            }
         }
     }
 
@@ -314,56 +313,71 @@ pub fn run_all(args: &Args) {
     let num_problems = problem_files.len();
 
     // Initiate 2D vector of results: results[problem_file][parameter_combination]
-    let mut results: Vec<Vec<String>> = Vec::with_capacity(problem_files.len());
+    let results: Arc<Mutex<Vec<Vec<String>>>> =
+        Arc::new(Mutex::new(Vec::with_capacity(problem_files.len())));
+
+    let pb = create_progress_bar(num_problems as u64);
 
     // Iterate all problem files
-    for (i, problem_file) in problem_files.into_iter().enumerate() {
-        println!(
-            "Running instance {} ({} / {})",
-            &problem_files_consumed[i].display(),
-            i + 1,
-            num_problems
-        );
+    problem_files
+        .into_par_iter()
+        .enumerate()
+        .for_each(|(i, problem_file)| {
+            /* println!(
+                "Running instance {} ({} / {})",
+                &problem_files_consumed[i].display(),
+                i + 1,
+                num_problems
+            ); */
 
-        // Get default options to be used in constructing OptionsGrid
-        let options = Options {
-            problem_file: Cow::Owned(problem_file),
-            run_all: args.run_all,
-            steady_state: args.steady_state,
-            all_params: args.all_params,
-            ..Options::default()
-        };
+            // Get default options to be used in constructing OptionsGrid
+            let options = Options {
+                problem_file: Cow::Owned(problem_file),
+                run_all: args.run_all,
+                steady_state: args.steady_state,
+                all_params: args.all_params,
+                ..Options::default()
+            };
 
-        // Get vector of all option combinations possible
-        let all_options = OptionsGrid::default().get_options(options);
+            // Get vector of all option combinations possible
+            let all_options = OptionsGrid::default().get_options(options);
 
-        if i == 0 {
-            write_params_to_file(
-                String::from(params::SOLUTION_FOLDER) + "/params.csv",
-                &all_options,
-            )
-            .unwrap();
-        }
+            if i == 0 {
+                write_params_to_file(
+                    String::from(params::SOLUTION_FOLDER) + "/params.csv",
+                    &all_options,
+                )
+                .unwrap();
+                // Update number of "jobs" in progress bar
+                pb.set_length((all_options.len() * num_problems) as u64);
+            }
 
-        // Store filename and result from each parameter combination in vector
-        let mut row = Vec::with_capacity(all_options.len() + 1);
+            // Store filename and result from each parameter combination in vector
+            let mut row = Vec::with_capacity(all_options.len() + 1);
 
-        row.push(String::from(
-            problem_files_consumed.get(i).unwrap().to_str().unwrap(),
-        ));
+            row.push(String::from(
+                problem_files_consumed.get(i).unwrap().to_str().unwrap(),
+            ));
 
-        all_options.into_iter().for_each(|options| {
-            row.push(run(options, false).to_string());
+            all_options.into_iter().for_each(|options| {
+                row.push(run(options, false).to_string());
+                // Increase progress bar
+                pb.inc(1);
+            });
+
+            results.lock().unwrap().push(row);
         });
 
-        results.push(row);
-    }
+    pb.finish_with_message("Done");
 
-    results.sort_by(|a, b| natural_lexical_cmp(&a[0], &b[0]));
+    results
+        .lock()
+        .unwrap()
+        .sort_by(|a, b| natural_lexical_cmp(&a[0], &b[0]));
 
     write_results(
         String::from(params::SOLUTION_FOLDER) + "/results.csv",
-        &results,
+        &results.lock().unwrap(),
     )
     .unwrap();
     println!(
@@ -424,6 +438,7 @@ fn get_problem_files(run_all: bool) -> Vec<PathBuf> {
         true => fs::read_dir("./instances/ruiz/json")
             .unwrap()
             .into_iter()
+            .take(20)
             .map(|p| p.unwrap().path())
             .collect(),
         false => vec![PathBuf::from(params::PROBLEM_FILE)],
@@ -457,4 +472,14 @@ fn write_params_to_file(
 
     wtr.flush()?;
     Ok(())
+}
+
+fn create_progress_bar(len: u64) -> ProgressBar {
+    let pb = ProgressBar::new(len);
+
+    pb.set_style(ProgressStyle::default_bar().template(
+        "{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] ({pos}/{len}, ETA {eta})",
+    ));
+
+    pb
 }
