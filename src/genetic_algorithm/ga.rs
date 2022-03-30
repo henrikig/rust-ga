@@ -438,7 +438,6 @@ fn get_problem_files(run_all: bool) -> Vec<PathBuf> {
         true => fs::read_dir("./instances/ruiz/json")
             .unwrap()
             .into_iter()
-            .take(20)
             .map(|p| p.unwrap().path())
             .collect(),
         false => vec![PathBuf::from(params::PROBLEM_FILE)],

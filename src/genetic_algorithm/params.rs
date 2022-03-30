@@ -26,4 +26,4 @@ pub const CROWDING_SCALE: f64 = 0.5;
 pub const K_NEAREST: usize = 10; // Only used in steady state crowding version
 
 // Solution folder for parameter grid search
-pub const SOLUTION_FOLDER: &str = "./solutions/popsize";
+pub const SOLUTION_FOLDER: &str = "./solutions/mutation";
