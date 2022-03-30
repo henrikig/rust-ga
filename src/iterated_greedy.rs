@@ -56,7 +56,8 @@ pub fn iterated_greedy(
     let temp: f64 = find_temp(&makespan, t);
     let mut rng = rand::thread_rng();
     let d = 3;
-    while makespan.count < approx_calc {
+    let starting_count: u32 = makespan.count;
+    while makespan.count - starting_count < approx_calc {
         let mut schedule_permutation = current_schedule.clone();
         let mut deleted_jobs: Vec<u32> = Vec::with_capacity(makespan.instance.jobs as usize);
         for _ in 0..d {
