@@ -1,5 +1,6 @@
 use crate::common::instance::{Instance, Solution};
 use crate::common::makespan::Makespan;
+use crate::common::utils;
 use crate::genetic_algorithm::entities::options::Args;
 
 use super::entities::chromosome::Chromosome;
@@ -12,7 +13,6 @@ use super::params;
 
 use clap::StructOpt;
 use csv::Writer;
-use indicatif::{ProgressBar, ProgressStyle};
 use lexical_sort::natural_lexical_cmp;
 use rand::{prelude::ThreadRng, seq::SliceRandom, Rng};
 use rayon::prelude::*;
@@ -301,8 +301,8 @@ pub fn main() {
 // Run all problems for all parameter combinations
 pub fn run_all(args: &Args) {
     // Get vector of all problem files (twice as we have to consume them)
-    let problem_files = get_problem_files(true);
-    let problem_files_consumed = get_problem_files(true);
+    let problem_files = utils::get_problem_files(true);
+    let problem_files_consumed = utils::get_problem_files(true);
 
     // Make sure problem files are in same order
     assert_eq!(
@@ -316,20 +316,13 @@ pub fn run_all(args: &Args) {
     let results: Arc<Mutex<Vec<Vec<String>>>> =
         Arc::new(Mutex::new(Vec::with_capacity(problem_files.len())));
 
-    let pb = create_progress_bar(num_problems as u64);
+    let pb = utils::create_progress_bar(num_problems as u64);
 
     // Iterate all problem files
     problem_files
         .into_par_iter()
         .enumerate()
         .for_each(|(i, problem_file)| {
-            /* println!(
-                "Running instance {} ({} / {})",
-                &problem_files_consumed[i].display(),
-                i + 1,
-                num_problems
-            ); */
-
             // Get default options to be used in constructing OptionsGrid
             let options = Options {
                 problem_file: Cow::Owned(problem_file),
@@ -375,7 +368,7 @@ pub fn run_all(args: &Args) {
         .unwrap()
         .sort_by(|a, b| natural_lexical_cmp(&a[0], &b[0]));
 
-    write_results(
+    utils::write_results(
         String::from(params::SOLUTION_FOLDER) + "/results.csv",
         &results.lock().unwrap(),
     )
@@ -433,28 +426,6 @@ pub fn run(options: Options, run_one: bool) -> u32 {
     best_makespan
 }
 
-fn get_problem_files(run_all: bool) -> Vec<PathBuf> {
-    match run_all {
-        true => fs::read_dir("./instances/ruiz/json")
-            .unwrap()
-            .into_iter()
-            .map(|p| p.unwrap().path())
-            .collect(),
-        false => vec![PathBuf::from(params::PROBLEM_FILE)],
-    }
-}
-
-fn write_results(filename: String, records: &Vec<Vec<String>>) -> Result<(), Box<dyn Error>> {
-    let mut wtr = Writer::from_path(filename)?;
-
-    for record in records {
-        wtr.write_record(record)?;
-    }
-
-    wtr.flush()?;
-    Ok(())
-}
-
 fn write_params_to_file(
     filename: String,
     all_options: &Vec<Options>,
@@ -471,14 +442,4 @@ fn write_params_to_file(
 
     wtr.flush()?;
     Ok(())
-}
-
-fn create_progress_bar(len: u64) -> ProgressBar {
-    let pb = ProgressBar::new(len);
-
-    pb.set_style(ProgressStyle::default_bar().template(
-        "{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] ({pos}/{len}, ETA {eta})",
-    ));
-
-    pb
 }
