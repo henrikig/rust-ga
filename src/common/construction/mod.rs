@@ -5,6 +5,7 @@ use crate::genetic_algorithm::entities::chromosome::Chromosome;
 pub mod mddr;
 pub mod neh;
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize)]
 pub enum Construction {
     Random,

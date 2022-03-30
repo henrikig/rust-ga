@@ -156,7 +156,7 @@ fn remove_random(schedule: &Vec<u32>) -> (Vec<u32>, u32) {
     return (new_schedule, job);
 }
 
-// Run all problems for all parameter combinations
+// Solve all problems with iterated greedy
 pub fn run_all() {
     // Get vector of all problem files (twice as we have to consume them)
     let problem_files = utils::get_problem_files(true);

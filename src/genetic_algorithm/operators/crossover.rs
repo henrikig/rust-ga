@@ -5,6 +5,7 @@ use crate::common::best_insertion::find_best_insertion;
 use rand::Rng;
 use serde_derive::Serialize;
 
+#[allow(dead_code)]
 #[derive(Clone, Serialize)]
 pub enum XTYPE {
     SJ2OX,
