@@ -39,9 +39,12 @@ impl Default for GA {
 impl GA {
     pub fn run(&mut self) {
         let mut non_improvement_counter: usize = 0;
-        for iteration in 0..self.options.iterations {
+        let mut iteration = 0;
+        while !self.is_terminated() {
             // Replace the chromosomes with the worst fit if there has been no improvement in the best fit for y iterations
-            if non_improvement_counter >= self.options.non_improving_iterations {
+            if self.options.allways_keep < 1.0
+                && non_improvement_counter >= self.options.non_improving_iterations
+            {
                 let always_keep =
                     (self.population.len() as f64 * self.options.allways_keep) as usize;
                 for index in always_keep..self.options.pop_size {
@@ -138,7 +141,9 @@ impl GA {
                 new_c.makespan = c.makespan;
                 new_c.updated = false;
                 self.population.push(new_c);
-            })
+            });
+
+            iteration += 1;
         }
     }
 
@@ -150,7 +155,9 @@ impl GA {
         // Go through generations
         for _ in 0..self.options.iterations {
             // Replace the chromosomes with the worst fit if there has been no improvement in the best fit for y iterations
-            if non_improvement_counter >= self.options.non_improving_iterations {
+            if self.options.allways_keep < 1.0
+                && non_improvement_counter >= self.options.non_improving_iterations
+            {
                 let always_keep =
                     (self.population.len() as f64 * self.options.allways_keep) as usize;
                 for index in always_keep..self.options.pop_size {
@@ -276,6 +283,10 @@ impl GA {
         winner_clone
     }
 
+    pub fn is_terminated(&self) -> bool {
+        self.makespan.count > 5000
+    }
+
     fn generation_status(&self, iteration: usize) {
         println!(
             "{}: {}-{}",
@@ -341,8 +352,6 @@ pub fn run_all(args: &Args) {
                     &all_options,
                 )
                 .unwrap();
-                // Update number of "jobs" in progress bar
-                pb.set_length((all_options.len() * num_problems) as u64);
             }
 
             // Store filename and result from each parameter combination in vector
@@ -355,13 +364,14 @@ pub fn run_all(args: &Args) {
             all_options.into_iter().for_each(|options| {
                 row.push(run(options, false).to_string());
                 // Increase progress bar
-                pb.inc(1);
             });
+
+            pb.inc(1);
 
             results.lock().unwrap().push(row);
         });
 
-    pb.finish_with_message("Done");
+    // pb.finish_with_message("Done");
 
     results
         .lock()

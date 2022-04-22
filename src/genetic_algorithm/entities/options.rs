@@ -214,23 +214,26 @@ pub struct OptionsGrid {
 impl Default for OptionsGrid {
     fn default() -> OptionsGrid {
         OptionsGrid {
-            pop_sizes: vec![100],
+            pop_sizes: vec![150],
             elitism: vec![2],
             keep_best: vec![0.8],
             xover_prob: vec![0.5],
             xover_type: vec![
-                XTYPE::BCBX, // XTYPE::SB2OX, XTYPE::SJ2OX
+                XTYPE::BCBX, // XTYPE::SJ2OX, XTYPE::SB2OX,
             ],
             construction: vec![
                 Construction::MDDR(0.5),
-                // Construction::_MDDR(1.0),
+                Construction::MDDR(0.8),
+                Construction::MDDR(1.0),
                 // Construction::Random,
             ],
-            mutation_prob: vec![0.0, 0.1, 0.2, 0.3],
-            mutation_type: vec![MTYPE::Greedy, MTYPE::Shift, MTYPE::Swap, MTYPE::Reverse],
+            mutation_prob: vec![0.05],
+            mutation_type: vec![
+                MTYPE::Greedy, // MTYPE::Swap, MTYPE::Shift, MTYPE::Reverse
+            ],
             reversal_percent: vec![10],
             non_improving_iterations: vec![150],
-            allways_keep: vec![0.9],
+            allways_keep: vec![1.0],
             approx_calc: vec![100],
         }
     }
