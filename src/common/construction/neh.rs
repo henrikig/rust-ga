@@ -1,28 +1,30 @@
-use crate::{
-    common::{
-        instance::{parse, Instance},
-        makespan::Makespan,
-        utils,
-    },
-    genetic_algorithm::params,
-};
-use lexical_sort::natural_lexical_cmp;
-use rayon::prelude::*;
-use std::sync::{Arc, Mutex};
+use crate::common::{instance::Instance, makespan::Makespan};
 
-// Implements the NEH construction heuristic by an instance of makespan
-pub fn neh(makespan: &mut Makespan) -> (Vec<u32>, u32) {
-    // Order jobs in decending order of total processing time
-    let job_order: Vec<u32> = sort_jobs(&makespan.instance);
-    let mut schedule: (Vec<u32>, u32) = (
-        Vec::with_capacity(makespan.instance.jobs as usize),
-        u32::MAX,
-    );
+use super::solver::Solver;
 
-    for job in job_order.iter() {
-        schedule = insert_job(makespan, &schedule.0, job);
+pub struct NEH {}
+
+impl NEH {
+    pub fn neh(makespan: &mut Makespan) -> (Vec<u32>, u32) {
+        // Order jobs in decending order of total processing time
+        let job_order: Vec<u32> = sort_jobs(&makespan.instance);
+        let mut schedule: (Vec<u32>, u32) = (
+            Vec::with_capacity(makespan.instance.jobs as usize),
+            u32::MAX,
+        );
+
+        for job in job_order.iter() {
+            schedule = insert_job(makespan, &schedule.0, job);
+        }
+        return schedule;
     }
-    return schedule;
+}
+
+impl Solver for NEH {
+    fn run(makespan: &mut Makespan) -> u32 {
+        let res = NEH::neh(makespan);
+        res.1
+    }
 }
 
 // Sort jobs in an instance in decending order of total processing times
@@ -64,6 +66,7 @@ pub fn insert_job(makespan: &mut Makespan, schedule: &Vec<u32>, next_job: &u32) 
     return min_time;
 }
 
+/*
 // Solve all problems with neh
 pub fn run_all() {
     // Get vector of all problem files (twice as we have to consume them)
@@ -126,13 +129,14 @@ pub fn run_all() {
         String::from(params::SOLUTION_FOLDER) + "/neh/results.csv"
     );
 }
+*/
 
 #[cfg(test)]
 mod test {
     use crate::common::{instance::parse, instance::Instance, makespan::Makespan};
     use std::env;
 
-    use super::{insert_job, neh, sort_jobs};
+    use super::{insert_job, sort_jobs, NEH};
 
     #[test]
     fn sort_jobs_test() {
@@ -171,7 +175,7 @@ mod test {
         let i: Instance = parse(path).unwrap();
         let mut m = Makespan::new(&i);
 
-        let schedule = neh(&mut m);
+        let schedule = NEH::neh(&mut m);
         let (make, _) = m.makespan(&schedule.0);
         make
     }

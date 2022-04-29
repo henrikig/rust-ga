@@ -2,7 +2,27 @@ mod common;
 mod genetic_algorithm;
 mod iterated_greedy;
 
-use genetic_algorithm::ga;
+use crate::common::construction::solver::Solver;
+use clap::StructOpt;
+use common::construction::{mddr::MDDR, neh::NEH};
+use genetic_algorithm::{entities::options::Args, ga};
+use iterated_greedy::IteratedGreedy;
 fn main() {
-    ga::main();
+    // Parse arguments (run steady state (-s), run all problems (-r), test all parameters (-a))
+    let args = Args::parse();
+
+    // Based on arguments, we either MDDR, NEH, IG or GA
+    if args.mddr {
+        MDDR::run_all("./solutions/mddr");
+    } else if args.neh {
+        NEH::run_all("./solutions/neh");
+    } else if args.iterated_greedy {
+        IteratedGreedy::run_all("./solutions/ig");
+    }
+    // If we run GA, we either run one problem file, or all problem files
+    else if args.run_all {
+        ga::run_all(&args);
+    } else {
+        ga::run_one(&args);
+    }
 }

@@ -6,7 +6,7 @@ use std::{borrow::Cow, path::PathBuf};
 
 use crate::{
     common::{
-        construction::{mddr::MDDR, Construction},
+        construction::{gch::GCH, Construction},
         instance::parse,
         makespan::Makespan,
     },
@@ -38,6 +38,18 @@ pub struct Args {
     /// Local search after mutation
     #[clap(short, long)]
     pub local_search: bool,
+
+    /// Run all problem instances
+    #[clap(short, long)]
+    pub mddr: bool,
+
+    /// Run all problem instances
+    #[clap(short, long)]
+    pub neh: bool,
+
+    /// Run all problem instances
+    #[clap(short, long)]
+    pub iterated_greedy: bool,
 }
 
 #[derive(Clone)]
@@ -138,7 +150,7 @@ impl Options {
         // Add number of chromosomes from MDDR constructor as specified
         match self.construction {
             Construction::MDDR(num) => {
-                let mut constructed: Vec<Chromosome> = MDDR {
+                let mut constructed: Vec<Chromosome> = GCH {
                     makespan: &mut makespan,
                 }
                 .take((self.pop_size as f32 * num) as usize)

@@ -11,7 +11,6 @@ use super::operators::local_search::ls_ig;
 use super::operators::mutation::{self, Greedy, Mutation, Reverse, Swap, MTYPE, SHIFT};
 use super::params;
 
-use clap::StructOpt;
 use csv::Writer;
 use lexical_sort::natural_lexical_cmp;
 use rand::{prelude::ThreadRng, seq::SliceRandom, Rng};
@@ -297,18 +296,6 @@ impl GA {
     }
 }
 
-pub fn main() {
-    // Parse arguments (run steady state (-s), run all problems (-r), test all parameters (-a))
-    let args = Args::parse();
-
-    // Based on arguments, we either run all problems or a single one
-    if args.run_all {
-        run_all(&args);
-    } else {
-        run_one(&args);
-    }
-}
-
 // Run all problems for all parameter combinations
 pub fn run_all(args: &Args) {
     // Get vector of all problem files (twice as we have to consume them)
@@ -378,11 +365,7 @@ pub fn run_all(args: &Args) {
         .unwrap()
         .sort_by(|a, b| natural_lexical_cmp(&a[0], &b[0]));
 
-    utils::write_results(
-        String::from(params::SOLUTION_FOLDER) + "/results.csv",
-        &results.lock().unwrap(),
-    )
-    .unwrap();
+    utils::write_results(params::SOLUTION_FOLDER, &results.lock().unwrap()).unwrap();
     println!(
         "All problems run, results are stored in `{}`",
         params::SOLUTION_FOLDER

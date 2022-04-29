@@ -157,8 +157,11 @@ impl Makespan {
                 };
             // Compute the completion time
             let completion_time = max(machine_ready_time, *prev_stage_completion_time)
-                + instance.setup_times[*stage as usize][prev_job as usize][*job as usize]
-                + instance.processing_times[*job as usize][*stage as usize];
+                + instance.processing_times[*job as usize][*stage as usize]
+                + match instance.processing_times[*job as usize][*stage as usize] {
+                    0 => 0,
+                    _ => instance.setup_times[*stage as usize][prev_job as usize][*job as usize],
+                };
             // If the time of completion is less than the current best found, update the machine to use and the completion time
             if time_machine.0 > completion_time {
                 time_machine = (completion_time, machine as u32)
@@ -168,7 +171,7 @@ impl Makespan {
         return time_machine;
     }
 
-    fn earliest_completion_time(
+    pub fn earliest_completion_time(
         stage: &u32,
         jobs_outstanding: &mut Vec<(u32, u32)>,
         job_completions: &mut Vec<Vec<(u32, u32)>>,
@@ -185,7 +188,7 @@ impl Makespan {
             );
         // Update datastuctures with the new scheduled job
         job_completions[*stage as usize].push((job, time));
-        machine_completions[*stage as usize][machine as usize].push((machine, time));
+        machine_completions[*stage as usize][machine as usize].push((job, time));
         // Find the index of the job from the vector of jobs outstanding
         let remove_at_index: usize = jobs_outstanding
             .iter()
