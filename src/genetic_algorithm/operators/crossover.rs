@@ -140,27 +140,48 @@ impl Crossover for PMX {
         _k: Option<usize>,
         _makespan: &mut Makespan,
     ) -> (Chromosome, Chromosome) {
-        let mut c1 = p1.jobs.to_vec();
-        let mut c2 = p2.jobs.to_vec();
-
-        let n_jobs = c1.len();
-
-        let k1 = rand::thread_rng().gen_range(0..n_jobs - 1);
-        let k2 = rand::thread_rng().gen_range(k1..n_jobs);
-
-        for job in k_min..=k_max {
-            let c1_job = c1[job];
-            let c2_job = c2[job];
-
-            let index_c1 = c1.iter().position(|&r| r == c2_job).unwrap();
-            let index_c2 = c2.iter().position(|&r| r == c1_job).unwrap();
-
-            c1.swap(job, index_c1);
-            c2.swap(job, index_c2);
-        }
+        // The `pmx` function returns only one child, so we call it twice with
+        // p1 and p2 swapping positions in the input
+        let c1 = pmx(&p1.jobs, &p2.jobs);
+        let c2 = pmx(&p2.jobs, &p1.jobs);
 
         (Chromosome::from(c1), Chromosome::from(c2))
     }
+}
+
+fn pmx(p1: &[u32], p2: &[u32]) -> Vec<u32> {
+    let n_jobs = p1.len();
+    let x1 = rand::thread_rng().gen_range(0..n_jobs - 1);
+    let x2 = rand::thread_rng().gen_range(x1..n_jobs);
+
+    let mut child = vec![0; n_jobs];
+
+    let mut mapping: Vec<Option<usize>> = vec![None; n_jobs];
+
+    for i in x1..x2 {
+        child[i] = p2[i];
+
+        mapping[p2[i] as usize] = Some(p1[i] as usize);
+    }
+
+    let mut map_from = |start: usize, stop: usize| {
+        for i in start..stop {
+            let mut o = mapping[p1[i] as usize];
+            let mut last = None;
+
+            while o.is_some() {
+                last = o;
+                o = mapping[o.unwrap()];
+            }
+
+            child[i] = if let Some(v) = last { v as u32 } else { p1[i] };
+        }
+    };
+
+    map_from(0, x1);
+    map_from(x2, n_jobs);
+
+    child
 }
 
 fn generate_children(p1: &Chromosome, p2: &Chromosome) -> (Vec<u32>, Vec<u32>) {
@@ -215,6 +236,8 @@ fn insert_remaining(
 
 #[cfg(test)]
 mod xover_test {
+    use itertools::Itertools;
+
     use crate::common::best_insertion::find_best_insertion;
     use crate::common::instance::Instance;
     use crate::common::makespan::Makespan;
@@ -284,13 +307,18 @@ mod xover_test {
 
     #[test]
     fn crossover_pmx_overlap() {
-        let p1 = Chromosome::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9]);
-        let p2 = Chromosome::from(vec![5, 4, 6, 9, 2, 1, 7, 8, 3]);
+        let p1 = Chromosome::from(vec![0, 1, 2, 3, 4, 5, 6, 7, 8]);
+        let p2 = Chromosome::from(vec![4, 3, 5, 8, 1, 0, 6, 7, 2]);
 
         let (c1, c2) = crossover::PMX::apply(&p1, &p2, None, &mut Makespan::new(&test_instance()));
 
-        assert_eq!(c2.jobs, vec![2, 9, 3, 4, 5, 6, 7, 8, 1]);
-        assert_eq!(c1.jobs, vec![1, 5, 6, 9, 2, 1, 7, 8, 4]);
+        // Cut points: x1 = 2, x2 = 6
+        // assert_eq(c1.jobs, vec![2, 4, 5, 8, 1, 0, 6, 7, 3]);
+        // assert_eq!(c2.jobs, vec![1, 8, 2, 3, 4, 5, 6, 7, 0]);
+
+        // Assert that there are no jobs that appear twice or more
+        itertools::assert_equal(c1.jobs.iter().unique(), &c1.jobs);
+        itertools::assert_equal(c2.jobs.iter().unique(), &c2.jobs);
     }
 
     fn test_instance() -> Instance {
