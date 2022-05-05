@@ -342,6 +342,7 @@ impl From<&Options> for Params {
                 XTYPE::SJ2OX => XTYPE::SJ2OX,
                 XTYPE::SB2OX => XTYPE::SB2OX,
                 XTYPE::BCBX => XTYPE::BCBX,
+                XTYPE::PMX => XTYPE::PMX,
             },
             construction: match options.construction {
                 Construction::Random => Construction::Random,

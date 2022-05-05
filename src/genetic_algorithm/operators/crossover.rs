@@ -11,6 +11,7 @@ pub enum XTYPE {
     SJ2OX,
     SB2OX,
     BCBX,
+    PMX,
 }
 
 pub trait Crossover {
@@ -25,6 +26,7 @@ pub trait Crossover {
 pub struct SJ2OX;
 pub struct SB2OX;
 pub struct BCBX;
+pub struct PMX;
 
 impl Crossover for SJ2OX {
     fn apply(
@@ -127,6 +129,36 @@ impl Crossover for BCBX {
         let c2 = find_best_insertion(c2, block1, makespan, true);
 
         // Return new chromosomes
+        (Chromosome::from(c1), Chromosome::from(c2))
+    }
+}
+
+impl Crossover for PMX {
+    fn apply(
+        p1: &Chromosome,
+        p2: &Chromosome,
+        _k: Option<usize>,
+        _makespan: &mut Makespan,
+    ) -> (Chromosome, Chromosome) {
+        let mut c1 = p1.jobs.to_vec();
+        let mut c2 = p2.jobs.to_vec();
+
+        let n_jobs = c1.len();
+
+        let k1 = rand::thread_rng().gen_range(0..n_jobs - 1);
+        let k2 = rand::thread_rng().gen_range(k1..n_jobs);
+
+        for job in k_min..=k_max {
+            let c1_job = c1[job];
+            let c2_job = c2[job];
+
+            let index_c1 = c1.iter().position(|&r| r == c2_job).unwrap();
+            let index_c2 = c2.iter().position(|&r| r == c1_job).unwrap();
+
+            c1.swap(job, index_c1);
+            c2.swap(job, index_c2);
+        }
+
         (Chromosome::from(c1), Chromosome::from(c2))
     }
 }
@@ -237,6 +269,28 @@ mod xover_test {
             c1.jobs,
             vec![3, 15, 17, 8, 14, 11, 13, 16, 9, 6, 18, 5, 19, 7, 4, 2, 1, 10, 20, 12]
         );
+    }
+
+    #[test]
+    fn crossover_pmx() {
+        let p1 = Chromosome::from(vec![9, 8, 4, 5, 6, 7, 1, 3, 2, 10]);
+        let p2 = Chromosome::from(vec![8, 7, 1, 2, 3, 10, 9, 5, 4, 6]);
+
+        let (c1, c2) = crossover::PMX::apply(&p1, &p2, None, &mut Makespan::new(&test_instance()));
+
+        println!("{:?}", c1);
+        println!("{:?}", c2);
+    }
+
+    #[test]
+    fn crossover_pmx_overlap() {
+        let p1 = Chromosome::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        let p2 = Chromosome::from(vec![5, 4, 6, 9, 2, 1, 7, 8, 3]);
+
+        let (c1, c2) = crossover::PMX::apply(&p1, &p2, None, &mut Makespan::new(&test_instance()));
+
+        assert_eq!(c2.jobs, vec![2, 9, 3, 4, 5, 6, 7, 8, 1]);
+        assert_eq!(c1.jobs, vec![1, 5, 6, 9, 2, 1, 7, 8, 4]);
     }
 
     fn test_instance() -> Instance {

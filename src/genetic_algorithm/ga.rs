@@ -5,7 +5,7 @@ use crate::genetic_algorithm::entities::options::Args;
 
 use super::entities::chromosome::Chromosome;
 use super::entities::options::{Options, OptionsGrid, Params};
-use super::operators::crossover::{Crossover, BCBX, SB2OX, SJ2OX, XTYPE};
+use super::operators::crossover::{Crossover, BCBX, PMX, SB2OX, SJ2OX, XTYPE};
 use super::operators::crowding;
 use super::operators::local_search::ls_ig;
 use super::operators::mutation::{self, Greedy, Mutation, Reverse, Swap, MTYPE, SHIFT};
@@ -66,6 +66,7 @@ impl GA {
                         XTYPE::SJ2OX => SJ2OX::apply(&p[0], &p[1], None, &mut self.makespan),
                         XTYPE::SB2OX => SB2OX::apply(&p[0], &p[1], None, &mut self.makespan),
                         XTYPE::BCBX => BCBX::apply(&p[0], &p[1], None, &mut self.makespan),
+                        XTYPE::PMX => PMX::apply(&p[0], &p[1], None, &mut self.makespan),
                     };
 
                     if params::PERFORM_CROWDING {
@@ -175,6 +176,7 @@ impl GA {
                 XTYPE::SJ2OX => SJ2OX::apply(&p1, &p2, None, &mut self.makespan),
                 XTYPE::SB2OX => SB2OX::apply(&p1, &p2, None, &mut self.makespan),
                 XTYPE::BCBX => BCBX::apply(&p1, &p2, None, &mut self.makespan),
+                XTYPE::PMX => PMX::apply(&p1, &p2, None, &mut self.makespan),
             };
 
             // Mutate
