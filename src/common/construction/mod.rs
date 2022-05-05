@@ -2,8 +2,10 @@ use serde_derive::Serialize;
 
 use crate::genetic_algorithm::entities::chromosome::Chromosome;
 
+pub mod gch;
 pub mod mddr;
 pub mod neh;
+pub mod solver;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Serialize)]

@@ -1,28 +1,30 @@
-use crate::{
-    common::{
-        instance::{parse, Instance},
-        makespan::Makespan,
-        utils,
-    },
-    genetic_algorithm::params,
-};
-use lexical_sort::natural_lexical_cmp;
-use rayon::prelude::*;
-use std::sync::{Arc, Mutex};
+use crate::common::{instance::Instance, makespan::Makespan};
 
-// Implements the NEH construction heuristic by an instance of makespan
-pub fn neh(makespan: &mut Makespan) -> (Vec<u32>, u32) {
-    // Order jobs in decending order of total processing time
-    let job_order: Vec<u32> = sort_jobs(&makespan.instance);
-    let mut schedule: (Vec<u32>, u32) = (
-        Vec::with_capacity(makespan.instance.jobs as usize),
-        u32::MAX,
-    );
+use super::solver::Solver;
 
-    for job in job_order.iter() {
-        schedule = insert_job(makespan, &schedule.0, job);
+pub struct NEH {}
+
+impl NEH {
+    pub fn neh(makespan: &mut Makespan) -> (Vec<u32>, u32) {
+        // Order jobs in decending order of total processing time
+        let job_order: Vec<u32> = sort_jobs(&makespan.instance);
+        let mut schedule: (Vec<u32>, u32) = (
+            Vec::with_capacity(makespan.instance.jobs as usize),
+            u32::MAX,
+        );
+
+        for job in job_order.iter() {
+            schedule = insert_job(makespan, &schedule.0, job);
+        }
+        return schedule;
     }
-    return schedule;
+}
+
+impl Solver for NEH {
+    fn run(makespan: &mut Makespan) -> u32 {
+        let res = NEH::neh(makespan);
+        res.1
+    }
 }
 
 // Sort jobs in an instance in decending order of total processing times
@@ -64,75 +66,12 @@ pub fn insert_job(makespan: &mut Makespan, schedule: &Vec<u32>, next_job: &u32) 
     return min_time;
 }
 
-// Solve all problems with neh
-pub fn run_all() {
-    // Get vector of all problem files (twice as we have to consume them)
-    let problem_files = utils::get_problem_files(true);
-    let problem_files_consumed = utils::get_problem_files(true);
-
-    // Make sure problem files are in same order
-    assert_eq!(
-        &problem_files, &problem_files_consumed,
-        "Order of problem files does not equal"
-    );
-
-    let num_problems = problem_files.len();
-
-    // Initiate 2D vector of results: results[problem_file][parameter_combination]
-    let results: Arc<Mutex<Vec<Vec<String>>>> =
-        Arc::new(Mutex::new(Vec::with_capacity(problem_files.len())));
-
-    let pb = utils::create_progress_bar(num_problems as u64);
-
-    // Iterate all problem files
-    problem_files
-        .into_par_iter()
-        .enumerate()
-        .for_each(|(i, problem_file)| {
-            // Store filename and result from each parameter combination in vector
-            let mut row = Vec::with_capacity(2);
-
-            row.push(String::from(
-                problem_files_consumed.get(i).unwrap().to_str().unwrap(),
-            ));
-
-            let i: Instance = parse(problem_file).unwrap();
-            let mut m: Makespan = Makespan::new(&i);
-
-            let (_, makespan) = neh(&mut m);
-
-            row.push(makespan.to_string());
-
-            results.lock().unwrap().push(row);
-
-            pb.inc(1);
-        });
-
-    pb.finish_with_message("Done");
-
-    results
-        .lock()
-        .unwrap()
-        .sort_by(|a, b| natural_lexical_cmp(&a[0], &b[0]));
-
-    utils::write_results(
-        String::from(params::SOLUTION_FOLDER) + "/neh/results.csv",
-        &results.lock().unwrap(),
-    )
-    .unwrap();
-
-    println!(
-        "All problems run, results are stored in `{}`",
-        String::from(params::SOLUTION_FOLDER) + "/neh/results.csv"
-    );
-}
-
 #[cfg(test)]
 mod test {
     use crate::common::{instance::parse, instance::Instance, makespan::Makespan};
     use std::env;
 
-    use super::{insert_job, neh, sort_jobs};
+    use super::{insert_job, sort_jobs, NEH};
 
     #[test]
     fn sort_jobs_test() {
@@ -171,7 +110,7 @@ mod test {
         let i: Instance = parse(path).unwrap();
         let mut m = Makespan::new(&i);
 
-        let schedule = neh(&mut m);
+        let schedule = NEH::neh(&mut m);
         let (make, _) = m.makespan(&schedule.0);
         make
     }

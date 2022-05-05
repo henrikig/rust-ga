@@ -6,7 +6,7 @@ use std::{borrow::Cow, path::PathBuf};
 
 use crate::{
     common::{
-        construction::{mddr::MDDR, neh::neh, Construction},
+        construction::{gch::GCH, neh::NEH, Construction},
         instance::parse,
         makespan::Makespan,
     },
@@ -38,6 +38,18 @@ pub struct Args {
     /// Local search after mutation
     #[clap(short, long)]
     pub local_search: bool,
+
+    /// Run all problem instances
+    #[clap(short, long)]
+    pub mddr: bool,
+
+    /// Run all problem instances
+    #[clap(short, long)]
+    pub neh: bool,
+
+    /// Run all problem instances
+    #[clap(short, long)]
+    pub iterated_greedy: bool,
 }
 
 #[derive(Clone)]
@@ -138,7 +150,7 @@ impl Options {
         match self.construction {
             // Add number of chromosomes from MDDR constructor as specified
             Construction::MDDR(num) => {
-                let mut constructed: Vec<Chromosome> = MDDR {
+                let mut constructed: Vec<Chromosome> = GCH {
                     makespan: &mut makespan,
                 }
                 .take((self.pop_size as f32 * num) as usize)
@@ -148,7 +160,7 @@ impl Options {
             }
             // Add one chromosome based on NEH
             Construction::NEH => {
-                let (neh_permutation, mks) = neh(&mut makespan);
+                let (neh_permutation, mks) = NEH::neh(&mut makespan);
                 let mut neh_chromosome = Chromosome::from(neh_permutation);
                 neh_chromosome.makespan = Some(mks);
                 neh_chromosome.updated = false;

@@ -1,4 +1,8 @@
-use std::{error::Error, fs, path::PathBuf};
+use std::{
+    error::Error,
+    fs,
+    path::{Path, PathBuf},
+};
 
 use csv::Writer;
 use indicatif::{ProgressBar, ProgressStyle};
@@ -26,8 +30,13 @@ pub fn create_progress_bar(len: u64) -> ProgressBar {
     pb
 }
 
-pub fn write_results(filename: String, records: &Vec<Vec<String>>) -> Result<(), Box<dyn Error>> {
-    let mut wtr = Writer::from_path(filename)?;
+pub fn write_results(folder_name: &str, records: &Vec<Vec<String>>) -> Result<(), Box<dyn Error>> {
+    match Path::new(folder_name).is_dir() {
+        false => fs::create_dir_all(folder_name)?,
+        _ => (),
+    }
+
+    let mut wtr = Writer::from_path(String::from(folder_name) + "/results.csv")?;
 
     for record in records {
         wtr.write_record(record)?;

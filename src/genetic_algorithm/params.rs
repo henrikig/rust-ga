@@ -4,7 +4,7 @@ use super::operators::{crossover::XTYPE, mutation::MTYPE};
 
 pub const PROBLEM_FILE: &str = "./instances/ruiz/json/n20m2-01.json";
 pub const POPULATION_SIZE: usize = 100;
-pub const ITERATIONS: usize = 2000;
+pub const ITERATIONS: usize = 5000;
 pub const ELITISM: usize = 2;
 pub const LOCAL_SEARCH: bool = true;
 pub const KEEP_BEST: f32 = 0.8;
