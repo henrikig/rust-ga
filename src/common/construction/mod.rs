@@ -10,6 +10,7 @@ pub mod neh;
 pub enum Construction {
     Random,
     MDDR(f32),
+    NEH,
 }
 
 pub trait Constructor {

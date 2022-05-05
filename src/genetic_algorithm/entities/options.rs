@@ -6,7 +6,7 @@ use std::{borrow::Cow, path::PathBuf};
 
 use crate::{
     common::{
-        construction::{mddr::MDDR, Construction},
+        construction::{mddr::MDDR, neh::neh, Construction},
         instance::parse,
         makespan::Makespan,
     },
@@ -135,8 +135,8 @@ impl Options {
         let mut population = Vec::with_capacity(self.pop_size);
         let mating_pool = Vec::with_capacity(self.pop_size);
 
-        // Add number of chromosomes from MDDR constructor as specified
         match self.construction {
+            // Add number of chromosomes from MDDR constructor as specified
             Construction::MDDR(num) => {
                 let mut constructed: Vec<Chromosome> = MDDR {
                     makespan: &mut makespan,
@@ -145,6 +145,14 @@ impl Options {
                 .collect();
 
                 population.append(&mut constructed);
+            }
+            // Add one chromosome based on NEH
+            Construction::NEH => {
+                let (neh_permutation, mks) = neh(&mut makespan);
+                let mut neh_chromosome = Chromosome::from(neh_permutation);
+                neh_chromosome.makespan = Some(mks);
+                neh_chromosome.updated = false;
+                population.push(neh_chromosome);
             }
             _ => (),
         }
@@ -222,9 +230,10 @@ impl Default for OptionsGrid {
                 XTYPE::BCBX, // XTYPE::SJ2OX, XTYPE::SB2OX,
             ],
             construction: vec![
-                Construction::MDDR(0.5),
-                Construction::MDDR(0.8),
+                // Construction::MDDR(0.5),
+                // Construction::MDDR(0.8),
                 Construction::MDDR(1.0),
+                // Construction::NEH,
                 // Construction::Random,
             ],
             mutation_prob: vec![0.05],
@@ -232,7 +241,7 @@ impl Default for OptionsGrid {
                 MTYPE::Greedy, // MTYPE::Swap, MTYPE::Shift, MTYPE::Reverse
             ],
             reversal_percent: vec![10],
-            non_improving_iterations: vec![150],
+            non_improving_iterations: vec![200],
             allways_keep: vec![1.0],
             approx_calc: vec![100],
         }
@@ -334,6 +343,7 @@ impl From<&Options> for Params {
             construction: match options.construction {
                 Construction::Random => Construction::Random,
                 Construction::MDDR(num) => Construction::MDDR(num),
+                Construction::NEH => Construction::NEH,
             },
             mutation_prob: options.mutation_prob,
             mutation_type: match options.mutation_type {
