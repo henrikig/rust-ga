@@ -170,7 +170,7 @@ impl GA {
         let mut iteration = 0;
 
         let start_time = Instant::now();
-        let duration = Duration::from_secs(180);
+        let duration = Duration::from_secs(params::ITERATIONS as u64);
 
         // Go through generations
         while start_time.elapsed() < duration {
@@ -294,6 +294,13 @@ impl GA {
         self.final_makespan(iteration, start_time.elapsed().as_secs());
 
         if params::WRITE_IMPROVEMENT {
+            let mut folder = PathBuf::from(params::IMPROVEMENT_FILE);
+            folder.pop();
+            write_params_to_file(
+                folder.to_str().unwrap().to_string() + "/params.csv",
+                &vec![self.options.clone()],
+            )
+            .unwrap();
             utils::write_makespan_improvement(&self.best_makespan).unwrap();
         }
     }
@@ -486,7 +493,9 @@ fn write_params_to_file(
         false => fs::create_dir_all(params::SOLUTION_FOLDER)?,
         _ => (),
     }
+
     let mut wtr = Writer::from_path(filename).unwrap();
+
     all_options
         .iter()
         .map(|o| Params::from(o))
