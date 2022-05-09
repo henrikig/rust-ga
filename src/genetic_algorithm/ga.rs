@@ -27,6 +27,7 @@ pub struct GA {
     pub makespan: Makespan,
     pub options: Options,
     pub rng: ThreadRng,
+    pub best_makespan: Vec<Vec<String>>,
 }
 
 impl Default for GA {
@@ -116,10 +117,16 @@ impl GA {
             self.makespan();
 
             // Check if any of the new chromosomes are improvements to the current best
-            if self.population.first().unwrap() < self.mating_pool.iter().min().unwrap() {
+            let best_offspring = self.mating_pool.iter().min().unwrap();
+            if self.population.first().unwrap() < best_offspring {
                 non_improvement_counter += 1;
             } else {
                 non_improvement_counter = 0;
+                self.best_makespan.push(vec![
+                    iteration.to_string(),
+                    best_offspring.makespan.unwrap().to_string(),
+                    self.makespan.count.to_string(),
+                ]);
             }
 
             // Elitism
@@ -145,15 +152,20 @@ impl GA {
 
             iteration += 1;
         }
+
+        if params::WRITE_IMPROVEMENT {
+            utils::write_makespan_improvement(&self.best_makespan).unwrap();
+        }
     }
 
     pub fn run_steady_state(&mut self) {
         // Calculate makespan for all individuals in population
         self.population.sort();
         let mut non_improvement_counter: usize = 0;
+        let mut iteration = 0;
 
         // Go through generations
-        for _ in 0..self.options.iterations {
+        while iteration < params::ITERATIONS {
             // Replace the chromosomes with the worst fit if there has been no improvement in the best fit for y iterations
             if self.options.allways_keep < 1.0
                 && non_improvement_counter >= self.options.non_improving_iterations
@@ -206,6 +218,11 @@ impl GA {
             // If non of the new chromosomes are better than the current best, the count increases
             if c1 < *self.population.first().unwrap() || c2 < *self.population.first().unwrap() {
                 non_improvement_counter = 0;
+                self.best_makespan.push(vec![
+                    iteration.to_string(),
+                    std::cmp::min(&c1, &c2).makespan.unwrap().to_string(),
+                    self.makespan.count.to_string(),
+                ]);
             } else {
                 non_improvement_counter += 1;
             }
@@ -257,6 +274,16 @@ impl GA {
                 replace(c1);
                 replace(c2);
             }
+
+            iteration += 1;
+
+            if iteration % 100 == 0 {
+                self.generation_status(iteration);
+            }
+        }
+
+        if params::WRITE_IMPROVEMENT {
+            utils::write_makespan_improvement(&self.best_makespan).unwrap();
         }
     }
 

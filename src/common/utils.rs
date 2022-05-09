@@ -45,3 +45,14 @@ pub fn write_results(folder_name: &str, records: &Vec<Vec<String>>) -> Result<()
     wtr.flush()?;
     Ok(())
 }
+
+pub fn write_makespan_improvement(records: &Vec<Vec<String>>) -> Result<(), Box<dyn Error>> {
+    let mut wtr = Writer::from_path(params::IMPROVEMENT_FILE)?;
+
+    for record in records {
+        wtr.write_record(record)?;
+    }
+
+    wtr.flush()?;
+    Ok(())
+}

@@ -190,6 +190,7 @@ impl Options {
             makespan,
             options: self,
             rng,
+            best_makespan: Vec::new(),
         };
     }
 }
