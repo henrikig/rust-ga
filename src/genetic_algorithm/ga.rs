@@ -5,7 +5,7 @@ use crate::genetic_algorithm::entities::options::Args;
 
 use super::entities::chromosome::Chromosome;
 use super::entities::options::{Options, OptionsGrid, Params};
-use super::operators::crossover::{Crossover, BCBX, SB2OX, SJ2OX, XTYPE};
+use super::operators::crossover::{Crossover, BCBX, PMX, SB2OX, SJ2OX, XTYPE};
 use super::operators::crowding;
 use super::operators::local_search::ls_ig;
 use super::operators::mutation::{self, Greedy, Mutation, Reverse, Swap, MTYPE, SHIFT};
@@ -27,6 +27,7 @@ pub struct GA {
     pub makespan: Makespan,
     pub options: Options,
     pub rng: ThreadRng,
+    pub best_makespan: Vec<Vec<String>>,
 }
 
 impl Default for GA {
@@ -66,6 +67,7 @@ impl GA {
                         XTYPE::SJ2OX => SJ2OX::apply(&p[0], &p[1], None, &mut self.makespan),
                         XTYPE::SB2OX => SB2OX::apply(&p[0], &p[1], None, &mut self.makespan),
                         XTYPE::BCBX => BCBX::apply(&p[0], &p[1], None, &mut self.makespan),
+                        XTYPE::PMX => PMX::apply(&p[0], &p[1], None, &mut self.makespan),
                     };
 
                     if params::PERFORM_CROWDING {
@@ -115,10 +117,16 @@ impl GA {
             self.makespan();
 
             // Check if any of the new chromosomes are improvements to the current best
-            if self.population.first().unwrap() < self.mating_pool.iter().min().unwrap() {
+            let best_offspring = self.mating_pool.iter().min().unwrap();
+            if self.population.first().unwrap() < best_offspring {
                 non_improvement_counter += 1;
             } else {
                 non_improvement_counter = 0;
+                self.best_makespan.push(vec![
+                    iteration.to_string(),
+                    best_offspring.makespan.unwrap().to_string(),
+                    self.makespan.count.to_string(),
+                ]);
             }
 
             // Elitism
@@ -144,15 +152,22 @@ impl GA {
 
             iteration += 1;
         }
+
+        self.final_makespan(iteration);
+
+        if params::WRITE_IMPROVEMENT {
+            utils::write_makespan_improvement(&self.best_makespan).unwrap();
+        }
     }
 
     pub fn run_steady_state(&mut self) {
         // Calculate makespan for all individuals in population
         self.population.sort();
         let mut non_improvement_counter: usize = 0;
+        let mut iteration = 0;
 
         // Go through generations
-        for _ in 0..self.options.iterations {
+        while iteration < params::ITERATIONS {
             // Replace the chromosomes with the worst fit if there has been no improvement in the best fit for y iterations
             if self.options.allways_keep < 1.0
                 && non_improvement_counter >= self.options.non_improving_iterations
@@ -175,6 +190,7 @@ impl GA {
                 XTYPE::SJ2OX => SJ2OX::apply(&p1, &p2, None, &mut self.makespan),
                 XTYPE::SB2OX => SB2OX::apply(&p1, &p2, None, &mut self.makespan),
                 XTYPE::BCBX => BCBX::apply(&p1, &p2, None, &mut self.makespan),
+                XTYPE::PMX => PMX::apply(&p1, &p2, None, &mut self.makespan),
             };
 
             // Mutate
@@ -204,6 +220,11 @@ impl GA {
             // If non of the new chromosomes are better than the current best, the count increases
             if c1 < *self.population.first().unwrap() || c2 < *self.population.first().unwrap() {
                 non_improvement_counter = 0;
+                self.best_makespan.push(vec![
+                    iteration.to_string(),
+                    std::cmp::min(&c1, &c2).makespan.unwrap().to_string(),
+                    self.makespan.count.to_string(),
+                ]);
             } else {
                 non_improvement_counter += 1;
             }
@@ -255,6 +276,18 @@ impl GA {
                 replace(c1);
                 replace(c2);
             }
+
+            iteration += 1;
+
+            if iteration % 100 == 0 {
+                self.generation_status(iteration);
+            }
+        }
+
+        self.final_makespan(iteration);
+
+        if params::WRITE_IMPROVEMENT {
+            utils::write_makespan_improvement(&self.best_makespan).unwrap();
         }
     }
 
@@ -297,6 +330,20 @@ impl GA {
             self.population[0].makespan.unwrap(),
             self.population.iter().last().unwrap().makespan.unwrap()
         );
+    }
+
+    fn final_makespan(&mut self, iteration: usize) {
+        self.best_makespan.push(vec![
+            iteration.to_string(),
+            self.population
+                .iter()
+                .min()
+                .unwrap()
+                .makespan
+                .unwrap()
+                .to_string(),
+            self.makespan.count.to_string(),
+        ]);
     }
 }
 

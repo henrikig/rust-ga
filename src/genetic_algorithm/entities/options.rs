@@ -194,6 +194,7 @@ impl Options {
             makespan,
             options: self,
             rng,
+            best_makespan: Vec::new(),
         };
     }
 }
@@ -247,7 +248,7 @@ impl Default for OptionsGrid {
             k_tournament: vec![2, 3, 5, 8],
             xover_prob: vec![0.5],
             xover_type: vec![
-                XTYPE::BCBX, // XTYPE::SJ2OX, XTYPE::SB2OX,
+                XTYPE::PMX, // XTYPE::BCBX, XTYPE::SJ2OX, XTYPE::SB2OX,
             ],
             construction: vec![
                 // Construction::MDDR(0.5),
@@ -361,6 +362,7 @@ impl From<&Options> for Params {
                 XTYPE::SJ2OX => XTYPE::SJ2OX,
                 XTYPE::SB2OX => XTYPE::SB2OX,
                 XTYPE::BCBX => XTYPE::BCBX,
+                XTYPE::PMX => XTYPE::PMX,
             },
             construction: match options.construction {
                 Construction::Random => Construction::Random,
