@@ -11,6 +11,7 @@ pub const ITERATIONS: usize = 200;
 pub const ELITISM: usize = 2;
 pub const LOCAL_SEARCH: bool = false;
 pub const KEEP_BEST: f32 = 0.8;
+pub const K_TOURNAMENT: usize = 2;
 pub const XOVER_PROB: f32 = 0.5;
 pub const XOVER: XTYPE = XTYPE::BCBX;
 pub const CONSTRUCTION: Construction = Construction::MDDR(1.0);
@@ -29,4 +30,5 @@ pub const CROWDING_SCALE: f64 = 0.5;
 pub const K_NEAREST: usize = 10; // Only used in steady state crowding version
 
 // Solution folder for parameter grid search
-pub const SOLUTION_FOLDER: &str = "./solutions/pmx";
+
+pub const SOLUTION_FOLDER: &str = "./solutions/k_tournament";
