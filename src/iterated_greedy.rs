@@ -39,7 +39,9 @@ use crate::{
             neh::{insert_job, NEH},
             solver::Solver,
         },
+        instance::parse,
         makespan::Makespan,
+        utils,
     },
     genetic_algorithm::params,
 };
@@ -62,6 +64,8 @@ pub fn iterated_greedy(
     approx_calc: u32,
 ) -> (Vec<u32>, u32) {
     let mut current_schedule: (Vec<u32>, u32);
+    let mut makespan_improvement: Vec<Vec<String>> = Vec::new();
+
     match schedule {
         Some(s) => current_schedule = s,
         None => current_schedule = NEH::neh(makespan),
@@ -73,6 +77,7 @@ pub fn iterated_greedy(
     let mut rng = rand::thread_rng();
     let d = 3;
     let starting_count: u32 = makespan.count;
+    let mut iteration = 0;
     while makespan.count - starting_count < approx_calc {
         let mut schedule_permutation = current_schedule.clone();
         let mut deleted_jobs: Vec<u32> = Vec::with_capacity(makespan.instance.jobs as usize);
@@ -97,7 +102,15 @@ pub fn iterated_greedy(
         {
             current_schedule = (schedule_permutation.0.clone(), schedule_permutation.1);
         }
+        iteration += 1;
+        makespan_improvement.push(vec![
+            iteration.to_string(),
+            current_schedule.1.to_string(),
+            makespan.count.to_string(),
+        ]);
     }
+    utils::write_makespan_improvement(&makespan_improvement).unwrap();
+
     return best_schedule;
 }
 
@@ -161,6 +174,13 @@ fn remove_random(schedule: &Vec<u32>) -> (Vec<u32>, u32) {
     new_schedule.remove(job_index as usize);
     // Return both
     return (new_schedule, job);
+}
+
+pub fn run_one() {
+    let i = parse(params::PROBLEM_FILE).unwrap();
+    let mut m = Makespan::new(&i);
+    let result = iterated_greedy(&mut m, None, params::ITERATIONS as u32);
+    println!("Iterated greedy finished with makespan {}", result.1);
 }
 
 #[cfg(test)]

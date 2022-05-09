@@ -17,7 +17,11 @@ fn main() {
     } else if args.neh {
         NEH::run_all("./solutions/neh");
     } else if args.iterated_greedy {
-        IteratedGreedy::run_all("./solutions/ig");
+        if args.run_all {
+            IteratedGreedy::run_all("./solutions/ig");
+        } else {
+            iterated_greedy::run_one();
+        }
     }
     // If we run GA, we either run one problem file, or all problem files
     else if args.run_all {
