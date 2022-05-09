@@ -6,8 +6,9 @@ pub const PROBLEM_FILE: &str = "./instances/ruiz/json/n20m2-01.json";
 pub const POPULATION_SIZE: usize = 100;
 pub const ITERATIONS: usize = 5000;
 pub const ELITISM: usize = 2;
-pub const LOCAL_SEARCH: bool = true;
+pub const LOCAL_SEARCH: bool = false;
 pub const KEEP_BEST: f32 = 0.8;
+pub const K_TOURNAMENT: usize = 2;
 pub const XOVER_PROB: f32 = 0.5;
 pub const XOVER: XTYPE = XTYPE::BCBX;
 pub const CONSTRUCTION: Construction = Construction::Random;
@@ -26,4 +27,4 @@ pub const CROWDING_SCALE: f64 = 0.5;
 pub const K_NEAREST: usize = 10; // Only used in steady state crowding version
 
 // Solution folder for parameter grid search
-pub const SOLUTION_FOLDER: &str = "./solutions/local_search";
+pub const SOLUTION_FOLDER: &str = "./solutions/k_tournament";

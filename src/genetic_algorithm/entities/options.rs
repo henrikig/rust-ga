@@ -81,6 +81,9 @@ pub struct Options {
     // Probability the best offspring is kept
     pub keep_best: f32,
 
+    // Number of individuals in tournament
+    pub k_tournament: usize,
+
     // Probability crossover is performed
     pub xover_prob: f32,
 
@@ -122,6 +125,7 @@ impl Default for Options {
             iterations: params::ITERATIONS,
             elitism: params::ELITISM,
             keep_best: params::KEEP_BEST,
+            k_tournament: params::K_TOURNAMENT,
             xover_prob: params::XOVER_PROB,
             xover_type: params::XOVER,
             construction: params::CONSTRUCTION,
@@ -205,6 +209,9 @@ pub struct OptionsGrid {
     // Probability the best offspring is kept
     pub keep_best: Vec<f32>,
 
+    // Number individuals in tournament
+    pub k_tournament: Vec<usize>,
+
     // Probability crossover is performed
     pub xover_prob: Vec<f32>,
 
@@ -237,6 +244,7 @@ impl Default for OptionsGrid {
             pop_sizes: vec![150],
             elitism: vec![2],
             keep_best: vec![0.8],
+            k_tournament: vec![2, 3, 5, 8],
             xover_prob: vec![0.5],
             xover_type: vec![
                 XTYPE::BCBX, // XTYPE::SJ2OX, XTYPE::SB2OX,
@@ -244,16 +252,16 @@ impl Default for OptionsGrid {
             construction: vec![
                 // Construction::MDDR(0.5),
                 // Construction::MDDR(0.8),
-                Construction::MDDR(1.0),
+                // Construction::MDDR(1.0),
                 // Construction::NEH,
-                // Construction::Random,
+                Construction::Random,
             ],
             mutation_prob: vec![0.05],
             mutation_type: vec![
-                MTYPE::Greedy, // MTYPE::Swap, MTYPE::Shift, MTYPE::Reverse
+                MTYPE::Swap, // MTYPE::Greedy, MTYPE::Shift, MTYPE::Reverse
             ],
             reversal_percent: vec![10],
-            non_improving_iterations: vec![200],
+            non_improving_iterations: vec![150],
             allways_keep: vec![1.0],
             approx_calc: vec![100],
         }
@@ -274,7 +282,8 @@ impl OptionsGrid {
             self.reversal_percent,
             self.non_improving_iterations,
             self.allways_keep,
-            self.approx_calc
+            //self.approx_calc,
+            self.k_tournament
         )
         .map(|opt| Options {
             pop_size: opt.0,
@@ -288,7 +297,8 @@ impl OptionsGrid {
             reversal_percent: opt.8,
             non_improving_iterations: opt.9,
             allways_keep: opt.10,
-            approx_calc: opt.11,
+            //approx_calc: opt.11,
+            k_tournament: opt.11,
             problem_file: Cow::Owned(options.problem_file.as_ref().clone()),
             ..options
         })

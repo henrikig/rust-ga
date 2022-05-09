@@ -267,13 +267,17 @@ impl GA {
 
     fn tournament(&mut self) -> Chromosome {
         // Select both possible parants
-        let p1 = self.population.choose(&mut self.rng).unwrap();
-        let p2 = self.population.choose(&mut self.rng).unwrap();
+        let mut candidates = Vec::with_capacity(self.options.k_tournament);
+
+        while candidates.len() < self.options.k_tournament {
+            candidates.push(self.population.choose(&mut self.rng).unwrap());
+        }
+
         // Choose best in 'keep_best' % of the time, random otherwise
         let winner = if self.rng.gen::<f32>() < self.options.keep_best {
-            std::cmp::min(p1, p2)
+            candidates.iter().min().unwrap()
         } else {
-            vec![p1, p2].choose(&mut self.rng).unwrap()
+            candidates.choose(&mut self.rng).unwrap()
         };
         // Create a new chromosome from the tournament winner
         let mut winner_clone = Chromosome::from(winner.jobs.to_vec());
