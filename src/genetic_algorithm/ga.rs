@@ -153,6 +153,8 @@ impl GA {
             iteration += 1;
         }
 
+        self.final_makespan(iteration);
+
         if params::WRITE_IMPROVEMENT {
             utils::write_makespan_improvement(&self.best_makespan).unwrap();
         }
@@ -282,6 +284,8 @@ impl GA {
             }
         }
 
+        self.final_makespan(iteration);
+
         if params::WRITE_IMPROVEMENT {
             utils::write_makespan_improvement(&self.best_makespan).unwrap();
         }
@@ -322,6 +326,20 @@ impl GA {
             self.population[0].makespan.unwrap(),
             self.population.iter().last().unwrap().makespan.unwrap()
         );
+    }
+
+    fn final_makespan(&mut self, iteration: usize) {
+        self.best_makespan.push(vec![
+            iteration.to_string(),
+            self.population
+                .iter()
+                .min()
+                .unwrap()
+                .makespan
+                .unwrap()
+                .to_string(),
+            self.makespan.count.to_string(),
+        ]);
     }
 }
 

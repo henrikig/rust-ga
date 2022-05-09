@@ -2,12 +2,12 @@ use crate::common::construction::Construction;
 
 use super::operators::{crossover::XTYPE, mutation::MTYPE};
 
-pub const PROBLEM_FILE: &str = "./instances/ruiz/json/n120m8-01.json";
+pub const PROBLEM_FILE: &str = "./instances/ruiz/json/n20m2-01.json";
 // pub const PROBLEM_FILE: &str = "./instances/ruiz/json/n120m8-01.json";
-pub const IMPROVEMENT_FILE: &str = "./solutions/improvement/best-n120m8-01.csv";
+pub const IMPROVEMENT_FILE: &str = "./solutions/improvement/best-n20m2-01.csv";
 pub const WRITE_IMPROVEMENT: bool = true;
 pub const POPULATION_SIZE: usize = 150;
-pub const ITERATIONS: usize = 50000;
+pub const ITERATIONS: usize = 200;
 pub const ELITISM: usize = 2;
 pub const LOCAL_SEARCH: bool = false;
 pub const KEEP_BEST: f32 = 0.8;
