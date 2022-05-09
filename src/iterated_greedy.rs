@@ -31,6 +31,8 @@ Iterative_Greedy(Instance) {
 }
 */
 
+use std::time::Instant;
+
 use rand::Rng;
 
 use crate::{
@@ -72,12 +74,13 @@ pub fn iterated_greedy(
     }
     current_schedule = iterative_improvement_insertion(makespan, &current_schedule.0);
     let mut best_schedule: (Vec<u32>, u32) = (current_schedule.0.clone(), current_schedule.1);
-    let t: f64 = 0.2; // Ruiz used 0, 0.1, 0.2, 0.3, 0.4, and 0.5
+    let t: f64 = 0.1; // Ruiz used 0, 0.1, 0.2, 0.3, 0.4, and 0.5
     let temp: f64 = find_temp(&makespan, t);
     let mut rng = rand::thread_rng();
     let d = 3;
     let starting_count: u32 = makespan.count;
     let mut iteration = 0;
+    let start_time = Instant::now();
     while makespan.count - starting_count < approx_calc {
         let mut schedule_permutation = current_schedule.clone();
         let mut deleted_jobs: Vec<u32> = Vec::with_capacity(makespan.instance.jobs as usize);
@@ -105,8 +108,9 @@ pub fn iterated_greedy(
         iteration += 1;
         makespan_improvement.push(vec![
             iteration.to_string(),
-            current_schedule.1.to_string(),
+            best_schedule.1.to_string(),
             makespan.count.to_string(),
+            start_time.elapsed().as_secs().to_string(),
         ]);
     }
     utils::write_makespan_improvement(&makespan_improvement).unwrap();
