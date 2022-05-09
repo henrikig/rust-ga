@@ -1,2 +1,2 @@
 steady_state,pop_size,elitism,keep_best,xover_prob,xover_type,construction,mutation_prob,mutation_type,reversal_percent,non_improving_iterations,allways_keep,approx_calc
-true,150,2,0.8,0.5,PMX,Random,0.05,Greedy,10,100,1.0,300
+true,150,2,0.8,0.5,PMX,1.0,0.05,Greedy,10,100,1.0,300
