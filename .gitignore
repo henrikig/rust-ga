@@ -130,5 +130,4 @@ dmypy.json
 Cargo.lock
 Cargo.toml
 
-solutions/
 .DS_Store
