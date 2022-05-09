@@ -245,7 +245,7 @@ impl Default for OptionsGrid {
             pop_sizes: vec![150],
             elitism: vec![2],
             keep_best: vec![0.8],
-            k_tournament: vec![2, 3, 5, 8],
+            k_tournament: vec![2],
             xover_prob: vec![0.5],
             xover_type: vec![
                 XTYPE::PMX, // XTYPE::BCBX, XTYPE::SJ2OX, XTYPE::SB2OX,
@@ -259,7 +259,7 @@ impl Default for OptionsGrid {
             ],
             mutation_prob: vec![0.05],
             mutation_type: vec![
-                MTYPE::Swap, // MTYPE::Greedy, MTYPE::Shift, MTYPE::Reverse
+                MTYPE::Shift, // MTYPE::Greedy, MTYPE::Shift, MTYPE::Reverse
             ],
             reversal_percent: vec![10],
             non_improving_iterations: vec![150],

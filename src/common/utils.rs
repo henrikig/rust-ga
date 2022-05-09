@@ -9,6 +9,8 @@ use indicatif::{ProgressBar, ProgressStyle};
 
 use crate::genetic_algorithm::params;
 
+use super::instance::Instance;
+
 pub fn get_problem_files(run_all: bool) -> Vec<PathBuf> {
     match run_all {
         true => fs::read_dir("./instances/ruiz/json")
@@ -20,164 +22,128 @@ pub fn get_problem_files(run_all: bool) -> Vec<PathBuf> {
     }
 }
 
+pub fn get_duration(instance: &Instance) -> u64 {
+    let n_jobs = instance.jobs as f64;
+    let m_stages = instance.stages as f64;
+
+    let scale = 1.7;
+
+    (n_jobs.powf(scale) * m_stages * 1.5) as u64
+}
+
 pub fn get_test_problems() -> Vec<PathBuf> {
     return vec![
-        PathBuf::from("n20m2-01.json"),
-        PathBuf::from("n20m2-02.json"),
-        PathBuf::from("n20m2-03.json"),
-        PathBuf::from("n20m2-04.json"),
-        PathBuf::from("n20m2-05.json"),
+        PathBuf::from("./instances/ruiz/json/n20m2-01.json"),
+        PathBuf::from("./instances/ruiz/json/n20m2-02.json"),
+        PathBuf::from("./instances/ruiz/json/n20m2-03.json"),
+        PathBuf::from("./instances/ruiz/json/n20m2-04.json"),
+        PathBuf::from("./instances/ruiz/json/n20m2-05.json"),
+        PathBuf::from("./instances/ruiz/json/n20m2-06.json"),
+        PathBuf::from("./instances/ruiz/json/n20m2-07.json"),
+        PathBuf::from("./instances/ruiz/json/n20m2-08.json"),
         //
-        PathBuf::from("n20m4-01.json"),
-        PathBuf::from("n20m4-02.json"),
-        PathBuf::from("n20m4-03.json"),
-        PathBuf::from("n20m4-04.json"),
-        PathBuf::from("n20m4-05.json"),
+        PathBuf::from("./instances/ruiz/json/n20m4-01.json"),
+        PathBuf::from("./instances/ruiz/json/n20m4-02.json"),
+        PathBuf::from("./instances/ruiz/json/n20m4-03.json"),
+        PathBuf::from("./instances/ruiz/json/n20m4-04.json"),
+        PathBuf::from("./instances/ruiz/json/n20m4-05.json"),
+        PathBuf::from("./instances/ruiz/json/n20m4-06.json"),
+        PathBuf::from("./instances/ruiz/json/n20m4-07.json"),
+        PathBuf::from("./instances/ruiz/json/n20m4-08.json"),
         //
-        PathBuf::from("n50m2-01.json"),
-        PathBuf::from("n50m2-02.json"),
-        PathBuf::from("n50m2-03.json"),
-        PathBuf::from("n50m2-04.json"),
-        PathBuf::from("n50m2-05.json"),
+        PathBuf::from("./instances/ruiz/json/n20m8-01.json"),
+        PathBuf::from("./instances/ruiz/json/n20m8-02.json"),
+        PathBuf::from("./instances/ruiz/json/n20m8-03.json"),
+        PathBuf::from("./instances/ruiz/json/n20m8-04.json"),
+        PathBuf::from("./instances/ruiz/json/n20m8-05.json"),
+        PathBuf::from("./instances/ruiz/json/n20m8-06.json"),
+        PathBuf::from("./instances/ruiz/json/n20m8-07.json"),
+        PathBuf::from("./instances/ruiz/json/n20m8-08.json"),
         //
-        PathBuf::from("n50m4-01.json"),
-        PathBuf::from("n50m4-02.json"),
-        PathBuf::from("n50m4-03.json"),
-        PathBuf::from("n50m4-04.json"),
-        PathBuf::from("n50m4-05.json"),
+        PathBuf::from("./instances/ruiz/json/n50m2-01.json"),
+        PathBuf::from("./instances/ruiz/json/n50m2-02.json"),
+        PathBuf::from("./instances/ruiz/json/n50m2-03.json"),
+        PathBuf::from("./instances/ruiz/json/n50m2-04.json"),
+        PathBuf::from("./instances/ruiz/json/n50m2-05.json"),
+        PathBuf::from("./instances/ruiz/json/n50m2-06.json"),
+        PathBuf::from("./instances/ruiz/json/n50m2-07.json"),
+        PathBuf::from("./instances/ruiz/json/n50m2-08.json"),
         //
-        PathBuf::from("n50m8-01.json"),
-        PathBuf::from("n50m8-02.json"),
-        PathBuf::from("n50m8-03.json"),
-        PathBuf::from("n50m8-04.json"),
-        PathBuf::from("n50m8-05.json"),
+        PathBuf::from("./instances/ruiz/json/n50m4-01.json"),
+        PathBuf::from("./instances/ruiz/json/n50m4-02.json"),
+        PathBuf::from("./instances/ruiz/json/n50m4-03.json"),
+        PathBuf::from("./instances/ruiz/json/n50m4-04.json"),
+        PathBuf::from("./instances/ruiz/json/n50m4-05.json"),
+        PathBuf::from("./instances/ruiz/json/n50m4-06.json"),
+        PathBuf::from("./instances/ruiz/json/n50m4-07.json"),
+        PathBuf::from("./instances/ruiz/json/n50m4-08.json"),
         //
-        PathBuf::from("n80m2-01.json"),
-        PathBuf::from("n80m2-02.json"),
-        PathBuf::from("n80m2-03.json"),
-        PathBuf::from("n80m2-04.json"),
-        PathBuf::from("n80m2-05.json"),
-        //
-        PathBuf::from("n80m4-01.json"),
-        PathBuf::from("n80m4-02.json"),
-        PathBuf::from("n80m4-03.json"),
-        PathBuf::from("n80m4-04.json"),
-        PathBuf::from("n80m4-05.json"),
-        //
-        PathBuf::from("n80m4-41.json"),
-        PathBuf::from("n80m4-42.json"),
-        PathBuf::from("n80m4-43.json"),
-        PathBuf::from("n80m4-44.json"),
-        PathBuf::from("n80m4-45.json"),
-        //
-        PathBuf::from("n80m8-01.json"),
-        PathBuf::from("n80m8-02.json"),
-        PathBuf::from("n80m8-03.json"),
-        PathBuf::from("n80m8-04.json"),
-        PathBuf::from("n80m8-05.json"),
-        //
-        PathBuf::from("n80m8-21.json"),
-        PathBuf::from("n80m8-22.json"),
-        PathBuf::from("n80m8-23.json"),
-        PathBuf::from("n80m8-24.json"),
-        PathBuf::from("n80m8-25.json"),
-        //
-        PathBuf::from("n80m8-41.json"),
-        PathBuf::from("n80m8-42.json"),
-        PathBuf::from("n80m8-43.json"),
-        PathBuf::from("n80m8-44.json"),
-        PathBuf::from("n80m8-45.json"),
-        //
-        PathBuf::from("n80m8-61.json"),
-        PathBuf::from("n80m8-62.json"),
-        PathBuf::from("n80m8-63.json"),
-        PathBuf::from("n80m8-64.json"),
-        PathBuf::from("n80m8-65.json"),
-        //
-        PathBuf::from("n120m2-01.json"),
-        PathBuf::from("n120m2-02.json"),
-        PathBuf::from("n120m2-03.json"),
-        PathBuf::from("n120m2-04.json"),
-        PathBuf::from("n120m2-05.json"),
-        //
-        PathBuf::from("n120m2-41.json"),
-        PathBuf::from("n120m2-42.json"),
-        PathBuf::from("n120m2-43.json"),
-        PathBuf::from("n120m2-44.json"),
-        PathBuf::from("n120m2-45.json"),
-        //
-        PathBuf::from("n120m4-01.json"),
-        PathBuf::from("n120m4-02.json"),
-        PathBuf::from("n120m4-03.json"),
-        PathBuf::from("n120m4-04.json"),
-        PathBuf::from("n120m4-05.json"),
-        //
-        PathBuf::from("n120m4-21.json"),
-        PathBuf::from("n120m4-22.json"),
-        PathBuf::from("n120m4-23.json"),
-        PathBuf::from("n120m4-24.json"),
-        PathBuf::from("n120m4-25.json"),
-        //
-        PathBuf::from("n120m4-41.json"),
-        PathBuf::from("n120m4-42.json"),
-        PathBuf::from("n120m4-43.json"),
-        PathBuf::from("n120m4-44.json"),
-        PathBuf::from("n120m4-45.json"),
-        //
-        PathBuf::from("n120m4-61.json"),
-        PathBuf::from("n120m4-62.json"),
-        PathBuf::from("n120m4-63.json"),
-        PathBuf::from("n120m4-64.json"),
-        PathBuf::from("n120m4-65.json"),
-        //
-        PathBuf::from("n120m8-01.json"),
-        PathBuf::from("n120m8-02.json"),
-        PathBuf::from("n120m8-03.json"),
-        PathBuf::from("n120m8-04.json"),
-        PathBuf::from("n120m8-05.json"),
-        //
-        PathBuf::from("n120m8-11.json"),
-        PathBuf::from("n120m8-12.json"),
-        PathBuf::from("n120m8-13.json"),
-        PathBuf::from("n120m8-14.json"),
-        PathBuf::from("n120m8-15.json"),
+        PathBuf::from("./instances/ruiz/json/n50m8-01.json"),
+        PathBuf::from("./instances/ruiz/json/n50m8-02.json"),
+        PathBuf::from("./instances/ruiz/json/n50m8-03.json"),
+        PathBuf::from("./instances/ruiz/json/n50m8-04.json"),
+        PathBuf::from("./instances/ruiz/json/n50m8-05.json"),
+        PathBuf::from("./instances/ruiz/json/n50m8-06.json"),
+        PathBuf::from("./instances/ruiz/json/n50m8-07.json"),
+        PathBuf::from("./instances/ruiz/json/n50m8-08.json"),
         //
         //
-        PathBuf::from("n120m8-21.json"),
-        PathBuf::from("n120m8-22.json"),
-        PathBuf::from("n120m8-23.json"),
-        PathBuf::from("n120m8-24.json"),
-        PathBuf::from("n120m8-25.json"),
+        PathBuf::from("./instances/ruiz/json/n80m2-01.json"),
+        PathBuf::from("./instances/ruiz/json/n80m2-02.json"),
+        PathBuf::from("./instances/ruiz/json/n80m2-03.json"),
+        PathBuf::from("./instances/ruiz/json/n80m2-04.json"),
+        PathBuf::from("./instances/ruiz/json/n80m2-05.json"),
+        PathBuf::from("./instances/ruiz/json/n80m2-06.json"),
+        PathBuf::from("./instances/ruiz/json/n80m2-07.json"),
+        PathBuf::from("./instances/ruiz/json/n80m2-08.json"),
         //
-        PathBuf::from("n120m8-31.json"),
-        PathBuf::from("n120m8-32.json"),
-        PathBuf::from("n120m8-33.json"),
-        PathBuf::from("n120m8-34.json"),
-        PathBuf::from("n120m8-35.json"),
+        PathBuf::from("./instances/ruiz/json/n80m4-01.json"),
+        PathBuf::from("./instances/ruiz/json/n80m4-02.json"),
+        PathBuf::from("./instances/ruiz/json/n80m4-03.json"),
+        PathBuf::from("./instances/ruiz/json/n80m4-04.json"),
+        PathBuf::from("./instances/ruiz/json/n80m4-41.json"),
+        PathBuf::from("./instances/ruiz/json/n80m4-42.json"),
+        PathBuf::from("./instances/ruiz/json/n80m4-43.json"),
+        PathBuf::from("./instances/ruiz/json/n80m4-44.json"),
         //
-        PathBuf::from("n120m8-41.json"),
-        PathBuf::from("n120m8-42.json"),
-        PathBuf::from("n120m8-43.json"),
-        PathBuf::from("n120m8-44.json"),
-        PathBuf::from("n120m8-45.json"),
+        PathBuf::from("./instances/ruiz/json/n80m8-01.json"),
+        PathBuf::from("./instances/ruiz/json/n80m8-02.json"),
+        PathBuf::from("./instances/ruiz/json/n80m8-21.json"),
+        PathBuf::from("./instances/ruiz/json/n80m8-22.json"),
+        PathBuf::from("./instances/ruiz/json/n80m8-41.json"),
+        PathBuf::from("./instances/ruiz/json/n80m8-42.json"),
+        PathBuf::from("./instances/ruiz/json/n80m8-61.json"),
+        PathBuf::from("./instances/ruiz/json/n80m8-62.json"),
         //
-        PathBuf::from("n120m8-51.json"),
-        PathBuf::from("n120m8-52.json"),
-        PathBuf::from("n120m8-53.json"),
-        PathBuf::from("n120m8-54.json"),
-        PathBuf::from("n120m8-55.json"),
         //
-        PathBuf::from("n120m8-61.json"),
-        PathBuf::from("n120m8-62.json"),
-        PathBuf::from("n120m8-63.json"),
-        PathBuf::from("n120m8-64.json"),
-        PathBuf::from("n120m8-65.json"),
+        PathBuf::from("./instances/ruiz/json/n120m2-01.json"),
+        PathBuf::from("./instances/ruiz/json/n120m2-02.json"),
+        PathBuf::from("./instances/ruiz/json/n120m2-03.json"),
+        PathBuf::from("./instances/ruiz/json/n120m2-04.json"),
+        PathBuf::from("./instances/ruiz/json/n120m2-41.json"),
+        PathBuf::from("./instances/ruiz/json/n120m2-42.json"),
+        PathBuf::from("./instances/ruiz/json/n120m2-43.json"),
+        PathBuf::from("./instances/ruiz/json/n120m2-44.json"),
         //
-        PathBuf::from("n120m8-71.json"),
-        PathBuf::from("n120m8-72.json"),
-        PathBuf::from("n120m8-73.json"),
-        PathBuf::from("n120m8-74.json"),
-        PathBuf::from("n120m8-75.json"),
+        PathBuf::from("./instances/ruiz/json/n120m4-01.json"),
+        PathBuf::from("./instances/ruiz/json/n120m4-02.json"),
+        PathBuf::from("./instances/ruiz/json/n120m4-21.json"),
+        PathBuf::from("./instances/ruiz/json/n120m4-22.json"),
+        PathBuf::from("./instances/ruiz/json/n120m4-41.json"),
+        PathBuf::from("./instances/ruiz/json/n120m4-42.json"),
+        PathBuf::from("./instances/ruiz/json/n120m4-61.json"),
+        PathBuf::from("./instances/ruiz/json/n120m4-61.json"),
+        //
+        PathBuf::from("./instances/ruiz/json/n120m8-01.json"),
+        PathBuf::from("./instances/ruiz/json/n120m8-11.json"),
+        PathBuf::from("./instances/ruiz/json/n120m8-21.json"),
+        PathBuf::from("./instances/ruiz/json/n120m8-31.json"),
+        PathBuf::from("./instances/ruiz/json/n120m8-41.json"),
+        PathBuf::from("./instances/ruiz/json/n120m8-51.json"),
+        PathBuf::from("./instances/ruiz/json/n120m8-61.json"),
+        PathBuf::from("./instances/ruiz/json/n120m8-71.json"),
+        //
+        //
     ];
 }
 
@@ -216,4 +182,34 @@ pub fn write_makespan_improvement(records: &Vec<Vec<String>>) -> Result<(), Box<
 
     wtr.flush()?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::common::instance::parse;
+
+    use super::{get_duration, get_test_problems};
+
+    #[test]
+    fn iterative_improvement_insertion_test() {
+        let i = parse("./instances/ruiz/json/n120m8-01.json").unwrap();
+        let duration = get_duration(&i) as u64;
+
+        assert!(duration > 40000);
+        assert!(duration < 50000);
+    }
+
+    #[test]
+    fn test_files() {
+        let files = get_test_problems();
+        let files_consumed = get_test_problems();
+
+        files
+            .into_iter()
+            .enumerate()
+            .for_each(|(i, problem_file)| match parse(problem_file) {
+                Err(_) => eprintln!("Could not open {:?}", files_consumed.get(i)),
+                Ok(_) => (),
+            })
+    }
 }
