@@ -1,0 +1,2 @@
+steady_state,pop_size,elitism,keep_best,xover_prob,xover_type,construction,mutation_prob,mutation_type,reversal_percent,non_improving_iterations,allways_keep,approx_calc
+true,100,2,0.8,0.5,BCBX,0.5,0.0,Greedy,10,150,0.9,100
