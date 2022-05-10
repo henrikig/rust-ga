@@ -33,7 +33,7 @@ Iterative_Greedy(Instance) {
 
 use std::time::Instant;
 
-use rand::Rng;
+use rand::{prelude::StdRng, Rng, SeedableRng};
 
 use crate::{
     common::{
@@ -67,16 +67,17 @@ pub fn iterated_greedy(
 ) -> (Vec<u32>, u32) {
     let mut current_schedule: (Vec<u32>, u32);
     let mut makespan_improvement: Vec<Vec<String>> = Vec::new();
+    let mut rng = StdRng::seed_from_u64(123);
 
     match schedule {
         Some(s) => current_schedule = s,
         None => current_schedule = NEH::neh(makespan),
-    }
-    current_schedule = iterative_improvement_insertion(makespan, &current_schedule.0);
+    };
+
+    current_schedule = iterative_improvement_insertion(makespan, &current_schedule.0, &mut rng);
     let mut best_schedule: (Vec<u32>, u32) = (current_schedule.0.clone(), current_schedule.1);
     let t: f64 = 0.1; // Ruiz used 0, 0.1, 0.2, 0.3, 0.4, and 0.5
     let temp: f64 = find_temp(&makespan, t);
-    let mut rng = rand::thread_rng();
     let d = 3;
     let starting_count: u32 = makespan.count;
     let mut iteration = 0;
@@ -85,7 +86,7 @@ pub fn iterated_greedy(
         let mut schedule_permutation = current_schedule.clone();
         let mut deleted_jobs: Vec<u32> = Vec::with_capacity(makespan.instance.jobs as usize);
         for _ in 0..d {
-            let (reduced_schedule, deleted_job) = remove_random(&schedule_permutation.0);
+            let (reduced_schedule, deleted_job) = remove_random(&schedule_permutation.0, &mut rng);
             let reduced_schedule_makspan = makespan.makespan(&reduced_schedule).0;
             schedule_permutation = (reduced_schedule, reduced_schedule_makspan).clone();
             deleted_jobs.push(deleted_job.clone())
@@ -94,7 +95,7 @@ pub fn iterated_greedy(
             schedule_permutation = insert_job(makespan, &schedule_permutation.0, job);
         }
         let new_schedule: (Vec<u32>, u32) =
-            iterative_improvement_insertion(makespan, &schedule_permutation.0);
+            iterative_improvement_insertion(makespan, &schedule_permutation.0, &mut rng);
         if current_schedule.1 > new_schedule.1 {
             current_schedule = (new_schedule.0.clone(), new_schedule.1);
             if best_schedule.1 > current_schedule.1 {
@@ -134,6 +135,7 @@ fn find_temp(makespan: &Makespan, t: f64) -> f64 {
 pub fn iterative_improvement_insertion(
     makespan: &mut Makespan,
     schedule: &Vec<u32>,
+    rng: &mut StdRng,
 ) -> (Vec<u32>, u32) {
     let mut improvement = true;
     // n is the amout of tries before each check of improvement. Should not be larger than the amount of jobs
@@ -150,7 +152,7 @@ pub fn iterative_improvement_insertion(
             let mut destroyed: (Vec<u32>, u32) = (Vec::with_capacity(schedule.len()), u32::MAX);
             // remove_random() has to be run until the job it removes is unique
             while destroyed.0.is_empty() || jobs_removed.contains(&destroyed.1) {
-                destroyed = remove_random(&current_schedule.0);
+                destroyed = remove_random(&current_schedule.0, rng);
             }
             // Add the chosen job to jobs_removed
             jobs_removed.push(destroyed.1);
@@ -167,12 +169,12 @@ pub fn iterative_improvement_insertion(
 }
 
 // Removes a random job from a schedule and returns the new schedule and the job
-fn remove_random(schedule: &Vec<u32>) -> (Vec<u32>, u32) {
+fn remove_random(schedule: &Vec<u32>, rng: &mut StdRng) -> (Vec<u32>, u32) {
     // Clone schedule to make sure it operates in steady state
     let mut new_schedule = schedule.clone();
     // let index: u32 = rand::random::<u32>() % schedule.len();
     // Choose a random job from the schedule
-    let job_index = rand::thread_rng().gen_range(0..schedule.len());
+    let job_index = rng.gen_range(0..schedule.len());
     let job = schedule[job_index];
     // Remove the job from the schedule
     new_schedule.remove(job_index as usize);
@@ -199,7 +201,9 @@ mod ig_tests {
         let mut m: Makespan = Makespan::new(&i);
         let schedule: Vec<u32> = (0..20).collect();
 
-        let (local_search, _) = iterative_improvement_insertion(&mut m, &schedule);
+        let mut rng = StdRng::seed_from_u64(123);
+
+        let (local_search, _) = iterative_improvement_insertion(&mut m, &schedule, &mut rng);
         println!(
             "Initial schedule makspan: {}, after iii: {}, makespan calculations: {}",
             m.makespan(&schedule).0,

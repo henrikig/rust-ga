@@ -1,3 +1,4 @@
+use rand::prelude::StdRng;
 use serde_derive::Serialize;
 
 use crate::genetic_algorithm::entities::chromosome::Chromosome;

@@ -3,7 +3,7 @@ use crate::{
     genetic_algorithm::{entities::chromosome::Chromosome, params},
 };
 
-use rand::Rng;
+use rand::{prelude::StdRng, Rng};
 use serde_derive::Serialize;
 
 #[derive(Clone, Serialize)]
@@ -15,7 +15,7 @@ pub enum MTYPE {
 }
 
 pub trait Mutation {
-    fn apply(c: &mut Chromosome, m: &mut Makespan);
+    fn apply(c: &mut Chromosome, m: &mut Makespan, rng: &mut StdRng);
 }
 
 pub struct SHIFT;
@@ -25,10 +25,10 @@ pub struct Greedy;
 
 impl Mutation for SHIFT {
     // Move a job from one location to another random location
-    fn apply(c: &mut Chromosome, _m: &mut Makespan) {
+    fn apply(c: &mut Chromosome, _m: &mut Makespan, rng: &mut StdRng) {
         // Find random job (index) and new location
-        let from = rand::thread_rng().gen_range(0..c.jobs.len());
-        let to = rand::thread_rng().gen_range(0..c.jobs.len());
+        let from = rng.gen_range(0..c.jobs.len());
+        let to = rng.gen_range(0..c.jobs.len());
 
         // Remove job from job permutation
         let job = c.jobs.remove(from);
@@ -40,10 +40,10 @@ impl Mutation for SHIFT {
 
 impl Mutation for Reverse {
     // Change order of jobs in the chosen range
-    fn apply(c: &mut Chromosome, _m: &mut Makespan) {
+    fn apply(c: &mut Chromosome, _m: &mut Makespan, rng: &mut StdRng) {
         let size = c.jobs.len() / params::REVERSAL_PERCENT;
 
-        let start = rand::thread_rng().gen_range(0..c.jobs.len() - size);
+        let start = rng.gen_range(0..c.jobs.len() - size);
 
         c.jobs[start..start + size].reverse();
         c.updated = true;
@@ -52,13 +52,13 @@ impl Mutation for Reverse {
 
 impl Mutation for Swap {
     // Change order of jobs in the chosen range
-    fn apply(c: &mut Chromosome, _m: &mut Makespan) {
-        let j1 = rand::thread_rng().gen_range(0..c.jobs.len());
-        let mut j2 = rand::thread_rng().gen_range(0..c.jobs.len());
+    fn apply(c: &mut Chromosome, _m: &mut Makespan, rng: &mut StdRng) {
+        let j1 = rng.gen_range(0..c.jobs.len());
+        let mut j2 = rng.gen_range(0..c.jobs.len());
 
         // Choose job 2 again if we picked the same jobs
         while j1 == j2 {
-            j2 = rand::thread_rng().gen_range(0..c.jobs.len());
+            j2 = rng.gen_range(0..c.jobs.len());
         }
 
         c.jobs.swap(j1, j2);
@@ -67,12 +67,12 @@ impl Mutation for Swap {
 }
 
 impl Mutation for Greedy {
-    fn apply(c: &mut Chromosome, m: &mut Makespan) {
-        let rand_job = rand::thread_rng().gen_range(0..c.jobs.len());
+    fn apply(c: &mut Chromosome, m: &mut Makespan, rng: &mut StdRng) {
+        let rand_job = rng.gen_range(0..c.jobs.len());
 
         let job = c.jobs.remove(rand_job);
 
-        let (new_jobs, makespan) = find_best_insertion(c.jobs.to_vec(), &[job], m, false);
+        let (new_jobs, makespan) = find_best_insertion(c.jobs.to_vec(), &[job], m, false, rng);
 
         c.jobs = new_jobs;
         c.makespan = Some(makespan);
@@ -81,6 +81,8 @@ impl Mutation for Greedy {
 
 #[cfg(test)]
 mod test {
+    use rand::{prelude::StdRng, SeedableRng};
+
     use crate::{
         common::makespan::Makespan,
         genetic_algorithm::{
@@ -100,8 +102,14 @@ mod test {
 
         assert_eq!(jobs_mutate.jobs.len(), 20);
 
+        let mut rng = StdRng::seed_from_u64(123);
+
         // Apply reversal mutation
-        Reverse::apply(&mut jobs_mutate, &mut Makespan::new(&test_instance()));
+        Reverse::apply(
+            &mut jobs_mutate,
+            &mut Makespan::new(&test_instance()),
+            &mut rng,
+        );
 
         // Count the number of jobs that are now equal
         let count = jobs_mutate
@@ -130,7 +138,13 @@ mod test {
         let mut jobs_mutate = Chromosome::from((0..20).collect::<Vec<u32>>());
         let jobs_compare = Chromosome::from((0..20).collect::<Vec<u32>>());
 
-        Swap::apply(&mut jobs_mutate, &mut Makespan::new(&test_instance()));
+        let mut rng = StdRng::seed_from_u64(123);
+
+        Swap::apply(
+            &mut jobs_mutate,
+            &mut Makespan::new(&test_instance()),
+            &mut rng,
+        );
 
         // Count the number of jobs that are now equal
         let count = jobs_mutate
@@ -154,8 +168,10 @@ mod test {
         // Calculate makespan before mutation
         let (makespan_before, _) = makespan.makespan(&c.jobs);
 
+        let mut rng = StdRng::seed_from_u64(123);
+
         // Apply mutation
-        Greedy::apply(&mut c, &mut makespan);
+        Greedy::apply(&mut c, &mut makespan, &mut rng);
 
         // Calculate makespan after mutation
         let (makespan_after, _) = makespan.makespan(&c.jobs);

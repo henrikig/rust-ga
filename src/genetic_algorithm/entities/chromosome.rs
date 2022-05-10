@@ -1,5 +1,4 @@
-use rand::seq::SliceRandom;
-use rand::thread_rng;
+use rand::{prelude::StdRng, seq::SliceRandom};
 use std::{
     cmp::Ordering,
     fmt::{Display, Error, Formatter},
@@ -15,9 +14,9 @@ pub struct Chromosome {
 }
 
 impl Chromosome {
-    pub fn new(instance: &Instance) -> Chromosome {
+    pub fn new(instance: &Instance, rng: &mut StdRng) -> Chromosome {
         let mut jobs: Vec<u32> = (0..instance.jobs).collect();
-        jobs.shuffle(&mut thread_rng());
+        jobs.shuffle(rng);
 
         Chromosome {
             jobs,

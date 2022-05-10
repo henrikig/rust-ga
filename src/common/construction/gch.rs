@@ -1,21 +1,21 @@
 use crate::common::best_insertion::find_best_insertion;
 use crate::common::makespan::Makespan;
 use crate::genetic_algorithm::entities::chromosome::Chromosome;
-use rand::seq::SliceRandom;
-use rand::thread_rng;
+use rand::prelude::{SliceRandom, StdRng};
 
 use super::Constructor;
 
 // Greedy Construction Heuristic (GCH)
 pub struct GCH<'a> {
     pub makespan: &'a mut Makespan,
+    pub rng: &'a mut StdRng,
 }
 
 impl Constructor for GCH<'_> {
     fn create(&mut self) -> Chromosome {
         // Get a random input vector of jobs
         let mut jobs: Vec<u32> = (0..self.makespan.instance.jobs).collect();
-        jobs.shuffle(&mut thread_rng());
+        jobs.shuffle(self.rng);
 
         // Initialise empty vector of output jobs
         let mut c: Vec<u32> = Vec::with_capacity(self.makespan.instance.jobs as usize);
@@ -29,7 +29,7 @@ impl Constructor for GCH<'_> {
             let job = jobs.remove(jobs.len() - 1);
 
             // Find current job's best insertion point in output jobs
-            (c, makespan) = find_best_insertion(c, &[job], &mut self.makespan, false);
+            (c, makespan) = find_best_insertion(c, &[job], &mut self.makespan, false, self.rng);
         }
 
         let mut c = Chromosome::from(c);
@@ -49,6 +49,8 @@ impl Iterator for GCH<'_> {
 
 #[cfg(test)]
 mod test {
+    use rand::{prelude::StdRng, SeedableRng};
+
     use crate::{
         common::{instance::parse, makespan::Makespan},
         genetic_algorithm::{entities::chromosome::Chromosome, params},
@@ -62,8 +64,11 @@ mod test {
 
         let mut makespan = Makespan::new(&instance);
 
+        let mut rng = StdRng::seed_from_u64(123);
+
         let constructor = GCH {
             makespan: &mut makespan,
+            rng: &mut rng,
         };
 
         let mut makespan = Makespan::new(&instance);
@@ -71,7 +76,7 @@ mod test {
         let mut heuristic: Vec<Chromosome> = constructor.take(10).collect();
         let mut random: Vec<Chromosome> = Vec::new();
         for _ in 0..10 {
-            random.push(Chromosome::new(&instance));
+            random.push(Chromosome::new(&instance, &mut rng));
         }
 
         heuristic.iter_mut().for_each(|c| c.makespan(&mut makespan));
@@ -89,8 +94,11 @@ mod test {
 
         let mut makespan = Makespan::new(&instance);
 
+        let mut rng = StdRng::seed_from_u64(123);
+
         let constructor = GCH {
             makespan: &mut makespan,
+            rng: &mut rng,
         };
 
         let mut population: Vec<Chromosome> = constructor.take(100).collect();

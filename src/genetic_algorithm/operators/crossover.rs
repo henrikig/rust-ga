@@ -2,6 +2,7 @@ use crate::{common::makespan::Makespan, genetic_algorithm::entities::chromosome:
 
 use crate::common::best_insertion::find_best_insertion;
 
+use rand::prelude::StdRng;
 use rand::Rng;
 use serde_derive::Serialize;
 
@@ -20,6 +21,7 @@ pub trait Crossover {
         p2: &Chromosome,
         k: Option<usize>,
         makespan: &mut Makespan,
+        rng: &mut StdRng,
     ) -> (Chromosome, Chromosome);
 }
 
@@ -34,6 +36,7 @@ impl Crossover for SJ2OX {
         p2: &Chromosome,
         k: Option<usize>,
         _makespan: &mut Makespan,
+        rng: &mut StdRng,
     ) -> (Chromosome, Chromosome) {
         // Generate new permutations based on parents
         let (mut c1, mut c2) = generate_children(p1, p2);
@@ -41,7 +44,7 @@ impl Crossover for SJ2OX {
         // Draw a cut point, k, from range [0, n_jobs)
         let k = match k {
             Some(k) => k,
-            None => rand::thread_rng().gen_range(0..p1.jobs.len()),
+            None => rng.gen_range(0..p1.jobs.len()),
         };
 
         // Copy elements before cut point from p1, p2 directly to respective children c1, c2
@@ -68,13 +71,14 @@ impl Crossover for SB2OX {
         p2: &Chromosome,
         _k: Option<usize>,
         _makespan: &mut Makespan,
+        rng: &mut StdRng,
     ) -> (Chromosome, Chromosome) {
         // Generate new permutations based on parents
         let (mut c1, mut c2) = generate_children(p1, p2);
 
         // Draw two different cut points, k1, k2
-        let k1 = rand::thread_rng().gen_range(0..p1.jobs.len());
-        let k2 = rand::thread_rng().gen_range(0..p1.jobs.len());
+        let k1 = rng.gen_range(0..p1.jobs.len());
+        let k2 = rng.gen_range(0..p1.jobs.len());
         let start = std::cmp::min(k1, k2);
         let stop = std::cmp::max(k1, k2);
         // Copy elements between cut points from p1, p2 directly to respective children c1, c2
@@ -101,6 +105,7 @@ impl Crossover for BCBX {
         p2: &Chromosome,
         k: Option<usize>,
         makespan: &mut Makespan,
+        rng: &mut StdRng,
     ) -> (Chromosome, Chromosome) {
         // Set number of jobs to extract
         let n_jobs = p1.jobs.len();
@@ -111,8 +116,8 @@ impl Crossover for BCBX {
         };
 
         // Get a random block from each parent with given block size
-        let block1 = rand::thread_rng().gen_range(0..n_jobs - k);
-        let block2 = rand::thread_rng().gen_range(0..n_jobs - k);
+        let block1 = rng.gen_range(0..n_jobs - k);
+        let block2 = rng.gen_range(0..n_jobs - k);
 
         let block1 = &p1.jobs[block1..block1 + k];
         let block2 = &p2.jobs[block2..block2 + k];
@@ -125,8 +130,8 @@ impl Crossover for BCBX {
         let c2 = filter(p2.jobs.to_vec(), block1);
 
         // Test each possible insertion, record best index
-        let (c1, m1) = find_best_insertion(c1, block2, makespan, true);
-        let (c2, m2) = find_best_insertion(c2, block1, makespan, true);
+        let (c1, m1) = find_best_insertion(c1, block2, makespan, true, rng);
+        let (c2, m2) = find_best_insertion(c2, block1, makespan, true, rng);
 
         // Return new chromosomes
         (
@@ -142,20 +147,22 @@ impl Crossover for PMX {
         p2: &Chromosome,
         _k: Option<usize>,
         _makespan: &mut Makespan,
+        rng: &mut StdRng,
     ) -> (Chromosome, Chromosome) {
         // The `pmx` function returns only one child, so we call it twice with
         // p1 and p2 swapping positions in the input
-        let c1 = pmx(&p1.jobs, &p2.jobs);
-        let c2 = pmx(&p2.jobs, &p1.jobs);
+        let c1 = pmx(&p1.jobs, &p2.jobs, rng);
+        let c2 = pmx(&p2.jobs, &p1.jobs, rng);
 
         (Chromosome::from(c1), Chromosome::from(c2))
     }
 }
 
-fn pmx(p1: &[u32], p2: &[u32]) -> Vec<u32> {
+fn pmx(p1: &[u32], p2: &[u32], rng: &mut StdRng) -> Vec<u32> {
     let n_jobs = p1.len();
-    let x1 = rand::thread_rng().gen_range(0..n_jobs - 1);
-    let x2 = rand::thread_rng().gen_range(x1..n_jobs);
+
+    let x1 = rng.gen_range(0..n_jobs - 1);
+    let x2 = rng.gen_range(x1..n_jobs);
 
     let mut child = vec![0; n_jobs];
 
@@ -240,6 +247,8 @@ fn insert_remaining(
 #[cfg(test)]
 mod xover_test {
     use itertools::Itertools;
+    use rand::prelude::StdRng;
+    use rand::SeedableRng;
 
     use crate::common::best_insertion::find_best_insertion;
     use crate::common::instance::Instance;
@@ -254,6 +263,7 @@ mod xover_test {
         let mut makespan = Makespan::new(&instance);
         let jobs = test_chromosome(&instance);
         let block = &[2, 3];
+        let mut rng = StdRng::seed_from_u64(123);
 
         // Remove the jobs from the opposite parent
         let filter = |jobs: Vec<u32>, block: &[u32]| -> Vec<u32> {
@@ -261,7 +271,7 @@ mod xover_test {
         };
 
         let jobs = filter(jobs.jobs.to_vec(), block);
-        let (jobs, _) = find_best_insertion(jobs, block, &mut makespan, true);
+        let (jobs, _) = find_best_insertion(jobs, block, &mut makespan, true, &mut rng);
 
         // Possible permutations
         // [2, 3, 0, 1, 4]
@@ -284,8 +294,15 @@ mod xover_test {
             3, 17, 9, 15, 14, 11, 13, 16, 6, 18, 5, 19, 7, 8, 4, 2, 1, 10, 20, 12,
         ]);
 
-        let (c1, c2) =
-            crossover::SJ2OX::apply(&p1, &p2, Some(8), &mut Makespan::new(&test_instance()));
+        let mut rng = StdRng::seed_from_u64(123);
+
+        let (c1, c2) = crossover::SJ2OX::apply(
+            &p1,
+            &p2,
+            Some(8),
+            &mut Makespan::new(&test_instance()),
+            &mut rng,
+        );
 
         assert_eq!(
             c2.jobs,
@@ -302,7 +319,15 @@ mod xover_test {
         let p1 = Chromosome::from(vec![9, 8, 4, 5, 6, 7, 1, 3, 2, 10]);
         let p2 = Chromosome::from(vec![8, 7, 1, 2, 3, 10, 9, 5, 4, 6]);
 
-        let (c1, c2) = crossover::PMX::apply(&p1, &p2, None, &mut Makespan::new(&test_instance()));
+        let mut rng = StdRng::seed_from_u64(123);
+
+        let (c1, c2) = crossover::PMX::apply(
+            &p1,
+            &p2,
+            None,
+            &mut Makespan::new(&test_instance()),
+            &mut rng,
+        );
 
         println!("{:?}", c1);
         println!("{:?}", c2);
@@ -313,7 +338,15 @@ mod xover_test {
         let p1 = Chromosome::from(vec![0, 1, 2, 3, 4, 5, 6, 7, 8]);
         let p2 = Chromosome::from(vec![4, 3, 5, 8, 1, 0, 6, 7, 2]);
 
-        let (c1, c2) = crossover::PMX::apply(&p1, &p2, None, &mut Makespan::new(&test_instance()));
+        let mut rng = StdRng::seed_from_u64(123);
+
+        let (c1, c2) = crossover::PMX::apply(
+            &p1,
+            &p2,
+            None,
+            &mut Makespan::new(&test_instance()),
+            &mut rng,
+        );
 
         // Cut points: x1 = 2, x2 = 6
         // assert_eq(c1.jobs, vec![2, 4, 5, 8, 1, 0, 6, 7, 3]);

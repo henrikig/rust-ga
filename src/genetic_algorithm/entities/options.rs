@@ -1,6 +1,6 @@
 use clap::Parser;
 use itertools::iproduct;
-use rand::thread_rng;
+use rand::{prelude::StdRng, SeedableRng};
 use serde_derive::Serialize;
 use std::{borrow::Cow, path::PathBuf, time::Instant};
 
@@ -151,6 +151,8 @@ impl Options {
         let mut population = Vec::with_capacity(self.pop_size);
         let mating_pool = Vec::with_capacity(self.pop_size);
 
+        let mut rng = StdRng::seed_from_u64(123);
+
         // Calculate initialization duration
         let start_time = Instant::now();
 
@@ -159,6 +161,7 @@ impl Options {
             Construction::MDDR(num) => {
                 let mut constructed: Vec<Chromosome> = GCH {
                     makespan: &mut makespan,
+                    rng: &mut rng,
                 }
                 .take((self.pop_size as f32 * num) as usize)
                 .collect();
@@ -178,7 +181,7 @@ impl Options {
 
         // Remaining chromosomes are added randomly
         while population.len() < self.pop_size {
-            population.push(Chromosome::new(&instance));
+            population.push(Chromosome::new(&instance, &mut rng));
         }
 
         let mut makespan = Makespan::new(&instance);
@@ -190,8 +193,6 @@ impl Options {
             .for_each(|c| c.makespan(&mut makespan));
 
         let init_duration = start_time.elapsed();
-
-        let rng = thread_rng();
 
         return GA {
             instance,
@@ -249,19 +250,20 @@ pub struct OptionsGrid {
 impl Default for OptionsGrid {
     fn default() -> OptionsGrid {
         OptionsGrid {
-            pop_sizes: vec![50, 100, 150, 300],
+            pop_sizes: vec![150, 300],
             elitism: vec![2],
             keep_best: vec![0.8],
             k_tournament: vec![2],
             xover_prob: vec![0.5],
             xover_type: vec![
-                XTYPE::PMX, // XTYPE::BCBX, XTYPE::SJ2OX, XTYPE::SB2OX,
+                XTYPE::PMX,
+                XTYPE::BCBX, // XTYPE::SJ2OX, XTYPE::SB2OX,
             ],
             construction: vec![
                 // Construction::MDDR(0.2),
                 // Construction::MDDR(0.5),
-                // Construction::MDDR(1.0),
-                Construction::NEH,
+                Construction::MDDR(1.0),
+                // Construction::NEH,
                 // Construction::Random,
             ],
             mutation_prob: vec![0.05],

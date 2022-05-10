@@ -1,4 +1,7 @@
-use rand::{prelude::SliceRandom, thread_rng, Rng};
+use rand::{
+    prelude::{SliceRandom, StdRng},
+    Rng, SeedableRng,
+};
 
 use crate::genetic_algorithm::entities::chromosome::Chromosome;
 
@@ -45,6 +48,7 @@ pub fn survivor_selection(
     children: &[Chromosome],
     parents: &[Chromosome],
     scale: f64,
+    rng: &mut StdRng,
 ) -> [Chromosome; 2] {
     /*
     If d(p1, c1) + d(p2, c2) < d(p1, c2) + d(p2, c1)
@@ -63,17 +67,22 @@ pub fn survivor_selection(
     if d(&parents[0], &children[0]) + d(&parents[1], &children[1])
         < d(&parents[0], &children[1]) + d(&parents[1], &children[0])
     {
-        p1 = find_winner(&parents[0], &children[0], scale);
-        p2 = find_winner(&parents[1], &children[1], scale);
+        p1 = find_winner(&parents[0], &children[0], scale, rng);
+        p2 = find_winner(&parents[1], &children[1], scale, rng);
     } else {
-        p1 = find_winner(&parents[0], &children[1], scale);
-        p2 = find_winner(&parents[1], &children[0], scale);
+        p1 = find_winner(&parents[0], &children[1], scale, rng);
+        p2 = find_winner(&parents[1], &children[0], scale, rng);
     };
 
     [p1, p2]
 }
 
-fn find_winner(parent: &Chromosome, child: &Chromosome, scale: f64) -> Chromosome {
+fn find_winner(
+    parent: &Chromosome,
+    child: &Chromosome,
+    scale: f64,
+    rng: &mut StdRng,
+) -> Chromosome {
     let scale_is_zero = (0.0 / scale).is_nan();
 
     // A scale of 0 implies deterministic crowding
@@ -86,7 +95,7 @@ fn find_winner(parent: &Chromosome, child: &Chromosome, scale: f64) -> Chromosom
             return child.clone();
         } else {
             // fitness values equal, choose uniformly
-            match vec![true, false].choose(&mut rand::thread_rng()).unwrap() {
+            match vec![true, false].choose(rng).unwrap() {
                 true => return child.clone(),
                 false => return parent.clone(),
             }
@@ -105,7 +114,7 @@ fn find_winner(parent: &Chromosome, child: &Chromosome, scale: f64) -> Chromosom
     let prob_child = (scale_f(p_fitness - c_fitness) * c_fitness)
         / (scale_f(p_fitness - c_fitness) * c_fitness + scale_f(c_fitness - p_fitness) * p_fitness);
 
-    if thread_rng().gen::<f64>() < prob_child {
+    if rng.gen::<f64>() < prob_child {
         child.clone()
     } else {
         parent.clone()
@@ -118,6 +127,7 @@ pub fn k_nearest_replacement(
     pop: &[Chromosome],
     k: usize,
     scale: f64,
+    rng: &mut StdRng,
 ) -> Option<usize> {
     // Calculate distance from c to every individual in pop
     //[(0, 17), (1, 14), ..., (N, 12)]
@@ -140,7 +150,7 @@ pub fn k_nearest_replacement(
         .0;
 
     // Arrange tournament between c and individual
-    let winner = find_winner(&c, pop.get(least_fit).unwrap(), scale);
+    let winner = find_winner(&c, pop.get(least_fit).unwrap(), scale, rng);
 
     // If c wins, return index of least fit individual, else None
     if &winner == c {
@@ -152,6 +162,8 @@ pub fn k_nearest_replacement(
 
 #[cfg(test)]
 mod test {
+    use rand::{prelude::StdRng, SeedableRng};
+
     use crate::genetic_algorithm::{
         entities::chromosome::Chromosome,
         operators::crowding::{k_nearest_replacement, DeviationDistance, Distance, ExactMatch},
@@ -189,8 +201,10 @@ mod test {
         c1.makespan = Some(15);
         c2.makespan = Some(5);
 
+        let mut rng = StdRng::seed_from_u64(123);
+
         // Scale = 0 should imply deterministic crowding
-        let res = survivor_selection(&mut [c1, c2], &[p1, p2], 0.0_f64);
+        let res = survivor_selection(&mut [c1, c2], &[p1, p2], 0.0_f64, &mut rng);
 
         let mut p1 = Chromosome::from(vec![5, 4, 3, 2, 1, 0]);
         let mut c2 = Chromosome::from(vec![1, 0, 2, 3, 4, 5]);
@@ -215,8 +229,10 @@ mod test {
         c1.makespan = Some(15);
         c2.makespan = Some(5);
 
+        let mut rng = StdRng::seed_from_u64(123);
+
         // Scale = 0 should imply deterministic crowding
-        let res = survivor_selection(&mut [c1, c2], &[p1, p2], 0.0_f64);
+        let res = survivor_selection(&mut [c1, c2], &[p1, p2], 0.0_f64, &mut rng);
 
         let mut c1 = Chromosome::from(vec![1, 0, 3, 2, 4, 5]);
         let mut c2 = Chromosome::from(vec![4, 5, 3, 1, 2, 0]);
@@ -241,8 +257,10 @@ mod test {
 
         let pop = vec![p1, p2, p3];
 
+        let mut rng = StdRng::seed_from_u64(123);
+
         // Scale = 0 should imply deterministic crowding
-        let replacement_idx = k_nearest_replacement(&c, &pop, 1, 0.0_f64);
+        let replacement_idx = k_nearest_replacement(&c, &pop, 1, 0.0_f64, &mut rng);
 
         assert_eq!(replacement_idx, Some(2));
     }
@@ -260,9 +278,10 @@ mod test {
         c.makespan = Some(15);
 
         let pop = vec![p1, p2, p3];
+        let mut rng = StdRng::seed_from_u64(123);
 
         // Scale = 0 should imply deterministic crowding
-        let replacement_idx = k_nearest_replacement(&c, &pop, 2, 0.0_f64);
+        let replacement_idx = k_nearest_replacement(&c, &pop, 2, 0.0_f64, &mut rng);
 
         assert_eq!(replacement_idx, Some(1));
     }
@@ -281,8 +300,10 @@ mod test {
 
         let pop = vec![p1, p2, p3];
 
+        let mut rng = StdRng::seed_from_u64(123);
+
         // Scale = 0 should imply deterministic crowding
-        let replacement_idx = k_nearest_replacement(&c, &pop, 2, 0.0_f64);
+        let replacement_idx = k_nearest_replacement(&c, &pop, 2, 0.0_f64, &mut rng);
 
         assert_eq!(replacement_idx, None);
     }

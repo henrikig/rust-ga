@@ -13,7 +13,8 @@ use super::params;
 
 use csv::Writer;
 use lexical_sort::natural_lexical_cmp;
-use rand::{prelude::ThreadRng, seq::SliceRandom, Rng};
+use rand::prelude::StdRng;
+use rand::{seq::SliceRandom, Rng};
 use rayon::prelude::*;
 use std::borrow::Cow;
 use std::path::Path;
@@ -27,7 +28,7 @@ pub struct GA {
     pub mating_pool: Vec<Chromosome>,
     pub makespan: Makespan,
     pub options: Options,
-    pub rng: ThreadRng,
+    pub rng: StdRng,
     pub best_makespan: Vec<Vec<String>>,
     pub init_duration: Duration,
 }
@@ -55,7 +56,7 @@ impl GA {
                 let always_keep =
                     (self.population.len() as f64 * self.options.allways_keep) as usize;
                 for index in always_keep..self.options.pop_size {
-                    self.population[index] = Chromosome::new(&self.instance);
+                    self.population[index] = Chromosome::new(&self.instance, &mut self.rng);
                 }
             }
 
@@ -71,18 +72,30 @@ impl GA {
                 if self.rng.gen::<f32>() < self.options.xover_prob {
                     // Crossover
                     let (mut c1, mut c2) = match self.options.xover_type {
-                        XTYPE::SJ2OX => SJ2OX::apply(&p[0], &p[1], None, &mut self.makespan),
-                        XTYPE::SB2OX => SB2OX::apply(&p[0], &p[1], None, &mut self.makespan),
-                        XTYPE::BCBX => BCBX::apply(&p[0], &p[1], None, &mut self.makespan),
-                        XTYPE::PMX => PMX::apply(&p[0], &p[1], None, &mut self.makespan),
+                        XTYPE::SJ2OX => {
+                            SJ2OX::apply(&p[0], &p[1], None, &mut self.makespan, &mut self.rng)
+                        }
+                        XTYPE::SB2OX => {
+                            SB2OX::apply(&p[0], &p[1], None, &mut self.makespan, &mut self.rng)
+                        }
+                        XTYPE::BCBX => {
+                            BCBX::apply(&p[0], &p[1], None, &mut self.makespan, &mut self.rng)
+                        }
+                        XTYPE::PMX => {
+                            PMX::apply(&p[0], &p[1], None, &mut self.makespan, &mut self.rng)
+                        }
                     };
 
                     if params::PERFORM_CROWDING {
                         c1.makespan(&mut self.makespan);
                         c2.makespan(&mut self.makespan);
 
-                        let [winner1, winner2] =
-                            crowding::survivor_selection(&[c1, c2], p, params::CROWDING_SCALE);
+                        let [winner1, winner2] = crowding::survivor_selection(
+                            &[c1, c2],
+                            p,
+                            params::CROWDING_SCALE,
+                            &mut self.rng,
+                        );
 
                         p[0] = winner1;
                         p[1] = winner2;
@@ -102,10 +115,10 @@ impl GA {
             self.mating_pool.iter_mut().for_each(|c| {
                 if self.rng.gen::<f32>() < self.options.mutation_prob {
                     match self.options.mutation_type {
-                        MTYPE::Shift => SHIFT::apply(c, &mut self.makespan),
-                        MTYPE::Reverse => Reverse::apply(c, &mut self.makespan),
-                        MTYPE::Swap => Swap::apply(c, &mut self.makespan),
-                        MTYPE::Greedy => Greedy::apply(c, &mut self.makespan),
+                        MTYPE::Shift => SHIFT::apply(c, &mut self.makespan, &mut self.rng),
+                        MTYPE::Reverse => Reverse::apply(c, &mut self.makespan, &mut self.rng),
+                        MTYPE::Swap => Swap::apply(c, &mut self.makespan, &mut self.rng),
+                        MTYPE::Greedy => Greedy::apply(c, &mut self.makespan, &mut self.rng),
                     }
                 }
             });
@@ -204,7 +217,7 @@ impl GA {
                 let always_keep =
                     (self.population.len() as f64 * self.options.allways_keep) as usize;
                 for index in always_keep..self.options.pop_size {
-                    let mut new_c = Chromosome::new(&self.instance);
+                    let mut new_c = Chromosome::new(&self.instance, &mut self.rng);
                     new_c.makespan(&mut self.makespan);
                     self.population[index] = new_c;
                 }
@@ -216,20 +229,28 @@ impl GA {
 
             // Crossover
             let (mut c1, mut c2) = match self.options.xover_type {
-                XTYPE::SJ2OX => SJ2OX::apply(&p1, &p2, None, &mut self.makespan),
-                XTYPE::SB2OX => SB2OX::apply(&p1, &p2, None, &mut self.makespan),
-                XTYPE::BCBX => BCBX::apply(&p1, &p2, None, &mut self.makespan),
-                XTYPE::PMX => PMX::apply(&p1, &p2, None, &mut self.makespan),
+                XTYPE::SJ2OX => SJ2OX::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
+                XTYPE::SB2OX => SB2OX::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
+                XTYPE::BCBX => BCBX::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
+                XTYPE::PMX => PMX::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
             };
 
             // Mutate
             let mut mutate = |c| {
                 if self.rng.gen::<f32>() < self.options.mutation_prob {
                     match self.options.mutation_type {
-                        mutation::MTYPE::Shift => mutation::SHIFT::apply(c, &mut self.makespan),
-                        mutation::MTYPE::Reverse => mutation::Reverse::apply(c, &mut self.makespan),
-                        mutation::MTYPE::Swap => mutation::Swap::apply(c, &mut self.makespan),
-                        mutation::MTYPE::Greedy => mutation::Greedy::apply(c, &mut self.makespan),
+                        mutation::MTYPE::Shift => {
+                            mutation::SHIFT::apply(c, &mut self.makespan, &mut self.rng)
+                        }
+                        mutation::MTYPE::Reverse => {
+                            mutation::Reverse::apply(c, &mut self.makespan, &mut self.rng)
+                        }
+                        mutation::MTYPE::Swap => {
+                            mutation::Swap::apply(c, &mut self.makespan, &mut self.rng)
+                        }
+                        mutation::MTYPE::Greedy => {
+                            mutation::Greedy::apply(c, &mut self.makespan, &mut self.rng)
+                        }
                     }
                 }
             };
@@ -274,6 +295,7 @@ impl GA {
                         &self.population,
                         params::K_NEAREST,
                         params::CROWDING_SCALE,
+                        &mut self.rng,
                     );
                     match replace_idx {
                         Some(idx) => {
@@ -489,7 +511,7 @@ pub fn run(options: Options, run_one: bool) -> u32 {
     let (best_makespan, machine_completions) = ga.makespan.makespan(&winner.jobs);
 
     // We store the best solution if we only run one problem
-    if run_one {
+    if run_one && params::WRITE_IMPROVEMENT {
         let solution: Solution = Solution::new(machine_completions, best_makespan, &ga.instance);
 
         let problem = ga
