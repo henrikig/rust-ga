@@ -1,6 +1,6 @@
 use rand::{
     prelude::{SliceRandom, StdRng},
-    Rng, SeedableRng,
+    Rng,
 };
 
 use crate::genetic_algorithm::entities::chromosome::Chromosome;
