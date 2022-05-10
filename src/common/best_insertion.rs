@@ -18,7 +18,7 @@ pub fn find_best_insertion(
     block: &[u32],
     makespan: &mut Makespan,
     allow_rnd: bool,
-) -> Vec<u32> {
+) -> (Vec<u32>, u32) {
     let n_jobs = jobs.len();
     let mut jobs: Vec<u32> = block.iter().cloned().chain(jobs.iter().cloned()).collect();
     let (mut best_makespan, _) = makespan.makespan(&jobs);
@@ -27,6 +27,7 @@ pub fn find_best_insertion(
     // Store one random solution which may be returned
     let random_idx: usize = rand::thread_rng().gen_range(0..n_jobs);
     let mut random_jobs: Vec<u32> = jobs.iter().cloned().collect();
+    let mut random_makespan = u32::MAX;
 
     // Initialise best jobs
     let mut best_jobs: Vec<Vec<u32>> = vec![jobs.iter().cloned().collect()];
@@ -38,7 +39,8 @@ pub fn find_best_insertion(
 
         // Update random solution if we are at the random index
         if allow_rnd && i == random_idx {
-            random_jobs = jobs.iter().cloned().collect()
+            random_jobs = jobs.iter().cloned().collect();
+            random_makespan = new_makespan;
         }
 
         // Update best jobs if the current has a lower makespan
@@ -53,8 +55,11 @@ pub fn find_best_insertion(
 
     // Return either one of the best solutions, or the chosen random solution
     if allow_rnd && rand::thread_rng().gen::<f32>() >= params::KEEP_BEST {
-        random_jobs
+        (random_jobs, random_makespan)
     } else {
-        return best_jobs.choose(&mut rand::thread_rng()).unwrap().to_vec();
+        (
+            best_jobs.choose(&mut rand::thread_rng()).unwrap().to_vec(),
+            best_makespan,
+        )
     }
 }

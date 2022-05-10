@@ -125,11 +125,14 @@ impl Crossover for BCBX {
         let c2 = filter(p2.jobs.to_vec(), block1);
 
         // Test each possible insertion, record best index
-        let c1 = find_best_insertion(c1, block2, makespan, true);
-        let c2 = find_best_insertion(c2, block1, makespan, true);
+        let (c1, m1) = find_best_insertion(c1, block2, makespan, true);
+        let (c2, m2) = find_best_insertion(c2, block1, makespan, true);
 
         // Return new chromosomes
-        (Chromosome::from(c1), Chromosome::from(c2))
+        (
+            Chromosome::new_with_makespan(c1, m1),
+            Chromosome::new_with_makespan(c2, m2),
+        )
     }
 }
 
@@ -258,7 +261,7 @@ mod xover_test {
         };
 
         let jobs = filter(jobs.jobs.to_vec(), block);
-        let jobs = find_best_insertion(jobs, block, &mut makespan, true);
+        let (jobs, _) = find_best_insertion(jobs, block, &mut makespan, true);
 
         // Possible permutations
         // [2, 3, 0, 1, 4]

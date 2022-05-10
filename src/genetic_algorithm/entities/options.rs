@@ -2,7 +2,7 @@ use clap::Parser;
 use itertools::iproduct;
 use rand::thread_rng;
 use serde_derive::Serialize;
-use std::{borrow::Cow, path::PathBuf};
+use std::{borrow::Cow, path::PathBuf, time::Instant};
 
 use crate::{
     common::{
@@ -151,6 +151,9 @@ impl Options {
         let mut population = Vec::with_capacity(self.pop_size);
         let mating_pool = Vec::with_capacity(self.pop_size);
 
+        // Calculate initialization duration
+        let start_time = Instant::now();
+
         match self.construction {
             // Add number of chromosomes from MDDR constructor as specified
             Construction::MDDR(num) => {
@@ -183,7 +186,10 @@ impl Options {
         // Calculate makespan for initial population
         population
             .iter_mut()
+            .filter(|c| c.updated)
             .for_each(|c| c.makespan(&mut makespan));
+
+        let init_duration = start_time.elapsed();
 
         let rng = thread_rng();
 
@@ -195,6 +201,7 @@ impl Options {
             options: self,
             rng,
             best_makespan: Vec::new(),
+            init_duration,
         };
     }
 }
@@ -245,21 +252,21 @@ impl Default for OptionsGrid {
             pop_sizes: vec![150],
             elitism: vec![2],
             keep_best: vec![0.8],
-            k_tournament: vec![2, 3, 5, 8],
+            k_tournament: vec![2],
             xover_prob: vec![0.5],
             xover_type: vec![
                 XTYPE::PMX, // XTYPE::BCBX, XTYPE::SJ2OX, XTYPE::SB2OX,
             ],
             construction: vec![
-                // Construction::MDDR(0.5),
-                // Construction::MDDR(0.8),
-                // Construction::MDDR(1.0),
-                // Construction::NEH,
+                Construction::MDDR(0.2),
+                Construction::MDDR(0.5),
+                Construction::MDDR(1.0),
+                Construction::NEH,
                 Construction::Random,
             ],
             mutation_prob: vec![0.05],
             mutation_type: vec![
-                MTYPE::Swap, // MTYPE::Greedy, MTYPE::Shift, MTYPE::Reverse
+                MTYPE::Shift, // MTYPE::Greedy, MTYPE::Shift, MTYPE::Reverse
             ],
             reversal_percent: vec![10],
             non_improving_iterations: vec![150],
@@ -322,6 +329,9 @@ pub struct Params {
     // Probability the best offspring is kept
     pub keep_best: f32,
 
+    // Tournament size
+    pub k_tournament: usize,
+
     // Probability crossover is performed
     pub xover_prob: f32,
 
@@ -357,6 +367,7 @@ impl From<&Options> for Params {
             pop_size: options.pop_size,
             elitism: options.elitism,
             keep_best: options.keep_best,
+            k_tournament: options.k_tournament,
             xover_prob: options.xover_prob,
             xover_type: match options.xover_type {
                 XTYPE::SJ2OX => XTYPE::SJ2OX,

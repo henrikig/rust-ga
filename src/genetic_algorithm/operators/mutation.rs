@@ -72,10 +72,10 @@ impl Mutation for Greedy {
 
         let job = c.jobs.remove(rand_job);
 
-        let new_jobs = find_best_insertion(c.jobs.to_vec(), &[job], m, false);
+        let (new_jobs, makespan) = find_best_insertion(c.jobs.to_vec(), &[job], m, false);
 
         c.jobs = new_jobs;
-        c.updated = true;
+        c.makespan = Some(makespan);
     }
 }
 
