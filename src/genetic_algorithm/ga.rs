@@ -175,17 +175,28 @@ impl GA {
         let duration = Duration::from_millis(duration);
         let allowed_time = duration.checked_sub(self.init_duration);
 
-        match allowed_time {
-            Some(_) => println!("Init took {} ms", self.init_duration.as_millis()),
-            None => println!(
-                "Failing for instance `{:?}`. It took {} ms",
-                self.options.problem_file.as_os_str(),
-                self.init_duration.as_millis()
-            ),
-        }
+        let time_to_spare = match allowed_time {
+            Some(t) => {
+                println!(
+                    "Init took {} ms. Available time {} ms",
+                    self.init_duration.as_millis(),
+                    duration.as_millis(),
+                );
+                t
+            }
+            None => {
+                println!(
+                    "Failing for instance `{:?}`. It took {} ms. Available time {} ms",
+                    self.options.problem_file.as_os_str(),
+                    self.init_duration.as_millis(),
+                    duration.as_millis(),
+                );
+                Duration::from_millis(0)
+            }
+        };
 
         // Go through generations
-        while start_time.elapsed() < duration - self.init_duration {
+        while start_time.elapsed() < time_to_spare {
             // Replace the chromosomes with the worst fit if there has been no improvement in the best fit for y iterations
             if self.options.allways_keep < 1.0
                 && non_improvement_counter >= self.options.non_improving_iterations

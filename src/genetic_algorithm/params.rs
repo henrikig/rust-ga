@@ -2,10 +2,10 @@ use crate::common::construction::Construction;
 
 use super::operators::{crossover::XTYPE, mutation::MTYPE};
 
-pub const PROBLEM_FILE: &str = "./instances/ruiz/json/n120m8-21.json";
+pub const PROBLEM_FILE: &str = "./instances/ruiz/json/n120m8-41.json";
 // pub const PROBLEM_FILE: &str = "./instances/ruiz/json/n120m8-21.json";
-pub const IMPROVEMENT_FILE: &str = "./solutions/improvement/ga/bcbx/n120m8-01.csv";
-pub const WRITE_IMPROVEMENT: bool = false;
+pub const IMPROVEMENT_FILE: &str = "./solutions/improvement/ga/mddr/n120m8-41.csv";
+pub const WRITE_IMPROVEMENT: bool = true;
 pub const POPULATION_SIZE: usize = 150;
 pub const ITERATIONS: usize = 180;
 pub const ELITISM: usize = 2;
@@ -31,4 +31,4 @@ pub const K_NEAREST: usize = 10; // Only used in steady state crowding version
 
 // Solution folder for parameter grid search
 
-pub const SOLUTION_FOLDER: &str = "./solutions/initialisation";
+pub const SOLUTION_FOLDER: &str = "./solutions/improvement/ga/mddr";
