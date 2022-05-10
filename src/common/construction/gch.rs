@@ -19,6 +19,7 @@ impl Constructor for GCH<'_> {
 
         // Initialise empty vector of output jobs
         let mut c: Vec<u32> = Vec::with_capacity(self.makespan.instance.jobs as usize);
+        let mut makespan = u32::MAX;
 
         // Add last job to output jobs (backward order due to O(n) worst-case complexity of .remove())
         c.push(jobs.remove(jobs.len() - 1));
@@ -28,10 +29,13 @@ impl Constructor for GCH<'_> {
             let job = jobs.remove(jobs.len() - 1);
 
             // Find current job's best insertion point in output jobs
-            c = find_best_insertion(c, &[job], &mut self.makespan, false);
+            (c, makespan) = find_best_insertion(c, &[job], &mut self.makespan, false);
         }
 
-        Chromosome::from(c)
+        let mut c = Chromosome::from(c);
+        c.makespan = Some(makespan);
+        c.updated = false;
+        return c;
     }
 }
 

@@ -26,6 +26,14 @@ impl Chromosome {
         }
     }
 
+    pub fn new_with_makespan(jobs: Vec<u32>, m: u32) -> Self {
+        Chromosome {
+            jobs: jobs.to_vec(),
+            makespan: Some(m),
+            updated: false,
+        }
+    }
+
     pub fn makespan(&mut self, mks: &mut Makespan) {
         let (m, _) = mks.makespan(&self.jobs);
         self.makespan = Some(m);

@@ -29,6 +29,7 @@ pub struct GA {
     pub options: Options,
     pub rng: ThreadRng,
     pub best_makespan: Vec<Vec<String>>,
+    pub init_duration: Duration,
 }
 
 impl Default for GA {
@@ -46,7 +47,7 @@ impl GA {
         let duration = Duration::from_millis(duration);
 
         // Go through generations
-        while start_time.elapsed() < duration {
+        while start_time.elapsed() < duration - self.init_duration {
             // Replace the chromosomes with the worst fit if there has been no improvement in the best fit for y iterations
             if self.options.allways_keep < 1.0
                 && non_improvement_counter >= self.options.non_improving_iterations
@@ -172,9 +173,19 @@ impl GA {
         let start_time = Instant::now();
         let duration = utils::get_duration(&self.instance);
         let duration = Duration::from_millis(duration);
+        let allowed_time = duration.checked_sub(self.init_duration);
+
+        match allowed_time {
+            Some(_) => println!("Init took {} ms", self.init_duration.as_millis()),
+            None => println!(
+                "Failing for instance `{:?}`. It took {} ms",
+                self.options.problem_file.as_os_str(),
+                self.init_duration.as_millis()
+            ),
+        }
 
         // Go through generations
-        while start_time.elapsed() < duration {
+        while start_time.elapsed() < duration - self.init_duration {
             // Replace the chromosomes with the worst fit if there has been no improvement in the best fit for y iterations
             if self.options.allways_keep < 1.0
                 && non_improvement_counter >= self.options.non_improving_iterations
@@ -378,6 +389,11 @@ pub fn run_all(args: &Args) {
         Arc::new(Mutex::new(Vec::with_capacity(problem_files.len())));
 
     let pb = utils::create_progress_bar(num_problems as u64);
+
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(12)
+        .build_global()
+        .unwrap();
 
     // Iterate all problem files
     problem_files
