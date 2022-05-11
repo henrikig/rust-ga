@@ -29,6 +29,8 @@ pub const PERFORM_CROWDING: bool = false;
 pub const CROWDING_SCALE: f64 = 0.5;
 pub const K_NEAREST: usize = 10; // Only used in steady state crowding version
 
+pub const IG_GRID_SEARCH: bool = true;
+
 // Solution folder for parameter grid search
 
-pub const SOLUTION_FOLDER: &str = "./solutions/xover";
+pub const SOLUTION_FOLDER: &str = "./solutions/iterated_greedy";

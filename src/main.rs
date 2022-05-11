@@ -6,7 +6,7 @@ use crate::common::construction::solver::Solver;
 use clap::StructOpt;
 use common::construction::{mddr::MDDR, neh::NEH};
 use genetic_algorithm::{entities::options::Args, ga};
-use iterated_greedy::IteratedGreedy;
+use iterated_greedy::iterated_greedy::{self as ig, IteratedGreedy};
 fn main() {
     // Parse arguments (run steady state (-s), run all problems (-r), test all parameters (-a))
     let args = Args::parse();
@@ -20,7 +20,7 @@ fn main() {
         if args.run_all {
             IteratedGreedy::run_all("./solutions/ig");
         } else {
-            iterated_greedy::run_one();
+            ig::run_one();
         }
     }
     // If we run GA, we either run one problem file, or all problem files

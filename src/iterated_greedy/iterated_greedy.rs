@@ -31,7 +31,7 @@ Iterative_Greedy(Instance) {
 }
 */
 
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use rand::{prelude::StdRng, Rng, SeedableRng};
 
@@ -48,11 +48,13 @@ use crate::{
     genetic_algorithm::params,
 };
 
+use super::options::Options;
+
 pub struct IteratedGreedy {}
 
 impl Solver for IteratedGreedy {
-    fn run(makespan: &mut Makespan) -> u32 {
-        let result = iterated_greedy(makespan, None, params::ITERATIONS as u32);
+    fn run(makespan: &mut Makespan, option: Option<Options>) -> u32 {
+        let result = iterated_greedy(makespan, None, params::ITERATIONS as u32, option);
 
         result.1
     }
@@ -63,7 +65,8 @@ impl Solver for IteratedGreedy {
 pub fn iterated_greedy(
     makespan: &mut Makespan,
     schedule: Option<(Vec<u32>, u32)>,
-    approx_calc: u32,
+    allowed_count: u32,
+    option: Option<Options>,
 ) -> (Vec<u32>, u32) {
     let mut current_schedule: (Vec<u32>, u32);
     let mut makespan_improvement: Vec<Vec<String>> = Vec::new();
@@ -76,13 +79,31 @@ pub fn iterated_greedy(
 
     current_schedule = iterative_improvement_insertion(makespan, &current_schedule.0, &mut rng);
     let mut best_schedule: (Vec<u32>, u32) = (current_schedule.0.clone(), current_schedule.1);
-    let t: f64 = 0.1; // Ruiz used 0, 0.1, 0.2, 0.3, 0.4, and 0.5
+
+    let (t, d) = match option {
+        Some(opt) => (opt.temp, opt.block_size),
+        None => {
+            let o = Options::default();
+            (o.temp, o.block_size)
+        }
+    };
+
     let temp: f64 = find_temp(&makespan, t);
-    let d = 3;
-    let starting_count: u32 = makespan.count;
+
     let mut iteration = 0;
     let start_time = Instant::now();
-    while makespan.count - starting_count < approx_calc {
+    let allowed_duration = utils::get_duration(&makespan.instance);
+    let allowed_duration = Duration::from_millis(allowed_duration);
+    let start_count = makespan.count;
+
+    // Go through generations
+    while !is_terminated(
+        start_time.elapsed(),
+        allowed_duration,
+        makespan.count,
+        start_count,
+        allowed_count,
+    ) {
         let mut schedule_permutation = current_schedule.clone();
         let mut deleted_jobs: Vec<u32> = Vec::with_capacity(makespan.instance.jobs as usize);
         for _ in 0..d {
@@ -185,8 +206,24 @@ fn remove_random(schedule: &Vec<u32>, rng: &mut StdRng) -> (Vec<u32>, u32) {
 pub fn run_one() {
     let i = parse(params::PROBLEM_FILE).unwrap();
     let mut m = Makespan::new(&i);
-    let result = iterated_greedy(&mut m, None, params::ITERATIONS as u32);
+    let result = iterated_greedy(&mut m, None, params::ITERATIONS as u32, None);
     println!("Iterated greedy finished with makespan {}", result.1);
+}
+
+fn is_terminated(
+    current_duration: Duration,
+    allowed_duration: Duration,
+    current_count: u32,
+    start_count: u32,
+    allowed_count: u32,
+) -> bool {
+    // Either, we compare with time
+    if params::IG_GRID_SEARCH {
+        current_duration >= allowed_duration
+    // Or we compare with makespan count
+    } else {
+        current_count - start_count >= allowed_count
+    }
 }
 
 #[cfg(test)]
@@ -218,7 +255,7 @@ mod ig_tests {
         let i: Instance = parse("instances\\ruiz\\json\\n20m2-1.json").unwrap();
         let mut m: Makespan = Makespan::new(&i);
 
-        let ig = iterated_greedy(&mut m, None, 5000);
+        let ig = iterated_greedy(&mut m, None, 5000, None);
 
         let schedule: Vec<u32> = (0..20).collect();
         let schedule_makespan = m.makespan(&schedule).0;

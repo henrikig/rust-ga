@@ -1,11 +1,11 @@
-use crate::common::makespan::Makespan;
+use crate::{common::makespan::Makespan, iterated_greedy::options::Options};
 
 use super::solver::Solver;
 
 pub struct MDDR {}
 
 impl Solver for MDDR {
-    fn run(makespan: &mut Makespan) -> u32 {
+    fn run(makespan: &mut Makespan, _: Option<Options>) -> u32 {
         let result = MDDR::mddr(makespan);
 
         result.0

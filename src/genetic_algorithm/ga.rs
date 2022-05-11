@@ -464,9 +464,9 @@ pub fn run_all(args: &Args) {
 
             all_options.into_iter().for_each(|options| {
                 row.push(run(options, false).to_string());
-                // Increase progress bar
             });
 
+            // Increase progress bar
             pb.inc(1);
 
             results.lock().unwrap().push(row);
