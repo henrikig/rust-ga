@@ -250,15 +250,12 @@ pub struct OptionsGrid {
 impl Default for OptionsGrid {
     fn default() -> OptionsGrid {
         OptionsGrid {
-            pop_sizes: vec![150, 300],
+            pop_sizes: vec![150],
             elitism: vec![2],
             keep_best: vec![0.8],
             k_tournament: vec![2],
             xover_prob: vec![0.5],
-            xover_type: vec![
-                XTYPE::PMX,
-                XTYPE::BCBX, // XTYPE::SJ2OX, XTYPE::SB2OX,
-            ],
+            xover_type: vec![XTYPE::PMX, XTYPE::BCBX, XTYPE::SJ2OX, XTYPE::SB2OX],
             construction: vec![
                 // Construction::MDDR(0.2),
                 // Construction::MDDR(0.5),

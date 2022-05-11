@@ -46,9 +46,15 @@ impl GA {
         let start_time = Instant::now();
         let duration = utils::get_duration(&self.instance);
         let duration = Duration::from_millis(duration);
+        let allowed_time = duration.checked_sub(self.init_duration);
+
+        let time_to_spare = match allowed_time {
+            Some(t) => t,
+            None => Duration::from_millis(0),
+        };
 
         // Go through generations
-        while start_time.elapsed() < duration - self.init_duration {
+        while start_time.elapsed() < time_to_spare {
             // Replace the chromosomes with the worst fit if there has been no improvement in the best fit for y iterations
             if self.options.allways_keep < 1.0
                 && non_improvement_counter >= self.options.non_improving_iterations
@@ -190,20 +196,20 @@ impl GA {
 
         let time_to_spare = match allowed_time {
             Some(t) => {
-                println!(
-                    "Init took {} ms. Available time {} ms",
-                    self.init_duration.as_millis(),
-                    duration.as_millis(),
-                );
+                // println!(
+                //     "Init took {} ms. Available time {} ms",
+                //     self.init_duration.as_millis(),
+                //     duration.as_millis(),
+                // );
                 t
             }
             None => {
-                println!(
-                    "Failing for instance `{:?}`. It took {} ms. Available time {} ms",
-                    self.options.problem_file.as_os_str(),
-                    self.init_duration.as_millis(),
-                    duration.as_millis(),
-                );
+                // println!(
+                //     "Failing for instance `{:?}`. It took {} ms. Available time {} ms",
+                //     self.options.problem_file.as_os_str(),
+                //     self.init_duration.as_millis(),
+                //     duration.as_millis(),
+                // );
                 Duration::from_millis(0)
             }
         };
@@ -374,18 +380,14 @@ impl GA {
         winner_clone
     }
 
-    pub fn is_terminated(&self) -> bool {
-        self.makespan.count > 5000
-    }
-
-    fn generation_status(&self, iteration: usize) {
-        println!(
-            "{}: {}-{}",
-            iteration,
-            self.population[0].makespan.unwrap(),
-            self.population.iter().last().unwrap().makespan.unwrap()
-        );
-    }
+    // fn generation_status(&self, iteration: usize) {
+    //     println!(
+    //         "{}: {}-{}",
+    //         iteration,
+    //         self.population[0].makespan.unwrap(),
+    //         self.population.iter().last().unwrap().makespan.unwrap()
+    //     );
+    // }
 
     fn final_makespan(&mut self, iteration: usize, elapsed_time: u64) {
         self.best_makespan.push(vec![
@@ -424,7 +426,7 @@ pub fn run_all(args: &Args) {
     let pb = utils::create_progress_bar(num_problems as u64);
 
     rayon::ThreadPoolBuilder::new()
-        .num_threads(12)
+        .num_threads(8)
         .build_global()
         .unwrap();
 
