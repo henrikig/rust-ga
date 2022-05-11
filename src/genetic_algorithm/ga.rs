@@ -1,3 +1,4 @@
+use crate::common::construction::gch::GCH;
 use crate::common::instance::{Instance, Solution};
 use crate::common::makespan::Makespan;
 use crate::common::utils;
@@ -222,11 +223,20 @@ impl GA {
             {
                 let always_keep =
                     (self.population.len() as f64 * self.options.allways_keep) as usize;
+
+                let mut constructed: Vec<Chromosome> = GCH {
+                    makespan: &mut self.makespan,
+                    rng: &mut self.rng,
+                }
+                .take(self.options.pop_size - always_keep)
+                .collect();
+
                 for index in always_keep..self.options.pop_size {
-                    let mut new_c = Chromosome::new(&self.instance, &mut self.rng);
-                    new_c.makespan(&mut self.makespan);
+                    let new_c = constructed.remove(0);
                     self.population[index] = new_c;
                 }
+
+                self.population.sort();
             }
 
             // Select two individuals from tournament selection
