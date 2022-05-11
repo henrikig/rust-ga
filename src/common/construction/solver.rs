@@ -2,19 +2,23 @@ use lexical_sort::natural_lexical_cmp;
 use rayon::prelude::*;
 use std::sync::{Arc, Mutex};
 
-use crate::common::{
-    instance::{parser::parse, Instance},
-    makespan::Makespan,
-    utils,
+use crate::{
+    common::{
+        instance::{parser::parse, Instance},
+        makespan::Makespan,
+        utils,
+    },
+    genetic_algorithm::params,
+    iterated_greedy::options::{Options, OptionsGrid},
 };
 
 pub trait Solver {
-    fn run(makespan: &mut Makespan) -> u32;
+    fn run(makespan: &mut Makespan, options: Option<Options>) -> u32;
 
     fn run_all(result_folder: &str) {
         // Get vector of all problem files (twice as we have to consume them)
-        let problem_files = utils::get_problem_files(true);
-        let problem_files_consumed = utils::get_problem_files(true);
+        let problem_files = utils::get_test_problems();
+        let problem_files_consumed = utils::get_test_problems();
 
         // Make sure problem files are in same order
         assert_eq!(
@@ -30,24 +34,52 @@ pub trait Solver {
 
         let pb = utils::create_progress_bar(num_problems as u64);
 
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(8)
+            .build_global()
+            .unwrap();
+
         // Iterate all problem files
         problem_files
             .into_par_iter()
             .enumerate()
-            .for_each(|(i, problem_file)| {
+            .for_each(|(idx, problem_file)| {
                 // Store filename and result from each parameter combination in vector
-                let mut row = Vec::with_capacity(2);
+                let mut row = Vec::new();
 
                 row.push(String::from(
-                    problem_files_consumed.get(i).unwrap().to_str().unwrap(),
+                    problem_files_consumed.get(idx).unwrap().to_str().unwrap(),
                 ));
 
                 let i: Instance = parse(problem_file).unwrap();
+
+                let all_options = match params::IG_GRID_SEARCH {
+                    true => {
+                        if idx == 0 {
+                            OptionsGrid::default()
+                                .get_options()
+                                .iter()
+                                .for_each(|o| println!("{:?}", o))
+                        }
+                        Some(OptionsGrid::default().get_options())
+                    }
+                    false => None,
+                };
+
                 let mut m: Makespan = Makespan::new(&i);
 
-                let makespan = Self::run(&mut m);
+                match all_options {
+                    Some(options) => options.into_iter().for_each(|option| {
+                        let makespan = Self::run(&mut m, Some(option));
 
-                row.push(makespan.to_string());
+                        row.push(makespan.to_string());
+                    }),
+                    None => {
+                        let makespan = Self::run(&mut m, None);
+
+                        row.push(makespan.to_string());
+                    }
+                }
 
                 results.lock().unwrap().push(row);
 

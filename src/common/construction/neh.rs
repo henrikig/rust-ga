@@ -1,4 +1,7 @@
-use crate::common::{instance::Instance, makespan::Makespan};
+use crate::{
+    common::{instance::Instance, makespan::Makespan},
+    iterated_greedy::options::Options,
+};
 
 use super::solver::Solver;
 
@@ -21,7 +24,7 @@ impl NEH {
 }
 
 impl Solver for NEH {
-    fn run(makespan: &mut Makespan) -> u32 {
+    fn run(makespan: &mut Makespan, _: Option<Options>) -> u32 {
         let res = NEH::neh(makespan);
         res.1
     }
