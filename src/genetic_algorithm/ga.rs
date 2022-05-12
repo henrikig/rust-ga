@@ -132,9 +132,14 @@ impl GA {
 
             // Local search
             if self.options.local_search {
-                self.mating_pool
-                    .iter_mut()
-                    .for_each(|c| ls_ig(c, &mut self.makespan, self.options.approx_calc as u32));
+                self.mating_pool.iter_mut().for_each(|c| {
+                    ls_ig(
+                        c,
+                        &mut self.makespan,
+                        self.options.approx_calc as u32,
+                        &mut self.rng,
+                    )
+                });
             }
 
             // Check if any of the new chromosomes are improvements to the current best
@@ -275,8 +280,18 @@ impl GA {
 
             // Local search
             if self.options.local_search {
-                ls_ig(&mut c1, &mut self.makespan, self.options.approx_calc as u32);
-                ls_ig(&mut c2, &mut self.makespan, self.options.approx_calc as u32)
+                ls_ig(
+                    &mut c1,
+                    &mut self.makespan,
+                    self.options.approx_calc as u32,
+                    &mut self.rng,
+                );
+                ls_ig(
+                    &mut c2,
+                    &mut self.makespan,
+                    self.options.approx_calc as u32,
+                    &mut self.rng,
+                )
             }
 
             let mut makespan = |c: &mut Chromosome| c.makespan(&mut self.makespan);
