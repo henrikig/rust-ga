@@ -101,6 +101,12 @@ impl GA {
                             &[c1, c2],
                             p,
                             self.options.crowding_scale,
+                            match self.options.distance_metric {
+                                crowding::DTYPE::ExactMatch => crowding::DTYPE::ExactMatch,
+                                crowding::DTYPE::DeviationDistance => {
+                                    crowding::DTYPE::DeviationDistance
+                                }
+                            },
                             &mut self.rng,
                         );
 
@@ -326,6 +332,12 @@ impl GA {
                         &self.population,
                         self.options.k_nearest,
                         self.options.crowding_scale,
+                        match self.options.distance_metric {
+                            crowding::DTYPE::ExactMatch => crowding::DTYPE::ExactMatch,
+                            crowding::DTYPE::DeviationDistance => {
+                                crowding::DTYPE::DeviationDistance
+                            }
+                        },
                         &mut self.rng,
                     );
                     match replace_idx {

@@ -6,7 +6,7 @@ use serde_derive::Serialize;
 
 use crate::genetic_algorithm::entities::chromosome::Chromosome;
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Copy)]
 pub enum DTYPE {
     ExactMatch,
     DeviationDistance,
@@ -55,6 +55,7 @@ pub fn survivor_selection(
     children: &[Chromosome],
     parents: &[Chromosome],
     scale: f64,
+    dtype: DTYPE,
     rng: &mut StdRng,
 ) -> [Chromosome; 2] {
     /*
@@ -69,7 +70,12 @@ pub fn survivor_selection(
     let p1;
     let p2;
 
-    let d = |c1: &Chromosome, c2: &Chromosome| ExactMatch::distance(c1, c2);
+    let d = match dtype {
+        DTYPE::ExactMatch => |c1: &Chromosome, c2: &Chromosome| ExactMatch::distance(c1, c2),
+        DTYPE::DeviationDistance => {
+            |c1: &Chromosome, c2: &Chromosome| DeviationDistance::distance(c1, c2)
+        }
+    };
 
     if d(&parents[0], &children[0]) + d(&parents[1], &children[1])
         < d(&parents[0], &children[1]) + d(&parents[1], &children[0])
@@ -134,13 +140,21 @@ pub fn k_nearest_replacement(
     pop: &[Chromosome],
     k: usize,
     scale: f64,
+    dtype: DTYPE,
     rng: &mut StdRng,
 ) -> Option<usize> {
+    let dist = match dtype {
+        DTYPE::ExactMatch => |c1: &Chromosome, c2: &Chromosome| ExactMatch::distance(c1, c2),
+        DTYPE::DeviationDistance => {
+            |c1: &Chromosome, c2: &Chromosome| DeviationDistance::distance(c1, c2)
+        }
+    };
+
     // Calculate distance from c to every individual in pop
     //[(0, 17), (1, 14), ..., (N, 12)]
     let mut distances = pop
         .iter()
-        .map(|o| ExactMatch::distance(c, o))
+        .map(|o| dist(c, o))
         .enumerate()
         .collect::<Vec<(usize, i32)>>();
 
@@ -173,7 +187,9 @@ mod test {
 
     use crate::genetic_algorithm::{
         entities::chromosome::Chromosome,
-        operators::crowding::{k_nearest_replacement, DeviationDistance, Distance, ExactMatch},
+        operators::crowding::{
+            k_nearest_replacement, DeviationDistance, Distance, ExactMatch, DTYPE,
+        },
     };
 
     use super::survivor_selection;
@@ -211,7 +227,13 @@ mod test {
         let mut rng = StdRng::seed_from_u64(123);
 
         // Scale = 0 should imply deterministic crowding
-        let res = survivor_selection(&mut [c1, c2], &[p1, p2], 0.0_f64, &mut rng);
+        let res = survivor_selection(
+            &mut [c1, c2],
+            &[p1, p2],
+            0.0_f64,
+            DTYPE::DeviationDistance,
+            &mut rng,
+        );
 
         let mut p1 = Chromosome::from(vec![5, 4, 3, 2, 1, 0]);
         let mut c2 = Chromosome::from(vec![1, 0, 2, 3, 4, 5]);
@@ -239,7 +261,13 @@ mod test {
         let mut rng = StdRng::seed_from_u64(123);
 
         // Scale = 0 should imply deterministic crowding
-        let res = survivor_selection(&mut [c1, c2], &[p1, p2], 0.0_f64, &mut rng);
+        let res = survivor_selection(
+            &mut [c1, c2],
+            &[p1, p2],
+            0.0_f64,
+            DTYPE::DeviationDistance,
+            &mut rng,
+        );
 
         let mut c1 = Chromosome::from(vec![1, 0, 3, 2, 4, 5]);
         let mut c2 = Chromosome::from(vec![4, 5, 3, 1, 2, 0]);
@@ -267,7 +295,8 @@ mod test {
         let mut rng = StdRng::seed_from_u64(123);
 
         // Scale = 0 should imply deterministic crowding
-        let replacement_idx = k_nearest_replacement(&c, &pop, 1, 0.0_f64, &mut rng);
+        let replacement_idx =
+            k_nearest_replacement(&c, &pop, 1, 0.0_f64, DTYPE::DeviationDistance, &mut rng);
 
         assert_eq!(replacement_idx, Some(2));
     }
@@ -288,7 +317,8 @@ mod test {
         let mut rng = StdRng::seed_from_u64(123);
 
         // Scale = 0 should imply deterministic crowding
-        let replacement_idx = k_nearest_replacement(&c, &pop, 2, 0.0_f64, &mut rng);
+        let replacement_idx =
+            k_nearest_replacement(&c, &pop, 2, 0.0_f64, DTYPE::DeviationDistance, &mut rng);
 
         assert_eq!(replacement_idx, Some(1));
     }
@@ -310,7 +340,8 @@ mod test {
         let mut rng = StdRng::seed_from_u64(123);
 
         // Scale = 0 should imply deterministic crowding
-        let replacement_idx = k_nearest_replacement(&c, &pop, 2, 0.0_f64, &mut rng);
+        let replacement_idx =
+            k_nearest_replacement(&c, &pop, 2, 0.0_f64, DTYPE::DeviationDistance, &mut rng);
 
         assert_eq!(replacement_idx, None);
     }

@@ -145,8 +145,6 @@ pub fn iterated_greedy(
         }
     }
 
-    println!("It took {}", start_time.elapsed().as_secs());
-
     if params::WRITE_IMPROVEMENT {
         utils::write_makespan_improvement(&makespan_improvement).unwrap();
     }
