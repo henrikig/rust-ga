@@ -100,7 +100,7 @@ impl GA {
                         let [winner1, winner2] = crowding::survivor_selection(
                             &[c1, c2],
                             p,
-                            params::CROWDING_SCALE,
+                            self.options.crowding_scale,
                             &mut self.rng,
                         );
 
@@ -309,8 +309,8 @@ impl GA {
                     let replace_idx = crowding::k_nearest_replacement(
                         &c,
                         &self.population,
-                        params::K_NEAREST,
-                        params::CROWDING_SCALE,
+                        self.options.k_nearest,
+                        self.options.crowding_scale,
                         &mut self.rng,
                     );
                     match replace_idx {

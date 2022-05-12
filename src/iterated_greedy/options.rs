@@ -12,8 +12,8 @@ pub struct Options {
 impl Default for Options {
     fn default() -> Self {
         Self {
-            temp: 0.1,
-            block_size: 3,
+            temp: 0.5,
+            block_size: 2,
         }
     }
 }

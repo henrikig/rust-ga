@@ -2,10 +2,17 @@ use rand::{
     prelude::{SliceRandom, StdRng},
     Rng,
 };
+use serde_derive::Serialize;
 
 use crate::genetic_algorithm::entities::chromosome::Chromosome;
 
-trait Distance {
+#[derive(Clone, Serialize)]
+pub enum DTYPE {
+    ExactMatch,
+    DeviationDistance,
+}
+
+pub trait Distance {
     fn distance(c1: &Chromosome, c2: &Chromosome) -> i32;
 }
 
@@ -62,7 +69,7 @@ pub fn survivor_selection(
     let p1;
     let p2;
 
-    let d = |c1: &Chromosome, c2: &Chromosome| DeviationDistance::distance(c1, c2);
+    let d = |c1: &Chromosome, c2: &Chromosome| ExactMatch::distance(c1, c2);
 
     if d(&parents[0], &children[0]) + d(&parents[1], &children[1])
         < d(&parents[0], &children[1]) + d(&parents[1], &children[0])
@@ -133,7 +140,7 @@ pub fn k_nearest_replacement(
     //[(0, 17), (1, 14), ..., (N, 12)]
     let mut distances = pop
         .iter()
-        .map(|o| DeviationDistance::distance(c, o))
+        .map(|o| ExactMatch::distance(c, o))
         .enumerate()
         .collect::<Vec<(usize, i32)>>();
 

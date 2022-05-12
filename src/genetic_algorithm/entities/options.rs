@@ -12,7 +12,7 @@ use crate::{
     },
     genetic_algorithm::{
         ga::GA,
-        operators::{crossover::XTYPE, mutation::MTYPE},
+        operators::{crossover::XTYPE, crowding::DTYPE, mutation::MTYPE},
         params,
     },
 };
@@ -111,6 +111,15 @@ pub struct Options {
 
     // Approximate makespan calculations in each local search
     pub approx_calc: usize,
+
+    // Crowding scale
+    pub crowding_scale: f64,
+
+    // Crowding k nearest
+    pub k_nearest: usize,
+
+    // Distance metric in crowding
+    pub distance_metric: DTYPE,
 }
 
 impl Default for Options {
@@ -135,6 +144,9 @@ impl Default for Options {
             non_improving_iterations: params::NON_IMPROVING_ITERATIONS,
             allways_keep: params::ALLWAYS_KEEP,
             approx_calc: params::APPROX_CALC,
+            crowding_scale: params::CROWDING_SCALE,
+            k_nearest: params::K_NEAREST,
+            distance_metric: params::DISTANCE_METRIC,
         }
     }
 }
@@ -244,6 +256,15 @@ pub struct OptionsGrid {
     pub allways_keep: Vec<f64>,
 
     pub approx_calc: Vec<usize>,
+
+    // Crowding scale
+    pub crowding_scale: Vec<f64>,
+
+    // Crowding k nearest
+    pub k_nearest: Vec<usize>,
+
+    // Distance metric in crowding
+    pub distance_metric: Vec<DTYPE>,
 }
 
 // Set the default values
@@ -270,9 +291,15 @@ impl Default for OptionsGrid {
                 MTYPE::Shift, // MTYPE::Greedy, MTYPE::Swap, MTYPE::Reverse
             ],
             reversal_percent: vec![10],
-            non_improving_iterations: vec![100, 200, 400],
-            allways_keep: vec![0.2, 0.5, 0.8],
+            non_improving_iterations: vec![100],
+            allways_keep: vec![1.0],
             approx_calc: vec![100],
+            crowding_scale: vec![0.0, 0.2, 0.5, 1.0, 1.5],
+            k_nearest: vec![2, 5, 10, 20],
+            distance_metric: vec![
+                // DTYPE::DeviationDistance,
+                DTYPE::ExactMatch,
+            ],
         }
     }
 }
@@ -288,11 +315,12 @@ impl OptionsGrid {
             self.construction,
             self.mutation_prob,
             self.mutation_type,
-            self.reversal_percent,
-            self.non_improving_iterations,
-            self.allways_keep,
-            //self.approx_calc,
-            self.k_tournament
+            // self.reversal_percent,
+            // self.non_improving_iterations,
+            self.crowding_scale,
+            self.k_nearest,
+            self.distance_metric // self.allways_keep,
+                                 // self.k_tournament
         )
         .map(|opt| Options {
             pop_size: opt.0,
@@ -303,11 +331,11 @@ impl OptionsGrid {
             construction: opt.5,
             mutation_prob: opt.6,
             mutation_type: opt.7,
-            reversal_percent: opt.8,
-            non_improving_iterations: opt.9,
-            allways_keep: opt.10,
-            //approx_calc: opt.11,
-            k_tournament: opt.11,
+            crowding_scale: opt.8,
+            k_nearest: opt.9,
+            distance_metric: opt.10,
+            // approx_calc: opt.11,
+            // k_tournament: opt.12,
             problem_file: Cow::Owned(options.problem_file.as_ref().clone()),
             ..options
         })
@@ -359,6 +387,15 @@ pub struct Params {
     pub allways_keep: f64,
 
     pub approx_calc: usize,
+
+    // Crowding scale
+    pub crowding_scale: f64,
+
+    // Crowding k nearest
+    pub k_nearest: usize,
+
+    // Distance metric in crowding
+    pub distance_metric: DTYPE,
 }
 
 impl From<&Options> for Params {
@@ -392,6 +429,12 @@ impl From<&Options> for Params {
             non_improving_iterations: options.non_improving_iterations,
             allways_keep: options.allways_keep,
             approx_calc: options.approx_calc,
+            crowding_scale: options.crowding_scale,
+            k_nearest: options.k_nearest,
+            distance_metric: match options.distance_metric {
+                DTYPE::ExactMatch => DTYPE::ExactMatch,
+                DTYPE::DeviationDistance => DTYPE::DeviationDistance,
+            },
         }
     }
 }

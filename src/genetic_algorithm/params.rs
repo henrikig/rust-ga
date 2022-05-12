@@ -1,6 +1,6 @@
 use crate::common::construction::Construction;
 
-use super::operators::{crossover::XTYPE, mutation::MTYPE};
+use super::operators::{crossover::XTYPE, crowding::DTYPE, mutation::MTYPE};
 
 pub const PROBLEM_FILE: &str = "./instances/ruiz/json/n20m2-01.json";
 // pub const PROBLEM_FILE: &str = "./instances/ruiz/json/n120m8-21.json";
@@ -9,7 +9,7 @@ pub const WRITE_IMPROVEMENT: bool = false;
 pub const POPULATION_SIZE: usize = 150;
 pub const ITERATIONS: usize = 180;
 pub const ELITISM: usize = 2;
-pub const LOCAL_SEARCH: bool = false;
+pub const LOCAL_SEARCH: bool = true;
 pub const KEEP_BEST: f32 = 0.8;
 pub const K_TOURNAMENT: usize = 2;
 pub const XOVER_PROB: f32 = 0.5;
@@ -25,12 +25,13 @@ pub const MTYPE: MTYPE = MTYPE::Shift;
 pub const REVERSAL_PERCENT: usize = 10;
 
 // CROWDING
-pub const PERFORM_CROWDING: bool = false;
+pub const PERFORM_CROWDING: bool = true;
 pub const CROWDING_SCALE: f64 = 0.5;
 pub const K_NEAREST: usize = 10; // Only used in steady state crowding version
+pub const DISTANCE_METRIC: DTYPE = DTYPE::ExactMatch;
 
-pub const IG_GRID_SEARCH: bool = true;
+pub const IG_GRID_SEARCH: bool = false;
 
 // Solution folder for parameter grid search
 
-pub const SOLUTION_FOLDER: &str = "./solutions/iterated_greedy";
+pub const SOLUTION_FOLDER: &str = "./solutions/crowding-exact";
