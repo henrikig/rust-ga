@@ -308,13 +308,13 @@ pub struct Qlearning {
 }
 
 impl Qlearning {
-    pub fn new(actions: Vec<CrossoverFn>) -> Qlearning {
+    pub fn new(actions: Vec<CrossoverFn>, learning_rate: f64, epsilon: f64) -> Qlearning {
         Qlearning {
             q_values: vec![0.0; actions.len()],
             counts: vec![0; actions.len()],
-            actions: actions,
-            learning_rate: 0.2, // min: 0.0, max: 1.0
-            epsilon: 0.25,      // min: 0.0, max: 1.0
+            actions,
+            learning_rate, // min: 0.0, max: 1.0
+            epsilon,       // min: 0.0, max: 1.0
         }
     }
 
@@ -374,8 +374,8 @@ impl Qlearning {
         let reward = (reward as f64) / (elapsed as f64);
 
         // Update the q-value using the learning rate
-        self.q_values[crossover] =
-            (1.0 - self.learning_rate) * self.q_values[crossover] + (self.learning_rate * (reward));
+        self.q_values[crossover] = (1.0 - self.learning_rate) * self.q_values[crossover]
+            + (self.learning_rate * (reward as f64));
         // Return the children
         return (c1, c2);
     }

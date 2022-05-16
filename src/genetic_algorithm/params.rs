@@ -20,6 +20,10 @@ pub const RTYPE: RTYPE = RTYPE::GCH;
 pub const ALLWAYS_KEEP: f64 = 1.0; // Percentage of population to always keep
 pub const APPROX_CALC: usize = 300;
 
+// Q-Learning
+pub const LEARNING_RATE: f64 = 0.2;
+pub const EPSILON: f64 = 0.25;
+
 // MUTATION
 pub const MUTATION_PROB: f32 = 0.0;
 pub const MTYPE: MTYPE = MTYPE::Shift;

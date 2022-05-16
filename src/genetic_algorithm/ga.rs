@@ -46,7 +46,8 @@ impl GA {
     pub fn run(&mut self) {
         let crossovers: Vec<CrossoverFn> =
             vec![SJ2OX::apply, BCBX::apply, SB2OX::apply, PMX::apply];
-        let mut q_crossover = Qlearning::new(crossovers);
+        let mut q_crossover =
+            Qlearning::new(crossovers, self.options.learning_rate, self.options.epsilon);
 
         let mut non_improvement_counter: usize = 0;
         let mut iteration = 0;
@@ -218,14 +219,11 @@ impl GA {
         let crossovers: Vec<CrossoverFn> =
             vec![SJ2OX::apply, BCBX::apply, SB2OX::apply, PMX::apply];
 
-        let mut q_crossover = Qlearning::new(crossovers);
+        let mut q_crossover =
+            Qlearning::new(crossovers, self.options.learning_rate, self.options.epsilon);
 
         // Calculate makespan for all individuals in population
         self.population.sort();
-        println!(
-            "{}",
-            self.population.iter().min().unwrap().makespan.unwrap()
-        );
         let mut non_improvement_counter: usize = 0;
         let mut iteration = 0;
 

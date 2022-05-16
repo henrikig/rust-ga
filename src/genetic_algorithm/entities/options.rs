@@ -90,6 +90,12 @@ pub struct Options {
     // Crossover type to be used
     pub xover_type: XTYPE,
 
+    // Q-Learning learning rate
+    pub learning_rate: f64,
+
+    // Q-Learning learning epsilon
+    pub epsilon: f64,
+
     // Construction heuristic used for initial population
     pub construction: Construction,
 
@@ -139,6 +145,8 @@ impl Default for Options {
             k_tournament: params::K_TOURNAMENT,
             xover_prob: params::XOVER_PROB,
             xover_type: params::XOVER,
+            learning_rate: params::LEARNING_RATE,
+            epsilon: params::EPSILON,
             construction: params::CONSTRUCTION,
             mutation_prob: params::MUTATION_PROB,
             mutation_type: params::MTYPE,
@@ -257,6 +265,12 @@ pub struct OptionsGrid {
     // Crossover type to be used
     pub xover_type: Vec<XTYPE>,
 
+    // Q-Learning learning rate
+    pub learning_rates: Vec<f64>,
+
+    // Q-Learning epsilon
+    pub epsilons: Vec<f64>,
+
     // Construction heuristic used for initial population
     pub construction: Vec<Construction>,
 
@@ -299,8 +313,10 @@ impl Default for OptionsGrid {
             xover_prob: vec![0.5],
             xover_type: vec![
                 // XTYPE::PMX, XTYPE::BCBX, XTYPE::SJ2OX, XTYPE::SB2OX
-                XTYPE::Random,
+                XTYPE::QLearning,
             ],
+            learning_rates: vec![0.05, 0.1, 0.2],
+            epsilons: vec![0.1, 0.25, 0.4],
             construction: vec![
                 // Construction::MDDR(0.2),
                 // Construction::MDDR(0.5),
@@ -311,10 +327,10 @@ impl Default for OptionsGrid {
             mutation_prob: vec![0.05],
             mutation_type: vec![
                 MTYPE::Shift,
-                MTYPE::Greedy,
-                MTYPE::Swap,
-                MTYPE::Reverse,
-                MTYPE::Random,
+                // MTYPE::Greedy,
+                // MTYPE::Swap,
+                // MTYPE::Reverse,
+                // MTYPE::Random,
             ],
             reversal_percent: vec![10],
             non_improving_iterations: vec![200],
@@ -341,11 +357,13 @@ impl OptionsGrid {
             self.mutation_type,
             // self.reversal_percent,
             // self.non_improving_iterations,
-            self.crowding_scale,
+            // self.crowding_scale,
             // self.k_nearest,
             // self.distance_metric,
             // self.approx_calc
-            self.non_improving_iterations,
+            // self.non_improving_iterations,
+            self.learning_rates,
+            self.epsilons,
             self.rtypes,
             self.allways_keep
         )
@@ -358,9 +376,11 @@ impl OptionsGrid {
             construction: opt.5,
             mutation_prob: opt.6,
             mutation_type: opt.7,
-            crowding_scale: opt.8,
+            // crowding_scale: opt.8,
             // k_nearest: opt.9,
-            non_improving_iterations: opt.9,
+            // non_improving_iterations: opt.9,
+            learning_rate: opt.8,
+            epsilon: opt.9,
             rtype: opt.10,
             allways_keep: opt.11,
             // distance_metric: opt.10,
@@ -396,6 +416,9 @@ pub struct Params {
 
     // Crossover type to be used
     pub xover_type: XTYPE,
+
+    pub learning_rate: f64,
+    pub epsilon: f64,
 
     // Construction heuristic used for initial population
     pub construction: Construction,
@@ -447,6 +470,8 @@ impl From<&Options> for Params {
                 XTYPE::Random => XTYPE::Random,
                 XTYPE::QLearning => XTYPE::QLearning,
             },
+            learning_rate: options.learning_rate,
+            epsilon: options.epsilon,
             construction: match options.construction {
                 Construction::Random => Construction::Random,
                 Construction::MDDR(num) => Construction::MDDR(num),
