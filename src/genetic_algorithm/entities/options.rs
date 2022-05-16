@@ -12,7 +12,7 @@ use crate::{
     },
     genetic_algorithm::{
         ga::GA,
-        operators::{crossover::XTYPE, crowding::DTYPE, mutation::MTYPE},
+        operators::{crossover::XTYPE, crowding::DTYPE, mutation::MTYPE, replacement::RTYPE},
         params,
     },
 };
@@ -105,8 +105,10 @@ pub struct Options {
     // Iterations to run in steady state before changing the less fit chromosomes
     pub non_improving_iterations: usize,
 
-    // Chromosomes to keep in case of a genocide
-    // Must be smaller than pop_size
+    // Replacement scheme
+    pub rtype: RTYPE,
+
+    // Percentage of population to keep in case of a genocide
     pub allways_keep: f64,
 
     // Approximate makespan calculations in each local search
@@ -142,6 +144,7 @@ impl Default for Options {
             mutation_type: params::MTYPE,
             reversal_percent: params::REVERSAL_PERCENT,
             non_improving_iterations: params::NON_IMPROVING_ITERATIONS,
+            rtype: params::RTYPE,
             allways_keep: params::ALLWAYS_KEEP,
             approx_calc: params::APPROX_CALC,
             crowding_scale: params::CROWDING_SCALE,
@@ -268,6 +271,9 @@ pub struct OptionsGrid {
 
     pub non_improving_iterations: Vec<usize>,
 
+    // Replacement schemes
+    pub rtypes: Vec<RTYPE>,
+
     pub allways_keep: Vec<f64>,
 
     pub approx_calc: Vec<usize>,
@@ -312,6 +318,7 @@ impl Default for OptionsGrid {
             ],
             reversal_percent: vec![10],
             non_improving_iterations: vec![200],
+            rtypes: vec![RTYPE::Mutate],
             allways_keep: vec![1.0],
             approx_calc: vec![0],
             crowding_scale: vec![0.0],
@@ -335,10 +342,11 @@ impl OptionsGrid {
             // self.reversal_percent,
             // self.non_improving_iterations,
             self.crowding_scale,
-            self.k_nearest,
+            // self.k_nearest,
             // self.distance_metric,
             // self.approx_calc
             self.non_improving_iterations,
+            self.rtypes,
             self.allways_keep
         )
         .map(|opt| Options {
@@ -351,8 +359,9 @@ impl OptionsGrid {
             mutation_prob: opt.6,
             mutation_type: opt.7,
             crowding_scale: opt.8,
-            k_nearest: opt.9,
-            non_improving_iterations: opt.10,
+            // k_nearest: opt.9,
+            non_improving_iterations: opt.9,
+            rtype: opt.10,
             allways_keep: opt.11,
             // distance_metric: opt.10,
             // approx_calc: opt.11,
@@ -403,8 +412,10 @@ pub struct Params {
     // Iterations to run in steady state before changing the less fit chromosomes
     pub non_improving_iterations: usize,
 
-    // Chromosomes to keep in case of a genocide
-    // Must be smaller than pop_size
+    // Replacement scheme
+    pub rtype: RTYPE,
+
+    // Percentage of population to keep in case of a genocide
     pub allways_keep: f64,
 
     pub approx_calc: usize,
@@ -450,6 +461,12 @@ impl From<&Options> for Params {
             },
             reversal_percent: options.reversal_percent,
             non_improving_iterations: options.non_improving_iterations,
+            rtype: match options.rtype {
+                RTYPE::Random => RTYPE::Random,
+                RTYPE::GCH => RTYPE::GCH,
+                RTYPE::Mutate => RTYPE::Mutate,
+                RTYPE::NoReplacement => RTYPE::NoReplacement,
+            },
             allways_keep: options.allways_keep,
             approx_calc: options.approx_calc,
             crowding_scale: options.crowding_scale,
