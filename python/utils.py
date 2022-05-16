@@ -57,7 +57,7 @@ def calc_stats(df):
 
 
 # Takes a dataframe with statistics to plot and returns a figure
-def plot_from_df(df, xname, yname, filename, new_names={}, rename=True, save=True):
+def plot_from_df(df, xname, yname, filename, new_names={}, rename=True, save=False):
     if rename:
         df.rename(index=lambda s: s.replace("_rpd", ""), inplace=True)
 
@@ -151,7 +151,7 @@ def parse_size(file):
     return size
 
 
-def line_plot_from_results(df, header, x_title, y_title, filename, save=True):
+def line_plot_from_results(df, header, x_title, y_title, filename, save=False):
     rpd = calc_rpd(df)
     rpd["size"] = rpd.index.map(lambda x: parse_size(x))
     dfs = []
