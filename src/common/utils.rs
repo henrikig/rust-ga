@@ -11,6 +11,7 @@ use crate::genetic_algorithm::params;
 
 use super::instance::Instance;
 
+#[allow(dead_code)]
 pub fn get_problem_files(run_all: bool) -> Vec<PathBuf> {
     match run_all {
         true => fs::read_dir("./instances/ruiz/json")

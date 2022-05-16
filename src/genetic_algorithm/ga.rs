@@ -6,7 +6,7 @@ use crate::genetic_algorithm::entities::options::Args;
 
 use super::entities::chromosome::Chromosome;
 use super::entities::options::{Options, OptionsGrid, Params};
-use super::operators::crossover::{Crossover, BCBX, PMX, SB2OX, SJ2OX, XTYPE};
+use super::operators::crossover::{Crossover, Random, BCBX, PMX, SB2OX, SJ2OX, XTYPE};
 use super::operators::crowding;
 use super::operators::local_search::ls_ig;
 use super::operators::mutation::{self, Greedy, Mutation, Reverse, Swap, MTYPE, SHIFT};
@@ -91,6 +91,9 @@ impl GA {
                         XTYPE::PMX => {
                             PMX::apply(&p[0], &p[1], None, &mut self.makespan, &mut self.rng)
                         }
+                        XTYPE::Random => {
+                            Random::apply(&p[0], &p[1], None, &mut self.makespan, &mut self.rng)
+                        }
                     };
 
                     if params::PERFORM_CROWDING {
@@ -132,6 +135,9 @@ impl GA {
                         MTYPE::Reverse => Reverse::apply(c, &mut self.makespan, &mut self.rng),
                         MTYPE::Swap => Swap::apply(c, &mut self.makespan, &mut self.rng),
                         MTYPE::Greedy => Greedy::apply(c, &mut self.makespan, &mut self.rng),
+                        MTYPE::Random => {
+                            mutation::Random::apply(c, &mut self.makespan, &mut self.rng)
+                        }
                     }
                 }
             });
@@ -260,23 +266,19 @@ impl GA {
                 XTYPE::SB2OX => SB2OX::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
                 XTYPE::BCBX => BCBX::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
                 XTYPE::PMX => PMX::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
+                XTYPE::Random => Random::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
             };
 
             // Mutate
             let mut mutate = |c| {
                 if self.rng.gen::<f32>() < self.options.mutation_prob {
                     match self.options.mutation_type {
-                        mutation::MTYPE::Shift => {
-                            mutation::SHIFT::apply(c, &mut self.makespan, &mut self.rng)
-                        }
-                        mutation::MTYPE::Reverse => {
-                            mutation::Reverse::apply(c, &mut self.makespan, &mut self.rng)
-                        }
-                        mutation::MTYPE::Swap => {
-                            mutation::Swap::apply(c, &mut self.makespan, &mut self.rng)
-                        }
-                        mutation::MTYPE::Greedy => {
-                            mutation::Greedy::apply(c, &mut self.makespan, &mut self.rng)
+                        MTYPE::Shift => SHIFT::apply(c, &mut self.makespan, &mut self.rng),
+                        MTYPE::Reverse => Reverse::apply(c, &mut self.makespan, &mut self.rng),
+                        MTYPE::Swap => mutation::Swap::apply(c, &mut self.makespan, &mut self.rng),
+                        MTYPE::Greedy => Greedy::apply(c, &mut self.makespan, &mut self.rng),
+                        MTYPE::Random => {
+                            mutation::Random::apply(c, &mut self.makespan, &mut self.rng)
                         }
                     }
                 }

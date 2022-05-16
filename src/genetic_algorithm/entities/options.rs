@@ -292,18 +292,23 @@ impl Default for OptionsGrid {
             k_tournament: vec![2],
             xover_prob: vec![0.5],
             xover_type: vec![
-                XTYPE::PMX, // XTYPE::PMX, XTYPE::SJ2OX, XTYPE::SB2OX
+                // XTYPE::PMX, XTYPE::BCBX, XTYPE::SJ2OX, XTYPE::SB2OX
+                XTYPE::Random,
             ],
             construction: vec![
                 // Construction::MDDR(0.2),
                 // Construction::MDDR(0.5),
-                Construction::Random,
-                // Construction::NEH,
+                Construction::MDDR(1.0),
                 // Construction::Random,
+                // Construction::NEH,
             ],
-            mutation_prob: vec![0.0],
+            mutation_prob: vec![0.05],
             mutation_type: vec![
-                MTYPE::Shift, // MTYPE::Greedy, MTYPE::Swap, MTYPE::Reverse
+                MTYPE::Shift,
+                MTYPE::Greedy,
+                MTYPE::Swap,
+                MTYPE::Reverse,
+                MTYPE::Random,
             ],
             reversal_percent: vec![10],
             non_improving_iterations: vec![200],
@@ -428,6 +433,7 @@ impl From<&Options> for Params {
                 XTYPE::SB2OX => XTYPE::SB2OX,
                 XTYPE::BCBX => XTYPE::BCBX,
                 XTYPE::PMX => XTYPE::PMX,
+                XTYPE::Random => XTYPE::Random,
             },
             construction: match options.construction {
                 Construction::Random => Construction::Random,
@@ -440,6 +446,7 @@ impl From<&Options> for Params {
                 MTYPE::Reverse => MTYPE::Reverse,
                 MTYPE::Swap => MTYPE::Swap,
                 MTYPE::Greedy => MTYPE::Greedy,
+                MTYPE::Random => MTYPE::Random,
             },
             reversal_percent: options.reversal_percent,
             non_improving_iterations: options.non_improving_iterations,

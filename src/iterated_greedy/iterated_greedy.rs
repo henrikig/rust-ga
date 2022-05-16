@@ -263,21 +263,6 @@ fn is_terminated(
     }
 }
 
-fn update_makespan_improvement(
-    iteration: u32,
-    makespan: u32,
-    count: u32,
-    time: &Instant,
-    makespan_improvement: &mut Vec<Vec<String>>,
-) {
-    makespan_improvement.push(vec![
-        iteration.to_string(),
-        makespan.to_string(),
-        count.to_string(),
-        time.elapsed().as_millis().to_string(),
-    ]);
-}
-
 #[cfg(test)]
 mod ig_tests {
 
