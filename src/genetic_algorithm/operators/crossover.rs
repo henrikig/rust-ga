@@ -13,8 +13,7 @@ pub enum XTYPE {
     SB2OX,
     BCBX,
     PMX,
-    Random2,
-    Random4,
+    Random,
 }
 
 pub trait Crossover {
@@ -31,8 +30,7 @@ pub struct SJ2OX;
 pub struct SB2OX;
 pub struct BCBX;
 pub struct PMX;
-pub struct Random2;
-pub struct Random4;
+pub struct Random;
 
 impl Crossover for SJ2OX {
     fn apply(
@@ -162,26 +160,7 @@ impl Crossover for PMX {
     }
 }
 
-impl Crossover for Random2 {
-    fn apply(
-        p1: &Chromosome,
-        p2: &Chromosome,
-        k: Option<usize>,
-        makespan: &mut Makespan,
-        rng: &mut StdRng,
-    ) -> (Chromosome, Chromosome) {
-        let xovers = vec![XTYPE::BCBX, XTYPE::PMX];
-        let xtype = xovers.choose(rng).unwrap();
-
-        match xtype {
-            XTYPE::BCBX => BCBX::apply(p1, p2, k, makespan, rng),
-            XTYPE::PMX => PMX::apply(p1, p2, k, makespan, rng),
-            _ => PMX::apply(p1, p2, k, makespan, rng),
-        }
-    }
-}
-
-impl Crossover for Random4 {
+impl Crossover for Random {
     fn apply(
         p1: &Chromosome,
         p2: &Chromosome,

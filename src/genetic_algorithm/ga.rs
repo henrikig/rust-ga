@@ -6,7 +6,7 @@ use crate::genetic_algorithm::entities::options::Args;
 
 use super::entities::chromosome::Chromosome;
 use super::entities::options::{Options, OptionsGrid, Params};
-use super::operators::crossover::{Crossover, Random2, Random4, BCBX, PMX, SB2OX, SJ2OX, XTYPE};
+use super::operators::crossover::{Crossover, Random, BCBX, PMX, SB2OX, SJ2OX, XTYPE};
 use super::operators::crowding;
 use super::operators::local_search::ls_ig;
 use super::operators::mutation::{self, Greedy, Mutation, Reverse, Swap, MTYPE, SHIFT};
@@ -91,11 +91,8 @@ impl GA {
                         XTYPE::PMX => {
                             PMX::apply(&p[0], &p[1], None, &mut self.makespan, &mut self.rng)
                         }
-                        XTYPE::Random2 => {
-                            Random2::apply(&p[0], &p[1], None, &mut self.makespan, &mut self.rng)
-                        }
-                        XTYPE::Random4 => {
-                            Random4::apply(&p[0], &p[1], None, &mut self.makespan, &mut self.rng)
+                        XTYPE::Random => {
+                            Random::apply(&p[0], &p[1], None, &mut self.makespan, &mut self.rng)
                         }
                     };
 
@@ -266,8 +263,7 @@ impl GA {
                 XTYPE::SB2OX => SB2OX::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
                 XTYPE::BCBX => BCBX::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
                 XTYPE::PMX => PMX::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
-                XTYPE::Random2 => Random2::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
-                XTYPE::Random4 => Random4::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
+                XTYPE::Random => Random::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
             };
 
             // Mutate

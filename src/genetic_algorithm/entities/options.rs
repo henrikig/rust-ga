@@ -292,16 +292,18 @@ impl Default for OptionsGrid {
             k_tournament: vec![2],
             xover_prob: vec![0.5],
             xover_type: vec![
-                XTYPE::PMX, // XTYPE::PMX, XTYPE::SJ2OX, XTYPE::SB2OX
+                // XTYPE::PMX, XTYPE::PMX, XTYPE::SJ2OX, XTYPE::SB2OX
+                XTYPE::Random,
             ],
             construction: vec![
                 // Construction::MDDR(0.2),
                 // Construction::MDDR(0.5),
-                Construction::Random,
+                Construction::MDDR(1.0),
+                // Construction::Random,
                 // Construction::NEH,
                 // Construction::Random,
             ],
-            mutation_prob: vec![0.0],
+            mutation_prob: vec![0.05],
             mutation_type: vec![
                 MTYPE::Shift, // MTYPE::Greedy, MTYPE::Swap, MTYPE::Reverse
             ],
@@ -428,8 +430,7 @@ impl From<&Options> for Params {
                 XTYPE::SB2OX => XTYPE::SB2OX,
                 XTYPE::BCBX => XTYPE::BCBX,
                 XTYPE::PMX => XTYPE::PMX,
-                XTYPE::Random2 => XTYPE::Random2,
-                XTYPE::Random4 => XTYPE::Random4,
+                XTYPE::Random => XTYPE::Random,
             },
             construction: match options.construction {
                 Construction::Random => Construction::Random,
