@@ -206,6 +206,21 @@ impl Options {
 
         let init_duration = start_time.elapsed();
 
+        let mut best_makespan = Vec::new();
+
+        best_makespan.push(vec![
+            "0".to_string(),
+            population
+                .iter()
+                .min()
+                .unwrap()
+                .makespan
+                .unwrap()
+                .to_string(),
+            "0".to_string(),
+            "0.0".to_string(),
+        ]);
+
         return GA {
             instance,
             population,
@@ -213,7 +228,7 @@ impl Options {
             makespan,
             options: self,
             rng,
-            best_makespan: Vec::new(),
+            best_makespan,
             init_duration,
         };
     }
@@ -277,12 +292,12 @@ impl Default for OptionsGrid {
             k_tournament: vec![2],
             xover_prob: vec![0.5],
             xover_type: vec![
-                XTYPE::BCBX, // XTYPE::PMX, XTYPE::SJ2OX, XTYPE::SB2OX
+                XTYPE::PMX, // XTYPE::PMX, XTYPE::SJ2OX, XTYPE::SB2OX
             ],
             construction: vec![
                 // Construction::MDDR(0.2),
                 // Construction::MDDR(0.5),
-                Construction::MDDR(1.0),
+                Construction::Random,
                 // Construction::NEH,
                 // Construction::Random,
             ],
@@ -291,8 +306,8 @@ impl Default for OptionsGrid {
                 MTYPE::Shift, // MTYPE::Greedy, MTYPE::Swap, MTYPE::Reverse
             ],
             reversal_percent: vec![10],
-            non_improving_iterations: vec![200, 1000, 3000],
-            allways_keep: vec![0.2, 0.5, 0.8],
+            non_improving_iterations: vec![200],
+            allways_keep: vec![1.0],
             approx_calc: vec![0],
             crowding_scale: vec![0.0],
             k_nearest: vec![2],

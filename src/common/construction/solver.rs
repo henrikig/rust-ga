@@ -1,6 +1,9 @@
 use lexical_sort::natural_lexical_cmp;
 use rayon::prelude::*;
-use std::sync::{Arc, Mutex};
+use std::{
+    borrow::Cow,
+    sync::{Arc, Mutex},
+};
 
 use crate::{
     common::{
@@ -47,39 +50,26 @@ pub trait Solver {
                 // Store filename and result from each parameter combination in vector
                 let mut row = Vec::new();
 
+                let i: Instance = parse(problem_files_consumed.get(idx).unwrap()).unwrap();
+
                 row.push(String::from(
                     problem_files_consumed.get(idx).unwrap().to_str().unwrap(),
                 ));
 
-                let i: Instance = parse(problem_file).unwrap();
-
-                let all_options = match params::IG_GRID_SEARCH {
-                    true => {
-                        if idx == 0 {
-                            OptionsGrid::default()
-                                .get_options()
-                                .iter()
-                                .for_each(|o| println!("{:?}", o))
-                        }
-                        Some(OptionsGrid::default().get_options())
-                    }
-                    false => None,
+                let options = Options {
+                    problem_file: Cow::Owned(problem_file),
+                    ..Options::default()
                 };
+
+                let all_options = OptionsGrid::default().get_options(options);
 
                 let mut m: Makespan = Makespan::new(&i);
 
-                match all_options {
-                    Some(options) => options.into_iter().for_each(|option| {
-                        let makespan = Self::run(&mut m, Some(option));
+                all_options.into_iter().for_each(|option| {
+                    let makespan = Self::run(&mut m, Some(option));
 
-                        row.push(makespan.to_string());
-                    }),
-                    None => {
-                        let makespan = Self::run(&mut m, None);
-
-                        row.push(makespan.to_string());
-                    }
-                }
+                    row.push(makespan.to_string());
+                });
 
                 results.lock().unwrap().push(row);
 

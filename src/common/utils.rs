@@ -173,8 +173,20 @@ pub fn write_results(folder_name: &str, records: &Vec<Vec<String>>) -> Result<()
     Ok(())
 }
 
-pub fn write_makespan_improvement(records: &Vec<Vec<String>>) -> Result<(), Box<dyn Error>> {
-    let mut wtr = Writer::from_path(params::IMPROVEMENT_FILE)?;
+pub fn write_makespan_improvement(
+    filename: PathBuf,
+    records: &Vec<Vec<String>>,
+) -> Result<(), Box<dyn Error>> {
+    let filename = PathBuf::from("./solutions/improvement").join(filename);
+
+    let parent_folder = Path::new(&filename).parent().unwrap();
+
+    match Path::new(parent_folder).is_dir() {
+        false => fs::create_dir_all(parent_folder)?,
+        _ => (),
+    }
+
+    let mut wtr = Writer::from_path(filename)?;
 
     for record in records {
         wtr.write_record(record)?;

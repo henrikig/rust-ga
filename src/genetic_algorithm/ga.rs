@@ -45,8 +45,8 @@ impl GA {
         let mut non_improvement_counter: usize = 0;
         let mut iteration = 0;
         let start_time = Instant::now();
-        let duration = utils::get_duration(&self.instance);
-        let duration = Duration::from_millis(duration);
+        let duration_millis = utils::get_duration(&self.instance);
+        let duration = Duration::from_millis(duration_millis);
         let allowed_time = duration.checked_sub(self.init_duration);
 
         let time_to_spare = match allowed_time {
@@ -164,7 +164,7 @@ impl GA {
                     iteration.to_string(),
                     best_offspring.makespan.unwrap().to_string(),
                     self.makespan.count.to_string(),
-                    start_time.elapsed().as_secs().to_string(),
+                    start_time.elapsed().as_millis().to_string(),
                 ]);
             }
 
@@ -188,10 +188,10 @@ impl GA {
             iteration += 1;
         }
 
-        self.final_makespan(iteration, start_time.elapsed().as_secs());
+        self.final_makespan(iteration, duration_millis);
 
         if params::WRITE_IMPROVEMENT {
-            utils::write_makespan_improvement(&self.best_makespan).unwrap();
+            write_improvement(&self.options, &self.best_makespan);
         }
     }
 
@@ -202,8 +202,8 @@ impl GA {
         let mut iteration = 0;
 
         let start_time = Instant::now();
-        let duration = utils::get_duration(&self.instance);
-        let duration = Duration::from_millis(duration);
+        let duration_millis = utils::get_duration(&self.instance);
+        let duration = Duration::from_millis(duration_millis);
         let allowed_time = duration.checked_sub(self.init_duration);
 
         let time_to_spare = match allowed_time {
@@ -311,7 +311,7 @@ impl GA {
                     iteration.to_string(),
                     std::cmp::min(&c1, &c2).makespan.unwrap().to_string(),
                     self.makespan.count.to_string(),
-                    start_time.elapsed().as_secs().to_string(),
+                    start_time.elapsed().as_millis().to_string(),
                 ]);
             } else {
                 non_improvement_counter += 1;
@@ -375,17 +375,10 @@ impl GA {
             iteration += 1;
         }
 
-        self.final_makespan(iteration, start_time.elapsed().as_secs());
+        self.final_makespan(iteration, duration_millis);
 
         if params::WRITE_IMPROVEMENT {
-            let mut folder = PathBuf::from(params::IMPROVEMENT_FILE);
-            folder.pop();
-            write_params_to_file(
-                folder.to_str().unwrap().to_string() + "/params.csv",
-                &vec![self.options.clone()],
-            )
-            .unwrap();
-            utils::write_makespan_improvement(&self.best_makespan).unwrap();
+            write_improvement(&self.options, &self.best_makespan);
         }
     }
 
@@ -588,4 +581,18 @@ fn write_params_to_file(
 
     wtr.flush()?;
     Ok(())
+}
+
+fn write_improvement(options: &Options, best_makespan: &Vec<Vec<String>>) {
+    let mut filename = PathBuf::from(
+        PathBuf::from(options.problem_file.as_os_str())
+            .file_name()
+            .unwrap(),
+    );
+
+    filename.set_extension("csv");
+
+    filename = PathBuf::from("ga/all").join(filename);
+
+    utils::write_makespan_improvement(filename, best_makespan).unwrap();
 }

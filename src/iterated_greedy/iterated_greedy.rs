@@ -31,7 +31,10 @@ Iterative_Greedy(Instance) {
 }
 */
 
-use std::time::{Duration, Instant};
+use std::{
+    path::PathBuf,
+    time::{Duration, Instant},
+};
 
 use rand::{prelude::StdRng, Rng, SeedableRng};
 
@@ -82,14 +85,17 @@ pub fn iterated_greedy(
         "0".to_string(),
         current_schedule.1.to_string(),
         makespan.count.to_string(),
-        "0".to_string(),
+        "0.0".to_string(),
     ]);
 
     current_schedule = iterative_improvement_insertion(makespan, &current_schedule.0, rng);
     let mut best_schedule: (Vec<u32>, u32) = (current_schedule.0.clone(), current_schedule.1);
 
     let (t, d) = match option {
-        Some(opt) => (opt.temp, opt.block_size),
+        Some(_) => {
+            let o = option.as_ref().unwrap();
+            (o.temp, o.block_size)
+        }
         None => {
             let o = Options::default();
             (o.temp, o.block_size)
@@ -100,8 +106,8 @@ pub fn iterated_greedy(
 
     let mut iteration: u32 = 0;
     let start_time = Instant::now();
-    let allowed_duration = utils::get_duration(&makespan.instance);
-    let allowed_duration = Duration::from_millis(allowed_duration);
+    let duration_millis = utils::get_duration(&makespan.instance);
+    let allowed_duration = Duration::from_millis(duration_millis);
 
     // Go through generations
     while !is_terminated(
@@ -133,20 +139,32 @@ pub fn iterated_greedy(
         {
             current_schedule = (schedule_permutation.0.clone(), schedule_permutation.1);
         }
-        iteration += 1;
-
         if params::WRITE_IMPROVEMENT {
             makespan_improvement.push(vec![
                 iteration.to_string(),
                 best_schedule.1.to_string(),
                 makespan.count.to_string(),
-                start_time.elapsed().as_secs().to_string(),
+                start_time.elapsed().as_millis().to_string(),
             ]);
         }
+
+        iteration += 1;
     }
 
     if params::WRITE_IMPROVEMENT {
-        utils::write_makespan_improvement(&makespan_improvement).unwrap();
+        makespan_improvement.push(vec![
+            iteration.to_string(),
+            best_schedule.1.to_string(),
+            makespan.count.to_string(),
+            duration_millis.to_string(),
+        ]);
+
+        let file = option.unwrap();
+        let file = file.problem_file.as_os_str();
+        let mut filename = PathBuf::from(PathBuf::from(file).file_name().unwrap());
+        filename.set_extension("csv");
+        filename = PathBuf::from("ig/all").join(filename);
+        utils::write_makespan_improvement(filename, &makespan_improvement).unwrap();
     }
 
     return best_schedule;
@@ -219,7 +237,14 @@ pub fn run_one() {
     let i = parse(params::PROBLEM_FILE).unwrap();
     let mut m = Makespan::new(&i);
     let mut rng = StdRng::seed_from_u64(123);
-    let result = iterated_greedy(&mut m, None, params::ITERATIONS as u32, None, &mut rng);
+
+    let result = iterated_greedy(
+        &mut m,
+        None,
+        params::ITERATIONS as u32,
+        Some(Options::default()),
+        &mut rng,
+    );
     println!("Iterated greedy finished with makespan {}", result.1);
 }
 
@@ -236,6 +261,21 @@ fn is_terminated(
     } else {
         iteration > max_iteration
     }
+}
+
+fn update_makespan_improvement(
+    iteration: u32,
+    makespan: u32,
+    count: u32,
+    time: &Instant,
+    makespan_improvement: &mut Vec<Vec<String>>,
+) {
+    makespan_improvement.push(vec![
+        iteration.to_string(),
+        makespan.to_string(),
+        count.to_string(),
+        time.elapsed().as_millis().to_string(),
+    ]);
 }
 
 #[cfg(test)]
