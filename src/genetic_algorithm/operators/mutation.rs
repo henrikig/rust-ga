@@ -3,7 +3,10 @@ use crate::{
     genetic_algorithm::{entities::chromosome::Chromosome, params},
 };
 
-use rand::{prelude::StdRng, Rng};
+use rand::{
+    prelude::{SliceRandom, StdRng},
+    Rng,
+};
 use serde_derive::Serialize;
 
 #[allow(dead_code)]
@@ -13,6 +16,7 @@ pub enum MTYPE {
     Reverse,
     Swap,
     Greedy,
+    Random,
 }
 
 pub trait Mutation {
@@ -23,6 +27,7 @@ pub struct SHIFT;
 pub struct Reverse;
 pub struct Swap;
 pub struct Greedy;
+pub struct Random;
 
 impl Mutation for SHIFT {
     // Move a job from one location to another random location
@@ -77,6 +82,21 @@ impl Mutation for Greedy {
 
         c.jobs = new_jobs;
         c.makespan = Some(makespan);
+    }
+}
+
+impl Mutation for Random {
+    fn apply(c: &mut Chromosome, m: &mut Makespan, rng: &mut StdRng) {
+        let mtypes = vec![MTYPE::Shift, MTYPE::Reverse, MTYPE::Swap, MTYPE::Greedy];
+        let mtype = mtypes.choose(rng).unwrap();
+
+        match mtype {
+            MTYPE::Shift => SHIFT::apply(c, m, rng),
+            MTYPE::Reverse => Reverse::apply(c, m, rng),
+            MTYPE::Swap => Swap::apply(c, m, rng),
+            MTYPE::Greedy => Greedy::apply(c, m, rng),
+            _ => SHIFT::apply(c, m, rng),
+        };
     }
 }
 

@@ -135,6 +135,9 @@ impl GA {
                         MTYPE::Reverse => Reverse::apply(c, &mut self.makespan, &mut self.rng),
                         MTYPE::Swap => Swap::apply(c, &mut self.makespan, &mut self.rng),
                         MTYPE::Greedy => Greedy::apply(c, &mut self.makespan, &mut self.rng),
+                        MTYPE::Random => {
+                            mutation::Random::apply(c, &mut self.makespan, &mut self.rng)
+                        }
                     }
                 }
             });
@@ -270,17 +273,12 @@ impl GA {
             let mut mutate = |c| {
                 if self.rng.gen::<f32>() < self.options.mutation_prob {
                     match self.options.mutation_type {
-                        mutation::MTYPE::Shift => {
-                            mutation::SHIFT::apply(c, &mut self.makespan, &mut self.rng)
-                        }
-                        mutation::MTYPE::Reverse => {
-                            mutation::Reverse::apply(c, &mut self.makespan, &mut self.rng)
-                        }
-                        mutation::MTYPE::Swap => {
-                            mutation::Swap::apply(c, &mut self.makespan, &mut self.rng)
-                        }
-                        mutation::MTYPE::Greedy => {
-                            mutation::Greedy::apply(c, &mut self.makespan, &mut self.rng)
+                        MTYPE::Shift => SHIFT::apply(c, &mut self.makespan, &mut self.rng),
+                        MTYPE::Reverse => Reverse::apply(c, &mut self.makespan, &mut self.rng),
+                        MTYPE::Swap => mutation::Swap::apply(c, &mut self.makespan, &mut self.rng),
+                        MTYPE::Greedy => Greedy::apply(c, &mut self.makespan, &mut self.rng),
+                        MTYPE::Random => {
+                            mutation::Random::apply(c, &mut self.makespan, &mut self.rng)
                         }
                     }
                 }
