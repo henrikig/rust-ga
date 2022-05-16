@@ -17,6 +17,7 @@ pub enum XTYPE {
     BCBX,
     PMX,
     Random,
+    QLearning,
 }
 
 pub trait Crossover {

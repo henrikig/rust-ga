@@ -445,6 +445,7 @@ impl From<&Options> for Params {
                 XTYPE::BCBX => XTYPE::BCBX,
                 XTYPE::PMX => XTYPE::PMX,
                 XTYPE::Random => XTYPE::Random,
+                XTYPE::QLearning => XTYPE::QLearning,
             },
             construction: match options.construction {
                 Construction::Random => Construction::Random,

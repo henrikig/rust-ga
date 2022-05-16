@@ -44,6 +44,10 @@ impl Default for GA {
 
 impl GA {
     pub fn run(&mut self) {
+        let crossovers: Vec<CrossoverFn> =
+            vec![SJ2OX::apply, BCBX::apply, SB2OX::apply, PMX::apply];
+        let mut q_crossover = Qlearning::new(crossovers);
+
         let mut non_improvement_counter: usize = 0;
         let mut iteration = 0;
         let start_time = Instant::now();
@@ -96,6 +100,13 @@ impl GA {
                         XTYPE::Random => {
                             Random::apply(&p[0], &p[1], None, &mut self.makespan, &mut self.rng)
                         }
+                        XTYPE::QLearning => q_crossover.crossover(
+                            &p[0],
+                            &p[1],
+                            None,
+                            &mut self.makespan,
+                            &mut self.rng,
+                        ),
                     };
 
                     if params::PERFORM_CROWDING {
@@ -272,15 +283,16 @@ impl GA {
             let p2 = self.tournament();
 
             // Crossover
-            let (mut c1, mut c2) =
-                q_crossover.crossover(&p1, &p2, None, &mut self.makespan, &mut self.rng);
-            /* let (mut c1, mut c2) = match self.options.xover_type {
+            let (mut c1, mut c2) = match self.options.xover_type {
                 XTYPE::SJ2OX => SJ2OX::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
                 XTYPE::SB2OX => SB2OX::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
                 XTYPE::BCBX => BCBX::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
                 XTYPE::PMX => PMX::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
                 XTYPE::Random => Random::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
-            }; */
+                XTYPE::QLearning => {
+                    q_crossover.crossover(&p1, &p2, None, &mut self.makespan, &mut self.rng)
+                }
+            };
 
             // Mutate
             let mut mutate = |c| {
