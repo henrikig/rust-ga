@@ -6,6 +6,7 @@ use crate::{
 use rand::{prelude::StdRng, Rng};
 use serde_derive::Serialize;
 
+#[allow(dead_code)]
 #[derive(Clone, Serialize)]
 pub enum MTYPE {
     Shift,

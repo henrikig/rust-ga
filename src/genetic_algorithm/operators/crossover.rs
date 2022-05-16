@@ -2,7 +2,7 @@ use crate::{common::makespan::Makespan, genetic_algorithm::entities::chromosome:
 
 use crate::common::best_insertion::find_best_insertion;
 
-use rand::prelude::StdRng;
+use rand::prelude::{SliceRandom, StdRng};
 use rand::Rng;
 use serde_derive::Serialize;
 
@@ -13,6 +13,8 @@ pub enum XTYPE {
     SB2OX,
     BCBX,
     PMX,
+    Random2,
+    Random4,
 }
 
 pub trait Crossover {
@@ -29,6 +31,8 @@ pub struct SJ2OX;
 pub struct SB2OX;
 pub struct BCBX;
 pub struct PMX;
+pub struct Random2;
+pub struct Random4;
 
 impl Crossover for SJ2OX {
     fn apply(
@@ -155,6 +159,46 @@ impl Crossover for PMX {
         let c2 = pmx(&p2.jobs, &p1.jobs, rng);
 
         (Chromosome::from(c1), Chromosome::from(c2))
+    }
+}
+
+impl Crossover for Random2 {
+    fn apply(
+        p1: &Chromosome,
+        p2: &Chromosome,
+        k: Option<usize>,
+        makespan: &mut Makespan,
+        rng: &mut StdRng,
+    ) -> (Chromosome, Chromosome) {
+        let xovers = vec![XTYPE::BCBX, XTYPE::PMX];
+        let xtype = xovers.choose(rng).unwrap();
+
+        match xtype {
+            XTYPE::BCBX => BCBX::apply(p1, p2, k, makespan, rng),
+            XTYPE::PMX => PMX::apply(p1, p2, k, makespan, rng),
+            _ => PMX::apply(p1, p2, k, makespan, rng),
+        }
+    }
+}
+
+impl Crossover for Random4 {
+    fn apply(
+        p1: &Chromosome,
+        p2: &Chromosome,
+        k: Option<usize>,
+        makespan: &mut Makespan,
+        rng: &mut StdRng,
+    ) -> (Chromosome, Chromosome) {
+        let xovers = vec![XTYPE::BCBX, XTYPE::PMX, XTYPE::SB2OX, XTYPE::SJ2OX];
+        let xtype = xovers.choose(rng).unwrap();
+
+        match xtype {
+            XTYPE::BCBX => BCBX::apply(p1, p2, k, makespan, rng),
+            XTYPE::PMX => PMX::apply(p1, p2, k, makespan, rng),
+            XTYPE::SB2OX => SB2OX::apply(p1, p2, k, makespan, rng),
+            XTYPE::SJ2OX => SJ2OX::apply(p1, p2, k, makespan, rng),
+            _ => PMX::apply(p1, p2, k, makespan, rng),
+        }
     }
 }
 

@@ -11,7 +11,6 @@ use crate::{
         makespan::Makespan,
         utils,
     },
-    genetic_algorithm::params,
     iterated_greedy::options::{Options, OptionsGrid},
 };
 
