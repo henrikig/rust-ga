@@ -390,8 +390,6 @@ impl GA {
             iteration += 1;
         }
 
-        q_crossover.summary();
-
         self.final_makespan(iteration, duration_millis);
 
         if params::WRITE_IMPROVEMENT {
