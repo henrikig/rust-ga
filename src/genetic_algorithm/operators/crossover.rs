@@ -1,3 +1,5 @@
+use std::cmp::{min, Ordering};
+
 use crate::{common::makespan::Makespan, genetic_algorithm::entities::chromosome::Chromosome};
 
 use crate::common::best_insertion::find_best_insertion;
@@ -241,6 +243,82 @@ fn insert_remaining(
             c1[i] = p2_order.remove(0);
             c2[i] = p1_order.remove(0);
         }
+    }
+}
+
+// Q-learning using the previously intoduced crossovers
+type CrossoverFn = fn(
+    &Chromosome,
+    &Chromosome,
+    Option<usize>,
+    &mut Makespan,
+    &mut StdRng,
+) -> (Chromosome, Chromosome);
+
+pub struct Qlearning {
+    actions: Vec<CrossoverFn>,
+    // pub actions: Vec<Box<dyn Crossover>>,
+    q_values: Vec<f64>,
+    learning_rate: f64,
+    epsilon: f64,
+}
+
+impl Qlearning {
+    pub fn new(actions: Vec<CrossoverFn>) -> Qlearning {
+        Qlearning {
+            q_values: vec![0.0; actions.len()],
+            actions: actions,
+            learning_rate: 0.2, // min: 0.0, max: 1.0
+            epsilon: 0.25,      // min: 0.0, max: 1.0
+        }
+    }
+
+    pub fn crossover(
+        &mut self,
+        p1: &Chromosome,
+        p2: &Chromosome,
+        k: Option<usize>,
+        makespan: &mut Makespan,
+        rng: &mut StdRng,
+    ) -> (Chromosome, Chromosome) {
+        // By the chance of epsilon, exploration -> random choice of crossover
+        if rng.gen_ratio(self.epsilon as u32 * 1000, 1000) {
+            let crossover: usize = rng.gen_range(0..3);
+            return self.evaluate(p1, p2, k, makespan, rng, crossover);
+        }
+        // Else the crossover with the hightest q-value is used
+        else {
+            // Find the crossover with the highest q-value
+            let crossover: usize = self
+                .q_values
+                .iter()
+                .enumerate()
+                .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal))
+                .map(|(index, _)| index)
+                .unwrap();
+            return self.evaluate(p1, p2, k, makespan, rng, crossover);
+        }
+    }
+
+    fn evaluate(
+        &mut self,
+        p1: &Chromosome,
+        p2: &Chromosome,
+        k: Option<usize>,
+        makespan: &mut Makespan,
+        rng: &mut StdRng,
+        crossover: usize,
+    ) -> (Chromosome, Chromosome) {
+        // Generate children
+        let (c1, c2) = self.actions[crossover](p1, p1, k, makespan, rng);
+        // Calculate the improvement
+        let reward: u32 =
+            min(c1.makespan, c2.makespan).unwrap() - min(p1.makespan, p2.makespan).unwrap();
+        // Update the q-value using the learning rate
+        self.q_values[crossover] = (1.0 - self.learning_rate) * self.q_values[crossover]
+            + (self.learning_rate * reward as f64);
+        // Return the children
+        return (c1, c2);
     }
 }
 
