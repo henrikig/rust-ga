@@ -1,4 +1,5 @@
-use std::cmp::{min, Ordering};
+use std::cmp::{max, min, Ordering};
+use std::time::Instant;
 
 use crate::{common::makespan::Makespan, genetic_algorithm::entities::chromosome::Chromosome};
 
@@ -39,7 +40,7 @@ impl Crossover for SJ2OX {
         p1: &Chromosome,
         p2: &Chromosome,
         k: Option<usize>,
-        _makespan: &mut Makespan,
+        makespan: &mut Makespan,
         rng: &mut StdRng,
     ) -> (Chromosome, Chromosome) {
         // Generate new permutations based on parents
@@ -65,7 +66,13 @@ impl Crossover for SJ2OX {
         // Insert the jobs that are yet not allocated in order of opposite parent
         insert_remaining(k, &mut c1, p2_order, &mut c2, p1_order);
 
-        return (Chromosome::from(c1), Chromosome::from(c2));
+        let mut c1 = Chromosome::from(c1);
+        let mut c2 = Chromosome::from(c2);
+
+        c1.makespan(makespan);
+        c2.makespan(makespan);
+
+        (c1, c2)
     }
 }
 
@@ -74,7 +81,7 @@ impl Crossover for SB2OX {
         p1: &Chromosome,
         p2: &Chromosome,
         _k: Option<usize>,
-        _makespan: &mut Makespan,
+        makespan: &mut Makespan,
         rng: &mut StdRng,
     ) -> (Chromosome, Chromosome) {
         // Generate new permutations based on parents
@@ -99,7 +106,13 @@ impl Crossover for SB2OX {
         // Insert the jobs that are yet not allocated in order of opposite parent
         insert_remaining(0, &mut c1, p2_order, &mut c2, p1_order);
 
-        return (Chromosome::from(c1), Chromosome::from(c2));
+        let mut c1 = Chromosome::from(c1);
+        let mut c2 = Chromosome::from(c2);
+
+        c1.makespan(makespan);
+        c2.makespan(makespan);
+
+        (c1, c2)
     }
 }
 
@@ -150,7 +163,7 @@ impl Crossover for PMX {
         p1: &Chromosome,
         p2: &Chromosome,
         _k: Option<usize>,
-        _makespan: &mut Makespan,
+        makespan: &mut Makespan,
         rng: &mut StdRng,
     ) -> (Chromosome, Chromosome) {
         // The `pmx` function returns only one child, so we call it twice with
@@ -158,7 +171,13 @@ impl Crossover for PMX {
         let c1 = pmx(&p1.jobs, &p2.jobs, rng);
         let c2 = pmx(&p2.jobs, &p1.jobs, rng);
 
-        (Chromosome::from(c1), Chromosome::from(c2))
+        let mut c1 = Chromosome::from(c1);
+        let mut c2 = Chromosome::from(c2);
+
+        c1.makespan(makespan);
+        c2.makespan(makespan);
+
+        (c1, c2)
     }
 }
 
@@ -270,7 +289,7 @@ fn insert_remaining(
 }
 
 // Q-learning using the previously intoduced crossovers
-type CrossoverFn = fn(
+pub type CrossoverFn = fn(
     &Chromosome,
     &Chromosome,
     Option<usize>,
@@ -284,12 +303,14 @@ pub struct Qlearning {
     q_values: Vec<f64>,
     learning_rate: f64,
     epsilon: f64,
+    counts: Vec<u32>,
 }
 
 impl Qlearning {
     pub fn new(actions: Vec<CrossoverFn>) -> Qlearning {
         Qlearning {
             q_values: vec![0.0; actions.len()],
+            counts: vec![0; actions.len()],
             actions: actions,
             learning_rate: 0.2, // min: 0.0, max: 1.0
             epsilon: 0.25,      // min: 0.0, max: 1.0
@@ -305,8 +326,9 @@ impl Qlearning {
         rng: &mut StdRng,
     ) -> (Chromosome, Chromosome) {
         // By the chance of epsilon, exploration -> random choice of crossover
-        if rng.gen_ratio(self.epsilon as u32 * 1000, 1000) {
-            let crossover: usize = rng.gen_range(0..3);
+        if rng.gen_ratio((self.epsilon * 1000.0) as u32, 1000) {
+            let crossover: usize = rng.gen_range(0..self.q_values.len());
+            self.counts[crossover] += 1;
             return self.evaluate(p1, p2, k, makespan, rng, crossover);
         }
         // Else the crossover with the hightest q-value is used
@@ -319,6 +341,8 @@ impl Qlearning {
                 .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal))
                 .map(|(index, _)| index)
                 .unwrap();
+
+            self.counts[crossover] += 1;
             return self.evaluate(p1, p2, k, makespan, rng, crossover);
         }
     }
@@ -333,13 +357,24 @@ impl Qlearning {
         crossover: usize,
     ) -> (Chromosome, Chromosome) {
         // Generate children
-        let (c1, c2) = self.actions[crossover](p1, p1, k, makespan, rng);
+        let start = Instant::now();
+
+        let (c1, c2) = self.actions[crossover](p1, p2, k, makespan, rng);
+
+        let elapsed = start.elapsed().as_micros();
+
         // Calculate the improvement
-        let reward: u32 =
-            min(c1.makespan, c2.makespan).unwrap() - min(p1.makespan, p2.makespan).unwrap();
+        let reward: i32 = max(
+            (min(p1.makespan.unwrap(), p2.makespan.unwrap()) as i32)
+                - (min(c1.makespan.unwrap(), c2.makespan.unwrap()) as i32),
+            0,
+        );
+
+        let reward = (reward as f64) / (elapsed as f64);
+
         // Update the q-value using the learning rate
-        self.q_values[crossover] = (1.0 - self.learning_rate) * self.q_values[crossover]
-            + (self.learning_rate * reward as f64);
+        self.q_values[crossover] =
+            (1.0 - self.learning_rate) * self.q_values[crossover] + (self.learning_rate * (reward));
         // Return the children
         return (c1, c2);
     }

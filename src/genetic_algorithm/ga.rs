@@ -6,7 +6,9 @@ use crate::genetic_algorithm::entities::options::Args;
 
 use super::entities::chromosome::Chromosome;
 use super::entities::options::{Options, OptionsGrid, Params};
-use super::operators::crossover::{Crossover, Random, BCBX, PMX, SB2OX, SJ2OX, XTYPE};
+use super::operators::crossover::{
+    Crossover, CrossoverFn, Qlearning, Random, BCBX, PMX, SB2OX, SJ2OX, XTYPE,
+};
 use super::operators::crowding;
 use super::operators::local_search::ls_ig;
 use super::operators::mutation::{self, Greedy, Mutation, Reverse, Swap, MTYPE, SHIFT};
@@ -202,8 +204,17 @@ impl GA {
     }
 
     pub fn run_steady_state(&mut self) {
+        let crossovers: Vec<CrossoverFn> =
+            vec![SJ2OX::apply, BCBX::apply, SB2OX::apply, PMX::apply];
+
+        let mut q_crossover = Qlearning::new(crossovers);
+
         // Calculate makespan for all individuals in population
         self.population.sort();
+        println!(
+            "{}",
+            self.population.iter().min().unwrap().makespan.unwrap()
+        );
         let mut non_improvement_counter: usize = 0;
         let mut iteration = 0;
 
@@ -261,13 +272,15 @@ impl GA {
             let p2 = self.tournament();
 
             // Crossover
-            let (mut c1, mut c2) = match self.options.xover_type {
+            let (mut c1, mut c2) =
+                q_crossover.crossover(&p1, &p2, None, &mut self.makespan, &mut self.rng);
+            /* let (mut c1, mut c2) = match self.options.xover_type {
                 XTYPE::SJ2OX => SJ2OX::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
                 XTYPE::SB2OX => SB2OX::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
                 XTYPE::BCBX => BCBX::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
                 XTYPE::PMX => PMX::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
                 XTYPE::Random => Random::apply(&p1, &p2, None, &mut self.makespan, &mut self.rng),
-            };
+            }; */
 
             // Mutate
             let mut mutate = |c| {
@@ -376,6 +389,8 @@ impl GA {
 
             iteration += 1;
         }
+
+        q_crossover.summary();
 
         self.final_makespan(iteration, duration_millis);
 
