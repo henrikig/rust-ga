@@ -29,12 +29,12 @@ pub fn get_duration(instance: &Instance) -> u64 {
 
     let scale = 1.7;
 
-    (n_jobs.powf(scale) * m_stages * 1.5) as u64
+    (n_jobs.powf(scale) * m_stages * 1.5 * 2.0) as u64
 }
 
 pub fn get_test_problems() -> Vec<PathBuf> {
     return vec![
-        PathBuf::from("./instances/ruiz/json/n20m2-01.json"),
+        /* PathBuf::from("./instances/ruiz/json/n20m2-01.json"),
         PathBuf::from("./instances/ruiz/json/n20m2-02.json"),
         PathBuf::from("./instances/ruiz/json/n20m2-03.json"),
         PathBuf::from("./instances/ruiz/json/n20m2-04.json"),
@@ -133,7 +133,7 @@ pub fn get_test_problems() -> Vec<PathBuf> {
         PathBuf::from("./instances/ruiz/json/n120m4-41.json"),
         PathBuf::from("./instances/ruiz/json/n120m4-42.json"),
         PathBuf::from("./instances/ruiz/json/n120m4-61.json"),
-        PathBuf::from("./instances/ruiz/json/n120m4-61.json"),
+        PathBuf::from("./instances/ruiz/json/n120m4-61.json"), */
         //
         PathBuf::from("./instances/ruiz/json/n120m8-01.json"),
         PathBuf::from("./instances/ruiz/json/n120m8-11.json"),

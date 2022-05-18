@@ -320,7 +320,7 @@ impl Default for OptionsGrid {
             construction: vec![
                 // Construction::MDDR(0.2),
                 // Construction::MDDR(0.5),
-                Construction::MDDR(1.0),
+                Construction::MDDR(0.2),
                 // Construction::Random,
                 // Construction::NEH,
             ],
@@ -333,14 +333,14 @@ impl Default for OptionsGrid {
                 MTYPE::Random,
             ],
             reversal_percent: vec![10],
-            non_improving_iterations: vec![3000, 5000],
+            non_improving_iterations: vec![0],
             rtypes: vec![
-                RTYPE::Mutate,
+                /* RTYPE::Mutate,
                 RTYPE::Random,
-                RTYPE::GCH,
-                // RTYPE::NoReplacement,
+                RTYPE::GCH, */
+                RTYPE::NoReplacement,
             ],
-            allways_keep: vec![0.4],
+            allways_keep: vec![1.0],
             approx_calc: vec![0],
             crowding_scale: vec![0.0],
             k_nearest: vec![20],

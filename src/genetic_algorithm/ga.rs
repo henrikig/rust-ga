@@ -336,7 +336,9 @@ impl GA {
                     iteration.to_string(),
                     std::cmp::min(&c1, &c2).makespan.unwrap().to_string(),
                     self.makespan.count.to_string(),
-                    start_time.elapsed().as_millis().to_string(),
+                    (start_time.elapsed() + self.init_duration)
+                        .as_millis()
+                        .to_string(),
                 ]);
             } else {
                 non_improvement_counter += 1;
