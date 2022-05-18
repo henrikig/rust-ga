@@ -336,10 +336,10 @@ impl Default for OptionsGrid {
             non_improving_iterations: vec![200],
             rtypes: vec![RTYPE::Mutate],
             allways_keep: vec![1.0],
-            approx_calc: vec![5, 50, 500],
+            approx_calc: vec![0],
             crowding_scale: vec![0.0],
-            k_nearest: vec![2],
-            distance_metric: vec![DTYPE::DeviationDistance],
+            k_nearest: vec![20],
+            distance_metric: vec![DTYPE::DeviationDistance, DTYPE::ExactMatch],
         }
     }
 }
@@ -359,13 +359,13 @@ impl OptionsGrid {
             // self.non_improving_iterations,
             // self.crowding_scale,
             // self.k_nearest,
-            // self.distance_metric,
-            self.approx_calc,
+            // self.approx_calc,
             // self.non_improving_iterations,
             // self.learning_rates,
             // self.epsilons,
             self.rtypes,
-            self.allways_keep
+            self.allways_keep,
+            self.distance_metric
         )
         .map(|opt| Options {
             pop_size: opt.0,
@@ -378,13 +378,13 @@ impl OptionsGrid {
             mutation_type: opt.7,
             // crowding_scale: opt.8,
             // k_nearest: opt.9,
-            approx_calc: opt.8,
+            // approx_calc: opt.8,
             // non_improving_iterations: opt.9,
             // learning_rate: opt.8,
             // epsilon: opt.9,
-            rtype: opt.9,
-            allways_keep: opt.10,
-            // distance_metric: opt.10,
+            rtype: opt.8,
+            allways_keep: opt.9,
+            distance_metric: opt.10,
             // k_tournament: opt.12,
             problem_file: Cow::Owned(options.problem_file.as_ref().clone()),
             ..options
