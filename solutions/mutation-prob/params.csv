@@ -3,3 +3,4 @@ true,150,2,0.8,2,0.5,QLearning,0.2,0.25,1.0,0.0,Random,10,100,Mutate,1.0,300,0.5
 true,150,2,0.8,2,0.5,QLearning,0.2,0.25,1.0,0.01,Random,10,100,Mutate,1.0,300,0.5,10,ExactMatch
 true,150,2,0.8,2,0.5,QLearning,0.2,0.25,1.0,0.02,Random,10,100,Mutate,1.0,300,0.5,10,ExactMatch
 true,150,2,0.8,2,0.5,QLearning,0.2,0.25,1.0,0.1,Random,10,100,Mutate,1.0,300,0.5,10,ExactMatch
+true,150,2,0.8,2,0.5,QLearning,0.2,0.25,1.0,0.2,Random,10,100,Mutate,1.0,300,0.5,10,ExactMatch
