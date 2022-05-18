@@ -338,7 +338,7 @@ impl Default for OptionsGrid {
                 RTYPE::Mutate,
                 RTYPE::Random,
                 RTYPE::GCH,
-                RTYPE::NoReplacement,
+                // RTYPE::NoReplacement,
             ],
             allways_keep: vec![0.4],
             approx_calc: vec![0],
