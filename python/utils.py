@@ -1,25 +1,6 @@
-import os
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import os
-
-# Save image as file
-def save_scatter_image(fig, filename):
-    if not os.path.exists("images/scatter"):
-        os.mkdir("images/scatter")
-
-    fig.write_image("images/scatter/" + filename + ".svg")
-    fig.write_image("images/scatter/" + filename + ".png")
-
-
-# Save image as file
-def save_line_image(fig, filename):
-    if not os.path.exists("images/line"):
-        os.mkdir("images/line")
-
-    fig.write_image("images/line/" + filename + ".svg")
-    fig.write_image("images/line/" + filename + ".png")
 
 
 # Get param dataframe given folder location and parameter name(s)
@@ -57,7 +38,7 @@ def calc_stats(df):
 
 
 # Takes a dataframe with statistics to plot and returns a figure
-def plot_from_df(df, xname, yname, filename, new_names={}, rename=True, save=False):
+def plot_from_df(df, xname, yname, new_names={}, rename=True):
     if rename:
         df.rename(index=lambda s: s.replace("_rpd", ""), inplace=True)
 
@@ -86,14 +67,11 @@ def plot_from_df(df, xname, yname, filename, new_names={}, rename=True, save=Fal
 
     fig.update_traces(marker_size=10)
 
-    if save:
-        save_scatter_image(fig, filename)
-
     return fig
 
 
 # Create a plot from two different problem folders
-def merge_and_plot(folders, names, x_title, y_title, filename="1_generational"):
+def merge_and_plot(folders, names, x_title, y_title):
     dfs = []
     for fname, colname in zip(folders, names):
         dfs.append(get_results(fname, [colname]))
@@ -104,14 +82,14 @@ def merge_and_plot(folders, names, x_title, y_title, filename="1_generational"):
 
     stats = calc_stats(rpd)
 
-    fig = plot_from_df(stats, x_title, y_title, filename)
+    fig = plot_from_df(stats, x_title, y_title)
 
     return fig
 
 
 # Create plot from single file, given a list of parameter names
 def single_file_plot(
-    folder, param_names, x_title, y_title, filename, new_names={}, print_first_row=False
+    folder, param_names, x_title, y_title, new_names={}, print_first_row=False
 ):
     # Get the parameter values
     params = get_params(folder, param_names)
@@ -132,7 +110,7 @@ def single_file_plot(
     rpd = calc_rpd(res)
 
     stats = calc_stats(rpd)
-    return plot_from_df(stats, x_title, y_title, filename, new_names=new_names)
+    return plot_from_df(stats, x_title, y_title, new_names=new_names)
 
 
 def parse_size(file):
@@ -151,7 +129,7 @@ def parse_size(file):
     return size
 
 
-def line_plot_from_results(df, header, x_title, y_title, filename, save=False):
+def line_plot_from_results(df, header, x_title, y_title):
     rpd = calc_rpd(df)
     rpd["size"] = rpd.index.map(lambda x: parse_size(x))
     dfs = []
@@ -188,23 +166,20 @@ def line_plot_from_results(df, header, x_title, y_title, filename, save=False):
     fig.update_xaxes(mirror=True)
     fig.update_yaxes(mirror=True)
 
-    if save:
-        save_line_image(fig, filename)
-
     return fig
 
 
-def merge_and_line(folders, names, x_title, y_title, filename="1_generational_line"):
+def merge_and_line(folders, names, x_title, y_title):
     dfs = []
     for fname, colname in zip(folders, names):
         dfs.append(get_results(fname, [colname]))
 
     res = pd.concat(dfs, axis=1)
 
-    return line_plot_from_results(res, names, x_title, y_title, filename)
+    return line_plot_from_results(res, names, x_title, y_title)
 
 
-def plot_line_diagram(folder, param_names, x_title, y_title, filename):
+def plot_line_diagram(folder, param_names, x_title, y_title):
     params = get_params(folder, param_names)
     params.index = params[param_names[0]].astype(str)
 
@@ -216,7 +191,7 @@ def plot_line_diagram(folder, param_names, x_title, y_title, filename):
 
     res = get_results(folder, header)
 
-    return line_plot_from_results(res, header, x_title, y_title, filename)
+    return line_plot_from_results(res, header, x_title, y_title)
 
 
 if __name__ == "__main__":
