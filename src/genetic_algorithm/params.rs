@@ -30,13 +30,13 @@ pub const MTYPE: MTYPE = MTYPE::Random;
 pub const REVERSAL_PERCENT: usize = 10;
 
 // CROWDING
-pub const PERFORM_CROWDING: bool = true;
+pub const PERFORM_CROWDING: bool = false;
 pub const CROWDING_SCALE: f64 = 0.0;
 pub const K_NEAREST: usize = 20; // Only used in steady state crowding version
-pub const DISTANCE_METRIC: DTYPE = DTYPE::ExactMatch;
+pub const DISTANCE_METRIC: DTYPE = DTYPE::DeviationDistance;
 
-pub const IG_GRID_SEARCH: bool = false;
+pub const IG_GRID_SEARCH: bool = true;
 
 // Solution folder for parameter grid search
 
-pub const SOLUTION_FOLDER: &str = "./solutions/crowding-all";
+pub const SOLUTION_FOLDER: &str = "./solutions/replacement-type";
