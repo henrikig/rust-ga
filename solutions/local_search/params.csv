@@ -1,6 +1,5 @@
-steady_state,pop_size,elitism,keep_best,k_tournament,xover_prob,xover_type,construction,mutation_prob,mutation_type,reversal_percent,non_improving_iterations,allways_keep,approx_calc,crowding_scale,k_nearest,distance_metric
-true,150,2,0.8,2,0.5,BCBX,1.0,0.0,Shift,10,100,1.0,5,0.0,2,ExactMatch
-true,150,2,0.8,2,0.5,BCBX,1.0,0.0,Shift,10,100,1.0,20,0.0,2,ExactMatch
-true,150,2,0.8,2,0.5,BCBX,1.0,0.0,Shift,10,100,1.0,50,0.0,2,ExactMatch
-true,150,2,0.8,2,0.5,BCBX,1.0,0.0,Shift,10,100,1.0,100,0.0,2,ExactMatch
-true,150,2,0.8,2,0.5,BCBX,1.0,0.0,Shift,10,100,1.0,No LS,0.0,2,ExactMatch
+steady_state,pop_size,elitism,keep_best,k_tournament,xover_prob,xover_type,learning_rate,epsilon,construction,mutation_prob,mutation_type,reversal_percent,non_improving_iterations,rtype,allways_keep,approx_calc,crowding_scale,k_nearest,distance_metric
+true,150,2,0.8,2,0.5,QLearning,0.2,0.25,1.0,0.1,Random,10,100,Mutate,1.0,5,0.5,10,ExactMatch
+true,150,2,0.8,2,0.5,QLearning,0.2,0.25,1.0,0.1,Random,10,100,Mutate,1.0,50,0.5,10,ExactMatch
+true,150,2,0.8,2,0.5,QLearning,0.2,0.25,1.0,0.1,Random,10,100,Mutate,1.0,500,0.5,10,ExactMatch
+true,150,2,0.8,2,0.5,QLearning,0.2,0.25,1.0,0.1,Random,10,100,Mutate,1.0,No Local Search,0.5,10,ExactMatch
