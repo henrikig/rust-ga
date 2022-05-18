@@ -324,7 +324,7 @@ impl Default for OptionsGrid {
                 // Construction::Random,
                 // Construction::NEH,
             ],
-            mutation_prob: vec![0.0, 0.01, 0.02, 0.1],
+            mutation_prob: vec![0.2],
             mutation_type: vec![
                 // MTYPE::Shift,
                 // MTYPE::Greedy,
