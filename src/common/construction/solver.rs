@@ -19,8 +19,8 @@ pub trait Solver {
 
     fn run_all(result_folder: &str) {
         // Get vector of all problem files (twice as we have to consume them)
-        let problem_files = utils::get_test_problems();
-        let problem_files_consumed = utils::get_test_problems();
+        let problem_files = utils::get_problem_files(true);
+        let problem_files_consumed = utils::get_problem_files(true);
 
         // Make sure problem files are in same order
         assert_eq!(
