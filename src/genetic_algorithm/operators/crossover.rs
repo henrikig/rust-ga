@@ -358,11 +358,11 @@ impl Qlearning {
         crossover: usize,
     ) -> (Chromosome, Chromosome) {
         // Generate children
-        let start = Instant::now();
+        // let start = Instant::now();
 
         let (c1, c2) = self.actions[crossover](p1, p2, k, makespan, rng);
 
-        let elapsed = start.elapsed().as_micros();
+        // let elapsed = start.elapsed().as_micros();
 
         // Calculate the improvement
         let reward: i32 = max(
@@ -371,7 +371,7 @@ impl Qlearning {
             0,
         );
 
-        let reward = (reward as f64) / (elapsed as f64);
+        // let reward = (reward as f64) / (elapsed as f64);
 
         // Update the q-value using the learning rate
         self.q_values[crossover] = (1.0 - self.learning_rate) * self.q_values[crossover]
