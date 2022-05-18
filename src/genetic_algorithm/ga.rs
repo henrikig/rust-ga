@@ -465,8 +465,8 @@ impl GA {
 // Run all problems for all parameter combinations
 pub fn run_all(args: &Args) {
     // Get vector of all problem files (twice as we have to consume them)
-    let problem_files = utils::get_test_problems();
-    let problem_files_consumed = utils::get_test_problems();
+    let problem_files = utils::get_problem_files(true);
+    let problem_files_consumed = utils::get_problem_files(true);
 
     // Make sure problem files are in same order
     assert_eq!(
