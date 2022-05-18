@@ -39,4 +39,4 @@ pub const IG_GRID_SEARCH: bool = true;
 
 // Solution folder for parameter grid search
 
-pub const SOLUTION_FOLDER: &str = "./solutions/convergence";
+pub const SOLUTION_FOLDER: &str = "./solutions/convergence-ig";

@@ -6,6 +6,7 @@ use serde_derive::Serialize;
 
 use crate::genetic_algorithm::entities::chromosome::Chromosome;
 
+#[allow(dead_code)]
 #[derive(Clone, Serialize, Copy)]
 pub enum DTYPE {
     ExactMatch,
