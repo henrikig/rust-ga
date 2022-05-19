@@ -129,7 +129,7 @@ def parse_size(file):
     return size
 
 
-def line_plot_from_results(df, header, x_title, y_title):
+def line_plot_from_results(df, header, x_title, y_title, new_names={}):
     rpd = calc_rpd(df)
     rpd["size"] = rpd.index.map(lambda x: parse_size(x))
     dfs = []
@@ -142,6 +142,9 @@ def line_plot_from_results(df, header, x_title, y_title):
 
     fig = go.Figure()
     for typ, stats in df.groupby("type"):
+        if typ in new_names:
+            typ = new_names[typ]
+
         fig.add_trace(
             go.Scatter(
                 x=stats.index,
@@ -169,17 +172,17 @@ def line_plot_from_results(df, header, x_title, y_title):
     return fig
 
 
-def merge_and_line(folders, names, x_title, y_title):
+def merge_and_line(folders, names, x_title, y_title, new_names={}):
     dfs = []
     for fname, colname in zip(folders, names):
         dfs.append(get_results(fname, [colname]))
 
     res = pd.concat(dfs, axis=1)
 
-    return line_plot_from_results(res, names, x_title, y_title)
+    return line_plot_from_results(res, names, x_title, y_title, new_names)
 
 
-def plot_line_diagram(folder, param_names, x_title, y_title):
+def plot_line_diagram(folder, param_names, x_title, y_title, new_names={}):
     params = get_params(folder, param_names)
     params.index = params[param_names[0]].astype(str)
 
@@ -191,13 +194,16 @@ def plot_line_diagram(folder, param_names, x_title, y_title):
 
     res = get_results(folder, header)
 
-    return line_plot_from_results(res, header, x_title, y_title)
+    return line_plot_from_results(res, header, x_title, y_title, new_names)
 
 
 if __name__ == "__main__":
-    merge_and_line(
-        ["../solutions/generational", "../solutions/steady_state"],
-        ["Generational", "Steady"],
-        "x",
-        "y",
+    new_names = {"No Replacement, nan": "No replacement"}
+
+    fig = plot_line_diagram(
+        "../solutions/replacement",
+        ["non_improving_iterations", "allways_keep"],
+        r"$\text{Number of jobs}$",
+        r"$\text{RPD(%)}$",
+        new_names,
     )
