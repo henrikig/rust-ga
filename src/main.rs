@@ -13,9 +13,9 @@ fn main() {
 
     // Based on arguments, we either MDDR, NEH, IG or GA
     if args.mddr {
-        MDDR::run_all("./solutions/mddr");
+        MDDR::run_all("./solutions/mddr2");
     } else if args.neh {
-        NEH::run_all("./solutions/neh");
+        NEH::run_all("./solutions/neh2");
     } else if args.iterated_greedy {
         if args.run_all {
             IteratedGreedy::run_all("./solutions/ig");
