@@ -39,4 +39,4 @@ pub const IG_GRID_SEARCH: bool = true;
 
 // Solution folder for parameter grid search
 
-pub const SOLUTION_FOLDER: &str = "./solutions/replacement-type-2";
+pub const SOLUTION_FOLDER: &str = "./solutions/replacement-rate";
