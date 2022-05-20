@@ -29,7 +29,7 @@ pub fn get_duration(instance: &Instance) -> u64 {
 
     let scale = 1.7;
 
-    (n_jobs.powf(scale) * m_stages * 1.5) as u64
+    (n_jobs.powf(scale) * m_stages * 1.5 * 2.0) as u64
 }
 
 #[allow(dead_code)]

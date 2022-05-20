@@ -340,7 +340,7 @@ impl Default for OptionsGrid {
                 // RTYPE::GCH,
                 // RTYPE::NoReplacement,
             ],
-            allways_keep: vec![0.2, 0.5, 0.8],
+            allways_keep: vec![0.8],
             approx_calc: vec![0],
             crowding_scale: vec![0.0],
             k_nearest: vec![20],

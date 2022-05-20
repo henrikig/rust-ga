@@ -15,8 +15,8 @@ pub const K_TOURNAMENT: usize = 2;
 pub const XOVER_PROB: f32 = 0.5;
 pub const XOVER: XTYPE = XTYPE::QLearning;
 pub const CONSTRUCTION: Construction = Construction::MDDR(1.0);
-pub const NON_IMPROVING_ITERATIONS: usize = 50; // use 50, 100, 150 (because of implementation)
-pub const RTYPE: RTYPE = RTYPE::GCH;
+pub const NON_IMPROVING_ITERATIONS: usize = 3000; // use 50, 100, 150 (because of implementation)
+pub const RTYPE: RTYPE = RTYPE::Mutate;
 pub const ALLWAYS_KEEP: f64 = 0.8; // Percentage of population to always keep
 pub const APPROX_CALC: usize = 300;
 
@@ -39,4 +39,4 @@ pub const IG_GRID_SEARCH: bool = true;
 
 // Solution folder for parameter grid search
 
-pub const SOLUTION_FOLDER: &str = "./solutions/replacement-rate";
+pub const SOLUTION_FOLDER: &str = "./solutions/ga2";
