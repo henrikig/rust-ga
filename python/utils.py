@@ -129,9 +129,27 @@ def parse_size(file):
     return size
 
 
-def line_plot_from_results(df, header, x_title, y_title, new_names={}):
+def parse_stage(file):
+    # get filename only
+    file = file.split("/")[-1]
+
+    # remove instance number
+    file = file.split("-")[0]
+
+    # Remove number of stages
+    file = file.split("m")[-1]
+
+    # Remove 'n' and parse as int
+    stages = int(file)
+
+    return stages
+
+
+def line_plot_from_results(
+    df, header, x_title, y_title, new_names={}, parser=parse_size
+):
     rpd = calc_rpd(df)
-    rpd["size"] = rpd.index.map(lambda x: parse_size(x))
+    rpd["size"] = rpd.index.map(lambda x: parser(x))
     dfs = []
 
     for h in header:
@@ -182,6 +200,18 @@ def merge_and_line(folders, names, x_title, y_title, new_names={}):
     return line_plot_from_results(res, names, x_title, y_title, new_names)
 
 
+def merge_and_line_stages(folders, names, x_title, y_title, new_names={}):
+    dfs = []
+    for fname, colname in zip(folders, names):
+        dfs.append(get_results(fname, [colname]))
+
+    res = pd.concat(dfs, axis=1)
+
+    return line_plot_from_results(
+        res, names, x_title, y_title, new_names, parser=parse_stage
+    )
+
+
 def plot_line_diagram(folder, param_names, x_title, y_title, new_names={}):
     params = get_params(folder, param_names)
     params.index = params[param_names[0]].astype(str)
@@ -198,12 +228,6 @@ def plot_line_diagram(folder, param_names, x_title, y_title, new_names={}):
 
 
 if __name__ == "__main__":
-    new_names = {"No Replacement, nan": "No replacement"}
+    instance = "./instances/ruiz/json/n20m2-05.json"
 
-    fig = plot_line_diagram(
-        "../solutions/replacement",
-        ["non_improving_iterations", "allways_keep"],
-        r"$\text{Number of jobs}$",
-        r"$\text{RPD(%)}$",
-        new_names,
-    )
+    print(parse_stage(instance))
