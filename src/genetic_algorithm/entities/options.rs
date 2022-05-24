@@ -313,7 +313,7 @@ impl Default for OptionsGrid {
             xover_prob: vec![0.5],
             xover_type: vec![
                 // XTYPE::PMX, XTYPE::BCBX, XTYPE::SJ2OX, XTYPE::SB2OX
-                XTYPE::QLearning,
+                XTYPE::PMX,
             ],
             learning_rates: vec![0.2],
             epsilons: vec![0.25],
@@ -324,13 +324,13 @@ impl Default for OptionsGrid {
                 // Construction::Random,
                 // Construction::NEH,
             ],
-            mutation_prob: vec![0.1],
+            mutation_prob: vec![0.05],
             mutation_type: vec![
                 // MTYPE::Shift,
                 // MTYPE::Greedy,
                 // MTYPE::Swap,
                 // MTYPE::Reverse,
-                MTYPE::Random,
+                MTYPE::Shift,
             ],
             reversal_percent: vec![10],
             non_improving_iterations: vec![3000],
@@ -340,7 +340,7 @@ impl Default for OptionsGrid {
                 // RTYPE::GCH,
                 // RTYPE::NoReplacement,
             ],
-            allways_keep: vec![0.8],
+            allways_keep: vec![1.0],
             approx_calc: vec![0],
             crowding_scale: vec![0.0],
             k_nearest: vec![20],
