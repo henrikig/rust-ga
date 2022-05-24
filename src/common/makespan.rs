@@ -137,7 +137,7 @@ impl Makespan {
     }
 
     // Function for choosing the machine in a given stage that completes the job the quickest
-    fn choose_machine_for_job(
+    pub fn choose_machine_for_job(
         job: &u32,
         stage: &u32,
         prev_stage_completion_time: &u32,

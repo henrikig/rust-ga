@@ -71,7 +71,10 @@ impl MDDR {
 
 #[cfg(test)]
 mod mddr_test {
-    use crate::common::{instance::Instance, makespan::Makespan};
+    use crate::common::{
+        instance::{parse, Instance},
+        makespan::Makespan,
+    };
 
     use super::MDDR;
 
@@ -88,6 +91,16 @@ mod mddr_test {
     #[test]
     fn test_mddr2() {
         let instance = test_instance();
+        let mut makespan = Makespan::new(&instance);
+        let (mks, machine_completions) = MDDR::mddr(&mut makespan);
+
+        println!("{:?}", machine_completions);
+        println!("{}", mks);
+    }
+
+    #[test]
+    fn test_mddr3() {
+        let instance = parse("./instances/ruiz/json/n20m2-18.json").unwrap();
         let mut makespan = Makespan::new(&instance);
         let (mks, machine_completions) = MDDR::mddr(&mut makespan);
 
