@@ -227,6 +227,10 @@ impl Makespan {
 
 #[cfg(test)]
 mod makespan_tests {
+    use std::time::Instant;
+
+    use itertools::Itertools;
+
     use crate::{common::instance::parse, genetic_algorithm::tests::tests::test_instance};
 
     use super::Makespan;
@@ -272,5 +276,35 @@ mod makespan_tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn makspan_test_unique() {
+        let instance = parse("./instances/ruiz/json/n120m8-01.json").unwrap();
+        let mut makespan = Makespan::new(&instance);
+        let schedule = (0..120).collect::<Vec<u32>>();
+        let (_, machine_completions) = makespan.makespan(&schedule);
+        for stage in 0..instance.stages {
+            let jobs = machine_completions[stage as usize]
+                .iter()
+                .flatten()
+                .map(|(j, _)| *j)
+                .collect::<Vec<u32>>();
+
+            let jobs_clone = jobs.clone();
+
+            itertools::assert_equal(jobs.into_iter().unique(), jobs_clone);
+        }
+    }
+
+    #[test]
+    fn makespan_time() {
+        let instance = parse("./instances/ruiz/json/n120m8-01.json").unwrap();
+        let mut makespan = Makespan::new(&instance);
+        let schedule = (0..120).collect::<Vec<u32>>();
+        let start = Instant::now();
+        let (mks, _) = makespan.makespan(&schedule);
+        let elapsed = start.elapsed().as_millis();
+        println!("Found makespan {} in {} ms", mks, elapsed);
     }
 }
