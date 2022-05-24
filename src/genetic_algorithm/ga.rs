@@ -1,4 +1,3 @@
-use crate::common::construction::gch::GCH;
 use crate::common::instance::{Instance, Solution};
 use crate::common::makespan::Makespan;
 use crate::common::utils;
@@ -9,9 +8,10 @@ use super::entities::options::{Options, OptionsGrid, Params};
 use super::operators::crossover::{
     Crossover, CrossoverFn, Qlearning, Random, BCBX, PMX, SB2OX, SJ2OX, XTYPE,
 };
-use super::operators::crowding;
 use super::operators::local_search::ls_ig;
 use super::operators::mutation::{self, Greedy, Mutation, Reverse, Swap, MTYPE, SHIFT};
+use super::operators::replacement::{Replacement, RTYPE};
+use super::operators::{crowding, replacement};
 use super::params;
 
 use csv::Writer;
@@ -258,19 +258,26 @@ impl GA {
             if self.options.allways_keep < 1.0
                 && non_improvement_counter >= self.options.non_improving_iterations
             {
-                let always_keep =
-                    (self.population.len() as f64 * self.options.allways_keep) as usize;
-
-                let mut constructed: Vec<Chromosome> = GCH {
-                    makespan: &mut self.makespan,
-                    rng: &mut self.rng,
-                }
-                .take(self.options.pop_size - always_keep)
-                .collect();
-
-                for index in always_keep..self.options.pop_size {
-                    let new_c = constructed.remove(0);
-                    self.population[index] = new_c;
+                match self.options.rtype {
+                    RTYPE::Random => replacement::Random::replace(
+                        &mut self.population,
+                        self.options.allways_keep,
+                        &mut self.makespan,
+                        &mut self.rng,
+                    ),
+                    RTYPE::GCH => replacement::GCH::replace(
+                        &mut self.population,
+                        self.options.allways_keep,
+                        &mut self.makespan,
+                        &mut self.rng,
+                    ),
+                    RTYPE::Mutate => replacement::Mutate::replace(
+                        &mut self.population,
+                        self.options.allways_keep,
+                        &mut self.makespan,
+                        &mut self.rng,
+                    ),
+                    _ => (),
                 }
 
                 self.population.sort();

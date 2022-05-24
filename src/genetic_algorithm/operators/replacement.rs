@@ -31,7 +31,8 @@ impl Replacement for Random {
         let always_keep = (population.len() as f64 * keep) as usize;
 
         for index in always_keep..population.len() {
-            let new_c = Chromosome::new(&m.instance, rng);
+            let mut new_c = Chromosome::new(&m.instance, rng);
+            new_c.makespan(m);
             population[index] = new_c;
         }
     }
@@ -67,12 +68,8 @@ impl Replacement for Mutate {
 
             let mut new_c = Chromosome::from(new_c);
             mutation::Random::apply(&mut new_c, m, rng);
+            new_c.makespan(m);
 
-            population[index] = new_c;
-        }
-
-        for index in always_keep + (popsize - always_keep) / 2..popsize {
-            let new_c = Chromosome::new(&m.instance, rng);
             population[index] = new_c;
         }
     }

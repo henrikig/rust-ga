@@ -32,6 +32,7 @@ pub fn get_duration(instance: &Instance) -> u64 {
     (n_jobs.powf(scale) * m_stages * 1.5) as u64
 }
 
+#[allow(dead_code)]
 pub fn get_test_problems() -> Vec<PathBuf> {
     return vec![
         PathBuf::from("./instances/ruiz/json/n20m2-01.json"),

@@ -71,13 +71,36 @@ impl MDDR {
 
 #[cfg(test)]
 mod mddr_test {
-    use crate::common::{instance::Instance, makespan::Makespan};
+    use crate::common::{
+        instance::{parse, Instance},
+        makespan::Makespan,
+    };
 
     use super::MDDR;
 
     #[test]
     fn test_mddr() {
         let instance = mini_instance();
+        let mut makespan = Makespan::new(&instance);
+        let (mks, machine_completions) = MDDR::mddr(&mut makespan);
+
+        println!("{:?}", machine_completions);
+        println!("{}", mks);
+    }
+
+    #[test]
+    fn test_mddr2() {
+        let instance = test_instance();
+        let mut makespan = Makespan::new(&instance);
+        let (mks, machine_completions) = MDDR::mddr(&mut makespan);
+
+        println!("{:?}", machine_completions);
+        println!("{}", mks);
+    }
+
+    #[test]
+    fn test_mddr3() {
+        let instance = parse("./instances/ruiz/json/n20m2-18.json").unwrap();
         let mut makespan = Makespan::new(&instance);
         let (mks, machine_completions) = MDDR::mddr(&mut makespan);
 
@@ -94,6 +117,37 @@ mod mddr_test {
             setup_times: vec![
                 vec![vec![1, 1, 1], vec![1, 1, 1], vec![1, 1, 1]],
                 vec![vec![1, 1, 1], vec![1, 1, 1], vec![1, 1, 1]],
+            ],
+        }
+    }
+
+    fn test_instance() -> Instance {
+        Instance {
+            jobs: 5,
+            stages: 2,
+            machines: vec![2, 1],
+            processing_times: vec![
+                vec![71, 98],
+                vec![51, 54],
+                vec![0, 49],
+                vec![94, 28],
+                vec![29, 90],
+            ],
+            setup_times: vec![
+                vec![
+                    vec![1, 1, 1, 1, 1],
+                    vec![1, 1, 1, 1, 1],
+                    vec![1, 1, 1, 1, 1],
+                    vec![1, 1, 1, 1, 1],
+                    vec![1, 1, 1, 1, 1],
+                ],
+                vec![
+                    vec![1, 1, 1, 1, 1],
+                    vec![1, 1, 1, 1, 1],
+                    vec![1, 1, 1, 1, 1],
+                    vec![1, 1, 1, 1, 1],
+                    vec![1, 1, 1, 1, 1],
+                ],
             ],
         }
     }

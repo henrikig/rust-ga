@@ -31,7 +31,7 @@ impl Solver for NEH {
 }
 
 // Sort jobs in an instance in decending order of total processing times
-fn sort_jobs(instance: &Instance) -> Vec<u32> {
+pub fn sort_jobs(instance: &Instance) -> Vec<u32> {
     // Make a list of total production time: production_time[job]
     let mut processing_times: Vec<(u32, u32)> = Vec::with_capacity(instance.jobs as usize);
     // Adds processing times for all jobs from the instance to get the total processing times
