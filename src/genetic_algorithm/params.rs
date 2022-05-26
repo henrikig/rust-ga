@@ -5,7 +5,7 @@ use super::operators::{crossover::XTYPE, crowding::DTYPE, mutation::MTYPE, repla
 pub const PROBLEM_FILE: &str = "./instances/ruiz/json/n120m8-02.json";
 // pub const PROBLEM_FILE: &str = "./instances/ruiz/json/n120m8-21.json";
 // pub const IMPROVEMENT_FILE: &str = "./solutions/improvement/ig/n20m2-01.csv";
-pub const WRITE_IMPROVEMENT: bool = false;
+pub const WRITE_IMPROVEMENT: bool = true;
 pub const POPULATION_SIZE: usize = 150;
 pub const ITERATIONS: usize = 180;
 pub const ELITISM: usize = 2;
@@ -39,4 +39,4 @@ pub const IG_GRID_SEARCH: bool = true;
 
 // Solution folder for parameter grid search
 
-pub const SOLUTION_FOLDER: &str = "./solutions/fifo";
+pub const SOLUTION_FOLDER: &str = "./solutions/init_gch";
