@@ -212,7 +212,9 @@ def merge_and_line_stages(folders, names, x_title, y_title, new_names={}):
     )
 
 
-def plot_line_diagram(folder, param_names, x_title, y_title, new_names={}):
+def plot_line_diagram(
+    folder, param_names, x_title, y_title, new_names={}, parser=parse_size
+):
     params = get_params(folder, param_names)
     params.index = params[param_names[0]].astype(str)
 
@@ -224,7 +226,7 @@ def plot_line_diagram(folder, param_names, x_title, y_title, new_names={}):
 
     res = get_results(folder, header)
 
-    return line_plot_from_results(res, header, x_title, y_title, new_names)
+    return line_plot_from_results(res, header, x_title, y_title, new_names, parser)
 
 
 if __name__ == "__main__":
