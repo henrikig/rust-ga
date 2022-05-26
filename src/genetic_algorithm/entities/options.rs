@@ -320,8 +320,8 @@ impl Default for OptionsGrid {
             construction: vec![
                 // Construction::MDDR(0.2),
                 // Construction::MDDR(0.5),
-                Construction::MDDR(1.0),
-                // Construction::Random,
+                // Construction::MDDR(1.0),
+                Construction::Random,
                 // Construction::NEH,
             ],
             mutation_prob: vec![0.05],
