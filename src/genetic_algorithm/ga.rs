@@ -626,7 +626,7 @@ fn write_improvement(options: &Options, best_makespan: &Vec<Vec<String>>) {
 
     filename.set_extension("csv");
 
-    filename = PathBuf::from("ga/init_random").join(filename);
+    filename = PathBuf::from("ga/init_gch2").join(filename);
 
     utils::write_makespan_improvement(filename, best_makespan).unwrap();
 }
