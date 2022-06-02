@@ -1,6 +1,6 @@
 # TIO4905
 
-This repository contains the work on our master thesis. The source code for our algorithmic implementations is found in `/src`. This folder includes both a genetic algorithm and an iterated greedy algorithm, as well as different construction heuristics.
+This repository contains the work on our master thesis. The source code for our algorithmic implementations is found in `/src`. This folder includes both a genetic algorithm and an iterated greedy algorithm, as well as different construction heuristics. The `/python` folder includes several scripts for visualising results from tests performed.
 
 ## Algorithms
 
